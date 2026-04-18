@@ -16,6 +16,11 @@ const DICT: Dict = {
   "hero.cta": { fr: "Découvrir le catalogue", en: "Explore the catalog" },
   "hero.cta2": { fr: "Configurateur 3D", en: "3D Configurator" },
 
+  "trust.delivery": { fr: "Livraison & reprise incluses", en: "Delivery & pickup included" },
+  "trust.custom": { fr: "Objets personnalisables", en: "Customizable items" },
+  "trust.quote": { fr: "Devis instantané", en: "Instant quote" },
+  "trust.bespoke": { fr: "Sur-mesure disponible", en: "Bespoke available" },
+
   "cats.title": { fr: "Univers", en: "Categories" },
   "cats.sub": { fr: "Cinq univers pour composer votre événement", en: "Five worlds to compose your event" },
 

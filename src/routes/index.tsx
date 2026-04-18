@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, MousePointerClick, Truck, Gamepad2, Tent, Signpost, Palette, Armchair } from "lucide-react";
+import { ArrowRight, Sparkles, MousePointerClick, Truck, Gamepad2, Tent, Signpost, Palette, Armchair, Wand2, Zap, Ruler } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice, categoryColor } from "@/lib/format";
@@ -115,6 +115,25 @@ function HomePage() {
               {t("hero.cta2")}
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* TRUST BADGES */}
+      <section className="border-y border-border bg-secondary/40">
+        <div className="container-x py-5 md:py-6 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {[
+            { i: Truck, label: t("trust.delivery") },
+            { i: Wand2, label: t("trust.custom") },
+            { i: Zap, label: t("trust.quote") },
+            { i: Ruler, label: t("trust.bespoke") },
+          ].map((b, i) => (
+            <div key={i} className="flex items-center gap-2.5 text-xs md:text-sm font-medium">
+              <span className="inline-flex shrink-0 items-center justify-center size-9 rounded-full bg-accent/10 text-accent">
+                <b.i className="size-4" strokeWidth={2} />
+              </span>
+              <span className="leading-tight">{b.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 

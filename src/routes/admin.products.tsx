@@ -76,6 +76,7 @@ function slugify(input: string): string {
 function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [optionCounts, setOptionCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -85,14 +86,21 @@ function AdminProductsPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: p, error: e1 }, { data: c, error: e2 }] = await Promise.all([
+    const [{ data: p, error: e1 }, { data: c, error: e2 }, { data: oc, error: e3 }] = await Promise.all([
       supabase.from("products").select("*").order("sort_order").order("name_fr"),
       supabase.from("categories").select("slug, name_fr").order("sort_order"),
+      supabase.from("product_option_categories").select("product_id"),
     ]);
     if (e1) toast.error(e1.message);
     if (e2) toast.error(e2.message);
+    if (e3) toast.error(e3.message);
     setProducts((p as Product[]) ?? []);
     setCategories((c as Category[]) ?? []);
+    const counts: Record<string, number> = {};
+    ((oc as { product_id: string }[]) ?? []).forEach((row) => {
+      counts[row.product_id] = (counts[row.product_id] ?? 0) + 1;
+    });
+    setOptionCounts(counts);
     setLoading(false);
   };
 
@@ -237,7 +245,14 @@ function AdminProductsPage() {
               filtered.map((p) => (
                 <tr key={p.id} className="border-t border-border hover:bg-muted/30">
                   <td className="px-4 py-3">
-                    <div className="font-medium">{p.name_fr}</div>
+                    <div className="font-medium flex items-center gap-2 flex-wrap">
+                      <span>{p.name_fr}</span>
+                      {optionCounts[p.id] > 0 && (
+                        <span className="inline-flex items-center rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold-foreground">
+                          🎨 {optionCounts[p.id]} option{optionCounts[p.id] > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">{p.slug}</div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.category_slug}</td>

@@ -82,12 +82,21 @@ function QuotePage() {
     };
 
     const { error } = await supabase.from("quote_requests").insert(payload);
-    setSubmitting(false);
     if (error) {
       console.error(error);
+      setSubmitting(false);
       toast.error(t("cart.error"));
       return;
     }
+
+    // Fire-and-forget email notifications (don't block UX on email failure)
+    fetch("/api/send-quote-emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch((err) => console.error("Email notification failed:", err));
+
+    setSubmitting(false);
     toast.success(t("cart.sent"));
     clear();
     setForm({ customer_name: "", company: "", email: "", phone: "", message: "", event_date: "", event_location: "" });

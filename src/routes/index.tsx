@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, MousePointerClick, FileCheck2, Headset } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
+import { formatPrice, categoryColor } from "@/lib/format";
+import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 
 interface Category {
@@ -11,6 +13,17 @@ interface Category {
   name_en: string;
   slug: string;
   color: string;
+  sort_order: number;
+}
+
+interface FeaturedProduct {
+  id: string;
+  slug: string;
+  name_fr: string;
+  name_en: string;
+  category_slug: string;
+  price_day: number;
+  image_url: string | null;
   sort_order: number;
 }
 
@@ -29,6 +42,7 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const { t, lang } = useI18n();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
 
   useEffect(() => {
     supabase
@@ -36,6 +50,14 @@ function HomePage() {
       .select("*")
       .order("sort_order")
       .then(({ data }) => setCategories((data as Category[]) ?? []));
+
+    supabase
+      .from("products")
+      .select("id, slug, name_fr, name_en, category_slug, price_day, image_url, sort_order")
+      .eq("is_active", true)
+      .order("sort_order")
+      .limit(8)
+      .then(({ data }) => setFeatured((data as FeaturedProduct[]) ?? []));
   }, []);
 
   return (

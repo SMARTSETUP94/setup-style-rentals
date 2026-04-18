@@ -131,13 +131,19 @@ function HomePage() {
               key={cat.id}
               to="/catalogue"
               search={{ category: cat.slug }}
-              className="group relative h-64 rounded-xl overflow-hidden border border-border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium reveal"
-              style={{ transitionDelay: `${idx * 60}ms` }}
+              className="group relative h-64 rounded-xl overflow-hidden border border-border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium"
+              style={{
+                animation: `hero-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${idx * 80}ms both`,
+                background: categoryGradient(cat.slug),
+              }}
             >
               <img
                 src={categoryImage(cat.slug)}
                 alt={pickLang(cat, "name", lang)}
                 loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
               <div

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, Plus, Minus, X, Check } from "lucide-react";
+import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
@@ -136,26 +136,21 @@ function ProductPage() {
         </button>
       </div>
 
-      <div className="container-x grid lg:grid-cols-2 gap-8 lg:gap-12 pb-16">
-        {/* Image */}
-        <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-secondary border border-border sticky top-24 self-start">
+      <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
+        {/* Image — 60% on desktop */}
+        <div className="lg:col-span-3 aspect-[4/3] rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start">
           <ProductImage
             name={pickLang(product, "name", lang)}
             category_slug={product.category_slug}
             image_url={product.image_url}
+            className="w-full h-full object-cover"
           />
         </div>
 
-        {/* Details */}
-        <div>
+        {/* Details — 40% on desktop */}
+        <div className="lg:col-span-2">
           {category && (
-            <div
-              className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full"
-              style={{
-                background: `${categoryColor(product.category_slug)}22`,
-                color: product.category_slug === "signaletique" ? "#1A1A1A" : categoryColor(product.category_slug),
-              }}
-            >
+            <div className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold border border-gold/20">
               {pickLang(category, "name", lang)}
             </div>
           )}
@@ -177,7 +172,7 @@ function ProductPage() {
           {product.configurator_url && (
             <button
               onClick={() => setShow3D(true)}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium border border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all"
+              className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
             >
               <Sparkles className="size-4" />
               {t("product.config3d")}
@@ -185,31 +180,32 @@ function ProductPage() {
           )}
 
           {/* Price grid */}
-          <div className="mt-8 grid grid-cols-3 gap-3">
-            {[
-              { label: t("product.day"), value: product.price_day },
-              { label: t("product.week"), value: product.price_week },
-              { label: t("product.month"), value: product.price_month },
-            ].map((p, i) => (
-              <div key={i} className="rounded-lg border border-border p-4 bg-white">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.label}</div>
-                {p.value != null ? (
-                  <>
-                    <div className="text-[10px] text-muted-foreground mt-1">{t("catalog.from")}</div>
-                    <div className="font-display font-semibold text-xl">
+          <div className="mt-8 rounded-xl bg-secondary/60 border border-border p-5">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+              {lang === "fr" ? "Tarifs de location" : "Rental rates"}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: t("product.day"), value: product.price_day },
+                { label: t("product.week"), value: product.price_week },
+                { label: t("product.month"), value: product.price_month },
+              ].map((p, i) => (
+                <div key={i} className="rounded-lg bg-background border border-border p-4 text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.label}</div>
+                  {p.value != null ? (
+                    <div className="mt-2 font-display font-semibold text-xl text-gold">
                       {formatPrice(p.value, lang)}
                     </div>
-                  </>
-                ) : (
-                  <div className="mt-2 font-display font-semibold text-xl">—</div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3 flex items-center justify-between text-sm rounded-lg bg-secondary/60 px-4 py-2.5">
-            <span className="text-muted-foreground">{t("product.deposit")}</span>
-            <span className="font-semibold">{formatPrice(product.deposit, lang)}</span>
+                  ) : (
+                    <div className="mt-2 font-display font-semibold text-xl text-muted-foreground">—</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between text-sm pt-3 border-t border-border">
+              <span className="text-muted-foreground">{t("product.deposit")}</span>
+              <span className="font-semibold">{formatPrice(product.deposit, lang)}</span>
+            </div>
           </div>
 
           {/* Quantity & dates */}

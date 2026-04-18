@@ -150,7 +150,7 @@ function AdminProductsPage() {
       price_month: editing.price_month ? Number(editing.price_month) : null,
       deposit: Number(editing.deposit) || 0,
       configurator_url: editing.configurator_url || null,
-      configurator_options: (editing.configurator_options ?? {}) as Record<string, unknown>,
+      configurator_options: (editing.configurator_options ?? {}) as never,
       image_url: editing.image_url || null,
       sort_order: Number(editing.sort_order) || 0,
       is_active: editing.is_active ?? true,

@@ -146,6 +146,36 @@ function HomePage() {
         </div>
       </section>
 
+      {/* FEATURED PRODUCTS */}
+      {featured.length > 0 && (
+        <section className="container-x py-14 md:py-20">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <SectionHeader num="03" title={t("featured.title")} sub={t("featured.sub")} />
+            <Link
+              to="/catalogue"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-accent transition-colors shrink-0"
+            >
+              {t("featured.all")}
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+
+          {/* Mobile: horizontal scroll. md+: grid */}
+          <div className="mt-8 -mx-5 md:mx-0 md:hidden overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 px-5 snap-x snap-mandatory">
+              {featured.map((p) => (
+                <FeaturedCard key={p.id} p={p} categories={categories} lang={lang} t={t} className="w-[70%] shrink-0 snap-start" />
+              ))}
+            </div>
+          </div>
+          <div className="mt-8 hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {featured.map((p) => (
+              <FeaturedCard key={p.id} p={p} categories={categories} lang={lang} t={t} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* CONFIGURATOR */}
       <section id="configurator" className="bg-secondary/50 py-14 md:py-20">
         <div className="container-x grid lg:grid-cols-2 gap-10 items-center">

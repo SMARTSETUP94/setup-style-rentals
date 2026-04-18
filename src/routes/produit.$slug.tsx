@@ -172,6 +172,15 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
+    const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
+    if (missing.length > 0) {
+      toast.error(
+        lang === "fr"
+          ? `Veuillez sélectionner : ${missing.map((c) => c.name_fr).join(", ")}`
+          : `Please select: ${missing.map((c) => c.name_en).join(", ")}`,
+      );
+      return;
+    }
     add({
       productId: product.id,
       slug: product.slug,
@@ -185,6 +194,7 @@ function ProductPage() {
       days,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      selectedOptions: selectedOptionsList.length > 0 ? selectedOptionsList : undefined,
     });
     toast.success(t("product.added"), { icon: <Check className="size-4" /> });
   };

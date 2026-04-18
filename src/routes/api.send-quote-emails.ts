@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
+const OptionSchema = z.object({
+  categoryName_fr: z.string().max(200),
+  categoryName_en: z.string().max(200),
+  name_fr: z.string().max(200),
+  name_en: z.string().max(200),
+  price: z.number().min(0),
+  line_total: z.number().min(0),
+});
+
 const ItemSchema = z.object({
   name_fr: z.string().max(300),
   name_en: z.string().max(300),
@@ -10,6 +19,8 @@ const ItemSchema = z.object({
   line_net: z.number().min(0),
   startDate: z.string().nullable().optional(),
   endDate: z.string().nullable().optional(),
+  options: z.array(OptionSchema).max(50).optional().default([]),
+  options_total: z.number().min(0).optional().default(0),
 });
 
 const PayloadSchema = z.object({
@@ -23,6 +34,8 @@ const PayloadSchema = z.object({
   items: z.array(ItemSchema).min(1).max(100),
   total_ht: z.number().min(0),
   delivery_fee: z.number().min(0).optional().default(0),
+  setup_fee: z.number().min(0).optional().default(0),
+  pickup_fee: z.number().min(0).optional().default(0),
   vat: z.number().min(0),
   total_ttc: z.number().min(0),
   total_deposit: z.number().min(0),

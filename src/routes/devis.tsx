@@ -100,6 +100,16 @@ function QuotePage() {
           line_discount: lt.discount,
           line_net: lt.net,
           line_deposit: lt.deposit,
+          options: (i.selectedOptions ?? []).map((o) => ({
+            categoryName_fr: o.categoryName_fr,
+            categoryName_en: o.categoryName_en,
+            name_fr: o.name_fr,
+            name_en: o.name_en,
+            price: o.price,
+            line_total: o.price * i.days * i.quantity,
+          })),
+          options_per_unit_per_day: lt.optionsPerUnit,
+          options_total: lt.optionsTotal,
         };
       }),
       subtotal_ht: totals.gross,

@@ -79,7 +79,7 @@ function CataloguePage() {
     navigate({ search: (prev: SearchType) => ({ ...prev, ...patch }) });
 
   return (
-    <div className="pt-28 md:pt-32">
+    <div className="pt-24 md:pt-28">
       {/* Header */}
       <div className="container-x">
         <div className="section-num">— 02 — Catalogue</div>
@@ -88,7 +88,7 @@ function CataloguePage() {
         </h1>
 
         {/* Filters */}
-        <div className="mt-10 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between border-y border-border py-4">
+        <div className="mt-6 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between border-y border-border py-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
@@ -143,17 +143,17 @@ function CataloguePage() {
       </div>
 
       {/* Grid */}
-      <div className="container-x mt-8 pb-24">
+      <div className="container-x mt-6 pb-16">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[4/5] rounded-lg bg-secondary animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-24 text-center text-muted-foreground">{t("catalog.empty")}</div>
+          <div className="py-16 text-center text-muted-foreground">{t("catalog.empty")}</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filtered.map((p) => {
               const cat = categories.find((c) => c.slug === p.category_slug);
               return (

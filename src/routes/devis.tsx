@@ -159,7 +159,7 @@ function QuotePage() {
   };
 
   return (
-    <div className="pt-28 md:pt-32 pb-24">
+    <div className="pt-24 md:pt-28 pb-16">
       <div className="container-x">
         <div className="section-num">— 05 — Devis</div>
         <h1 className="mt-3 font-display font-semibold text-[clamp(2.5rem,5vw,4rem)] leading-tight tracking-tight">
@@ -167,7 +167,7 @@ function QuotePage() {
         </h1>
 
         {items.length === 0 ? (
-          <div className="mt-16 text-center py-24 border border-dashed border-border rounded-2xl">
+          <div className="mt-10 text-center py-14 border border-dashed border-border rounded-2xl">
             <ShoppingBag className="size-12 text-muted-foreground mx-auto" />
             <p className="mt-4 text-muted-foreground">{t("cart.empty")}</p>
             <Link to="/catalogue" className="mt-6 inline-flex items-center gap-2 bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-semibold hover:bg-foreground/90 transition-colors">
@@ -175,7 +175,7 @@ function QuotePage() {
             </Link>
           </div>
         ) : (
-          <div className="mt-10 grid lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="mt-8 grid lg:grid-cols-3 gap-6 lg:gap-10">
             {/* Items */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => {

@@ -128,6 +128,8 @@ export function useI18n() {
   return ctx;
 }
 
-export function pickLang(obj: Record<string, unknown>, base: string, lang: Lang): string {
-  return (obj[`${base}_${lang}`] as string) ?? "";
+export function pickLang(obj: unknown, base: string, lang: Lang): string {
+  if (!obj || typeof obj !== "object") return "";
+  const value = (obj as Record<string, unknown>)[`${base}_${lang}`];
+  return typeof value === "string" ? value : "";
 }

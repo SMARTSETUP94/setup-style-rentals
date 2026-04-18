@@ -4,7 +4,7 @@ import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag } from "lucide-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
-import { formatPrice, categoryColor } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
@@ -282,8 +282,9 @@ function ProductPage() {
 
           <button
             onClick={handleAdd}
-            className="mt-6 w-full inline-flex items-center justify-center gap-2 bg-foreground text-background rounded-lg px-6 py-3.5 text-sm font-semibold hover:bg-foreground/90 transition-colors"
+            className="mt-8 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30"
           >
+            <ShoppingBag className="size-5" />
             {t("product.addToQuote")}
           </button>
 

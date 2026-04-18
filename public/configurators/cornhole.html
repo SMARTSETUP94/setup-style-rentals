@@ -109,20 +109,7 @@ html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-sy
         </div>
       </div>
     </div>
-    <div id="imageSection">
-      <div class="section-label">Motif</div>
-      <div class="section-title">Papier peint / visuel imprime</div>
-      <div class="section-desc">Importez une image a appliquer sur la surface.</div>
-      <div class="upload-zone" id="uploadZone">
-        <div class="upload-icon">&#128444;</div>
-        <div class="upload-text">Cliquez ou glissez une image<br><b>.jpg .png .webp</b></div>
-        <input type="file" id="fileInput" accept="image/*" style="display:none">
-      </div>
-      <div class="upload-preview" id="uploadPreview">
-        <img id="previewImg">
-        <button class="remove-btn" id="removeBtn">&times;</button>
-      </div>
-    </div>
+    
     <div>
       <div class="section-label">Export</div>
       <div class="section-title">Telecharger le 3D</div>
@@ -174,8 +161,7 @@ var BACK_RISE = Math.sin(TILT) * BL; // ~208mm
 var state = {
   boards: 1,
   frameColor: "#5a3a1e",
-  surfaceColor: "#1a4a8e",
-  imgTex: null
+  surfaceColor: "#1a4a8e"
 };
 
 /* ===== THREE ===== */
@@ -266,12 +252,7 @@ function makeSingleBoard(offX, offZ, rotY){
 
   // Materials
   var frameMat = new THREE.MeshStandardMaterial({color: fc, roughness: 0.4, metalness: 0.02});
-  var surfParams = {color: sc, roughness: 0.3, metalness: 0.02};
-  if (state.imgTex) {
-    surfParams.map = state.imgTex;
-    surfParams.color = new THREE.Color(0xffffff);
-  }
-  var surfMat = new THREE.MeshStandardMaterial(surfParams);
+  var surfMat = new THREE.MeshStandardMaterial({color: sc, roughness: 0.3, metalness: 0.02});
   var legMat  = new THREE.MeshStandardMaterial({color: fc.clone().multiplyScalar(0.8), roughness: 0.45});
   var blackMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.9});
 
@@ -477,51 +458,6 @@ function setupCP(pid, hid, key){
 setupCP("colorFrame", "hexFrame", "frameColor");
 setupCP("colorSurface", "hexSurface", "surfaceColor");
 
-// Image upload
-var uploadZone = document.getElementById("uploadZone");
-var fileInput = document.getElementById("fileInput");
-var uploadPreview = document.getElementById("uploadPreview");
-var previewImg = document.getElementById("previewImg");
-var removeBtn = document.getElementById("removeBtn");
-
-uploadZone.addEventListener("click", function(){ fileInput.click(); });
-uploadZone.addEventListener("dragover", function(e){ e.preventDefault(); uploadZone.style.borderColor = "rgba(160,140,255,.8)"; });
-uploadZone.addEventListener("dragleave", function(){ uploadZone.style.borderColor = ""; });
-uploadZone.addEventListener("drop", function(e){
-  e.preventDefault(); uploadZone.style.borderColor = "";
-  if (e.dataTransfer.files.length > 0) loadImg(e.dataTransfer.files[0]);
-});
-fileInput.addEventListener("change", function(){
-  if (fileInput.files.length > 0) loadImg(fileInput.files[0]);
-});
-removeBtn.addEventListener("click", function(){
-  state.imgTex = null;
-  uploadPreview.style.display = "none";
-  uploadZone.style.display = "block";
-  fileInput.value = "";
-  build();
-});
-
-function loadImg(file){
-  var reader = new FileReader();
-  reader.onload = function(ev){
-    var url = ev.target.result;
-    previewImg.src = url;
-    uploadPreview.style.display = "block";
-    uploadZone.style.display = "none";
-    var img = new Image();
-    img.onload = function(){
-      var tex = new THREE.Texture(img);
-      tex.needsUpdate = true;
-      tex.wrapS = THREE.ClampToEdgeWrapping;
-      tex.wrapT = THREE.ClampToEdgeWrapping;
-      state.imgTex = tex;
-      build();
-    };
-    img.src = url;
-  };
-  reader.readAsDataURL(file);
-}
 
 /* ===== EXPORTS ===== */
 function getMeshes(){

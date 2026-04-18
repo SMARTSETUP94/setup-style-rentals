@@ -105,14 +105,15 @@ function QuotePage() {
       subtotal_ht: totals.gross,
       total_ht: netWithDelivery,
       delivery_fee: delivery,
+      setup_fee: setupFee,
+      pickup_fee: pickupFee,
       vat,
       total_ttc: ttc,
       total_deposit: totals.deposit,
       status: "pending",
     };
 
-    const { delivery_fee: _df, ...dbPayload } = payload;
-    const { error } = await supabase.from("quote_requests").insert(dbPayload);
+    const { error } = await supabase.from("quote_requests").insert(payload);
     if (error) {
       console.error(error);
       setSubmitting(false);

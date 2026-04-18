@@ -525,10 +525,8 @@ document.getElementById("btnOBJ").addEventListener("click", function(){
     obj.push("");
     g.dispose();
   }
-  dlB(new Blob([obj.join("
-")],{type:"text/plain"}),"cornhole.obj");
-  dlB(new Blob([mtl.join("
-")],{type:"text/plain"}),"cornhole.mtl");
+  dlB(new Blob([obj.join("\n")],{type:"text/plain"}),"cornhole.obj");
+  dlB(new Blob([mtl.join("\n")],{type:"text/plain"}),"cornhole.mtl");
 });
 
 document.getElementById("btnDXF").addEventListener("click", function(){
@@ -550,8 +548,7 @@ document.getElementById("btnDXF").addEventListener("click", function(){
     g.dispose();
   }
   L.push("0","ENDSEC","0","EOF");
-  dlB(new Blob([L.join("
-")],{type:"application/dxf"}),"cornhole.dxf");
+  dlB(new Blob([L.join("\n")],{type:"application/dxf"}),"cornhole.dxf");
 });
 
 function dlB(blob, name){

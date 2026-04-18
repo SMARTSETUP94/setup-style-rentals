@@ -82,7 +82,7 @@ const DICT: Dict = {
   "cart.totalTTC": { fr: "Total TTC", en: "Total incl. tax" },
   "cart.deposits": { fr: "Cautions (remboursables)", en: "Deposits (refundable)" },
   "cart.delivery": { fr: "Livraison & Reprise", en: "Delivery & Pickup" },
-  "cart.deliveryNote": { fr: "Forfait : 100 € + 50 € par article", en: "Flat fee: €100 + €50 per item" },
+  "cart.deliveryNote": { fr: "Inclut livraison et reprise sur Paris/IDF", en: "Includes delivery and pickup in Paris/IDF" },
   "cart.exportPdf": { fr: "Exporter en PDF", en: "Export as PDF" },
   "cart.formTitle": { fr: "Vos coordonnées", en: "Your details" },
   "cart.name": { fr: "Nom complet", en: "Full name" },

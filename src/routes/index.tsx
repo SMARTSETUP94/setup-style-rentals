@@ -27,6 +27,14 @@ interface FeaturedProduct {
   sort_order: number;
 }
 
+const CATEGORY_ICONS: Record<string, typeof Sparkles> = {
+  jeux: Gamepad2,
+  structures: Tent,
+  signaletique: Signpost,
+  decoration: Palette,
+  mobilier: Armchair,
+};
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [

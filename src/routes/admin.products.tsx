@@ -355,7 +355,7 @@ function AdminProductsPage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Téléversez un fichier <code className="text-[10px] bg-muted px-1 rounded">.html</code> simple, ou collez l'URL d'un configurateur externe (ex: Spline, page hébergée).
                 </p>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
+                <p className="text-[11px] text-destructive mt-1">
                   ⚠️ Les fichiers téléversés ici sont servis avec une politique de sécurité restrictive et <strong>ne peuvent pas exécuter de JavaScript</strong> (Three.js, WebGL…). Pour un configurateur interactif, hébergez-le sur un service externe et collez son URL.
                 </p>
                 <ConfiguratorUploader

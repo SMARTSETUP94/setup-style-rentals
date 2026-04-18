@@ -130,10 +130,12 @@ export function lineTotal(item: CartItem): {
   optionsTotal: number;
 } {
   const optsUnit = optionsTotal(item);
-  const unitPerDay = item.price_day + optsUnit;
-  const gross = unitPerDay * item.days * item.quantity;
+  const rentalGross = item.price_day * item.days * item.quantity;
+  const optionsGross = optsUnit * item.quantity; // fixed, not per day
+  const gross = rentalGross + optionsGross;
   const discountRate = volumeDiscount(item.quantity);
-  const discount = gross * discountRate;
+  // Discount applies only on the rental part, not on fixed options
+  const discount = rentalGross * discountRate;
   const net = gross - discount;
   const deposit = item.deposit * item.quantity;
   return {
@@ -142,6 +144,6 @@ export function lineTotal(item: CartItem): {
     net,
     deposit,
     optionsPerUnit: optsUnit,
-    optionsTotal: optsUnit * item.days * item.quantity,
+    optionsTotal: optionsGross,
   };
 }

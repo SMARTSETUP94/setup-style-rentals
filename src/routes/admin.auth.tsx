@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ const schema = z.object({
 function AdminAuthPage() {
   const { user, isAdmin, loading, signIn } = useAuth();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,6 +40,17 @@ function AdminAuthPage() {
       return;
     }
     setBusy(true);
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        options: { emailRedirectTo: `${window.location.origin}/admin/auth` },
+      });
+      setBusy(false);
+      if (error) return toast.error(error.message);
+      toast.success("Compte créé. Demandez l'attribution du rôle admin.");
+      return;
+    }
     const { error } = await signIn(parsed.data.email, parsed.data.password);
     setBusy(false);
     if (error) {
@@ -84,8 +97,15 @@ function AdminAuthPage() {
               />
             </div>
             <Button type="submit" disabled={busy} className="w-full">
-              {busy ? "Connexion…" : "Se connecter"}
+              {busy ? "…" : mode === "signup" ? "Créer le compte" : "Se connecter"}
             </Button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {mode === "signin" ? "Créer un compte admin" : "J'ai déjà un compte"}
+            </button>
           </form>
           {user && !isAdmin && !loading && (
             <p className="mt-4 text-sm text-destructive text-center">

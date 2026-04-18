@@ -605,85 +605,53 @@ function ProductPage() {
         </div>
       </div>
 
-      {/* Inline 3D configurator preview (full width) */}
+      {/* Configuration recap (full width) */}
       {product.configurator_url && (
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
-          <div className="flex items-end justify-between gap-4 mb-4 flex-wrap">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {lang === "fr" ? "Aperçu interactif" : "Interactive preview"}
-              </div>
-              <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">
-                {lang === "fr" ? "Configurateur 3D" : "3D configurator"}
-              </h2>
+          <div className="mb-4">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {lang === "fr" ? "Votre configuration" : "Your configuration"}
             </div>
-            <button
-              onClick={() => setShow3D(true)}
-              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
-            >
-              <Sparkles className="size-4" />
-              {lang === "fr" ? "Plein écran" : "Fullscreen"}
-            </button>
+            <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">
+              {lang === "fr" ? "Récapitulatif" : "Summary"}
+            </h2>
           </div>
-          <div className="grid lg:grid-cols-3 gap-4 max-h-[650px]">
-            <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev max-h-[650px]">
-              <iframe
-                ref={inlineIframeRef}
-                src={product.configurator_url}
-                title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
-                className="block"
-                style={{ width: "100%", height: `${Math.min(iframeHeight, 650)}px`, minHeight: "600px", maxHeight: "650px", border: "none" }}
-                loading="lazy"
-                allow="clipboard-write"
-                onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
-              />
-            </div>
-
-            {/* Configuration summary panel */}
-            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col max-h-[650px] overflow-auto">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {lang === "fr" ? "Votre configuration" : "Your configuration"}
+          <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
+            {configuratorData || configuratorRecap ? (
+              <>
+                <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
+                  {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
+                </pre>
+                {configuratorData && typeof configuratorData.price === "number" && (
+                  <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
+                    <span className="text-muted-foreground">
+                      {lang === "fr" ? "Prix configuré" : "Configured price"}
+                    </span>
+                    <span className="font-display text-xl font-semibold text-gold">
+                      {formatPrice(Number(configuratorData.price), lang)}
+                      <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
+                        /{t("product.day")}
+                      </span>
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAddConfiguredToQuote}
+                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md bg-gold text-gold-foreground px-4 py-3 text-sm font-semibold hover:bg-gold/90 transition-all shadow-md shadow-gold/20"
+                >
+                  <Wand2 className="size-4" />
+                  {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
+                </button>
+              </>
+            ) : (
+              <div className="text-xs text-muted-foreground text-center py-8 px-4">
+                {lang === "fr"
+                  ? "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif ici."
+                  : "Customize the product in the configurator above to see the summary here."}
               </div>
-              <h3 className="mt-1 font-display text-lg font-semibold tracking-tight">
-                {lang === "fr" ? "Récapitulatif" : "Summary"}
-              </h3>
-              {configuratorData || configuratorRecap ? (
-                <>
-                  <pre className="mt-4 flex-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
-                    {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
-                  </pre>
-                  {configuratorData && typeof configuratorData.price === "number" && (
-                    <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
-                      <span className="text-muted-foreground">
-                        {lang === "fr" ? "Prix configuré" : "Configured price"}
-                      </span>
-                      <span className="font-display text-xl font-semibold text-gold">
-                        {formatPrice(Number(configuratorData.price), lang)}
-                        <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
-                          /{t("product.day")}
-                        </span>
-                      </span>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleAddConfiguredToQuote}
-                    className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md bg-gold text-gold-foreground px-4 py-3 text-sm font-semibold hover:bg-gold/90 transition-all shadow-md shadow-gold/20"
-                  >
-                    <Wand2 className="size-4" />
-                    {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
-                  </button>
-                </>
-              ) : (
-                <div className="mt-4 flex-1 flex items-center justify-center text-xs text-muted-foreground text-center px-4">
-                  {lang === "fr"
-                    ? "Personnalisez le produit dans le configurateur pour voir le récapitulatif ici."
-                    : "Customize the product in the configurator to see the summary here."}
-                </div>
-              )}
-            </aside>
-          </div>
-
+            )}
+          </aside>
         </section>
       )}
 

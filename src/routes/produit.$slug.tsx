@@ -136,10 +136,12 @@ function ProductPage() {
 
   const calc = useMemo(() => {
     if (!product) return null;
-    const unit = product.price_day + optionsUnitPrice;
-    const gross = unit * days * qty;
+    const rentalGross = product.price_day * days * qty;
+    const optionsGross = optionsUnitPrice * qty; // fixed price, not per day
+    const gross = rentalGross + optionsGross;
     const discountRate = volumeDiscount(qty);
-    const discount = gross * discountRate;
+    // Discount applies only to rental, not to fixed options
+    const discount = rentalGross * discountRate;
     const net = gross - discount;
     const deposit = product.deposit * qty;
     return { gross, discountRate, discount, net, deposit, optionsUnitPrice };
@@ -343,7 +345,7 @@ function ProductPage() {
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {o.price > 0
-                                ? `+${formatPrice(o.price, lang)} ${t("catalog.perDay")}`
+                                ? `+${formatPrice(o.price, lang)}`
                                 : lang === "fr"
                                   ? "Inclus"
                                   : "Included"}
@@ -419,7 +421,7 @@ function ProductPage() {
                 <Row
                   key={o.optionId}
                   label={`+ ${pickLang(o, "name", lang)}`}
-                  value={`+${formatPrice(o.price * days * qty, lang)}`}
+                  value={`+${formatPrice(o.price * qty, lang)}`}
                 />
               ))}
               {calc.discountRate > 0 && (

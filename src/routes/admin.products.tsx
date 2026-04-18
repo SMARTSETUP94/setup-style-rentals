@@ -350,21 +350,25 @@ function AdminProductsPage() {
                 <Label>Produit actif</Label>
               </div>
 
-              {editing.id && (
-                <div className="col-span-2 mt-4 pt-4 border-t border-border">
-                  <div className="mb-3">
-                    <h3 className="font-semibold">Options de personnalisation</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Catégories et options proposées au client (configurateur)
-                    </p>
+              {editing.id ? (
+                <div className="col-span-2 mt-6 rounded-lg border-2 border-gold/40 bg-gold/5 p-4">
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold text-base flex items-center gap-2">
+                        🎨 Options de personnalisation
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Catégories et options proposées au client sur la page produit (ex: Finition, Couleur, Taille…)
+                      </p>
+                    </div>
                   </div>
                   <ProductOptionsManager productId={editing.id} />
                 </div>
-              )}
-              {!editing.id && (
-                <div className="col-span-2 mt-4 pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground italic">
-                    Enregistrez le produit pour pouvoir ajouter des options de personnalisation.
+              ) : (
+                <div className="col-span-2 mt-6 rounded-lg border-2 border-dashed border-border bg-muted/30 p-4">
+                  <h3 className="font-semibold text-sm">🎨 Options de personnalisation</h3>
+                  <p className="text-xs text-muted-foreground italic mt-1">
+                    Enregistrez d'abord le produit, puis rouvrez-le pour ajouter des catégories d'options (Finition, Couleur, etc.).
                   </p>
                 </div>
               )}

@@ -591,14 +591,14 @@ function ProductPage() {
               {lang === "fr" ? "Plein écran" : "Fullscreen"}
             </button>
           </div>
-          <div className="grid lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev">
+          <div className="grid lg:grid-cols-3 gap-4 max-h-[650px]">
+            <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev max-h-[650px]">
               <iframe
                 ref={inlineIframeRef}
                 src={product.configurator_url}
                 title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
                 className="block"
-                style={{ width: "100%", height: `${iframeHeight}px`, minHeight: "900px", border: "none" }}
+                style={{ width: "100%", height: `${Math.min(iframeHeight, 650)}px`, minHeight: "600px", maxHeight: "650px", border: "none" }}
                 loading="lazy"
                 allow="clipboard-write"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
@@ -606,7 +606,7 @@ function ProductPage() {
             </div>
 
             {/* Configuration summary panel */}
-            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
+            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col max-h-[650px] overflow-auto">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {lang === "fr" ? "Votre configuration" : "Your configuration"}
               </div>

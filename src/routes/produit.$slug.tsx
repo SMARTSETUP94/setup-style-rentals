@@ -84,6 +84,7 @@ function ProductPage() {
   const modalIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
+  const [iframeHeight, setIframeHeight] = useState<number>(900);
 
   useEffect(() => {
     setLoading(true);

@@ -144,6 +144,7 @@ export type Database = {
       products: {
         Row: {
           category_slug: string
+          configurator_options: Json
           configurator_url: string | null
           created_at: string
           deposit: number
@@ -165,6 +166,7 @@ export type Database = {
         }
         Insert: {
           category_slug: string
+          configurator_options?: Json
           configurator_url?: string | null
           created_at?: string
           deposit?: number
@@ -186,6 +188,7 @@ export type Database = {
         }
         Update: {
           category_slug?: string
+          configurator_options?: Json
           configurator_url?: string | null
           created_at?: string
           deposit?: number

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
@@ -27,6 +27,24 @@ interface ProductOptionRow {
   is_active: boolean;
 }
 
+interface ConfiguratorOption {
+  value: string;
+  label: string;
+  price: number;
+}
+type ConfiguratorOptionsMap = Record<string, ConfiguratorOption[]>;
+
+interface ConfiguratorConfigData {
+  // Free-shape payload from the iframe — typed loosely to support multiple configurators
+  [k: string]: unknown;
+  price?: number;
+}
+interface ConfiguratorMessage {
+  type: string;
+  data?: ConfiguratorConfigData;
+  recap?: string;
+}
+
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;
   description_fr: string | null; description_en: string | null;
@@ -34,6 +52,7 @@ interface Product {
   price_day: number; price_week: number | null; price_month: number | null;
   deposit: number; image_url: string | null;
   configurator_url: string | null;
+  configurator_options: ConfiguratorOptionsMap | null;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
@@ -58,6 +77,12 @@ function ProductPage() {
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
   const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
+
+  // 3D configurator integration
+  const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const modalIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
+  const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
 
   useEffect(() => {
     setLoading(true);
@@ -108,6 +133,43 @@ function ProductPage() {
       setDays(d);
     }
   }, [startDate, endDate]);
+
+  // Send dynamic prices to the configurator iframe(s) whenever data is ready
+  const sendPricesToIframe = (frame: HTMLIFrameElement | null) => {
+    if (!frame || !product) return;
+    const opts = product.configurator_options;
+    if (!opts || Object.keys(opts).length === 0) return;
+    try {
+      frame.contentWindow?.postMessage(
+        { type: "set-prices", options: opts, basePrice: Number(product.price_day) || 0 },
+        "*",
+      );
+    } catch {
+      // ignore cross-origin failures
+    }
+  };
+
+  // Listen for configurator messages
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data as ConfiguratorMessage | undefined;
+      if (!d || typeof d !== "object") return;
+      if (d.type === "cornhole-ready") {
+        // Iframe just signalled it's ready: push prices to whichever iframe sent it
+        const src = e.source as Window | null;
+        if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
+        if (modalIframeRef.current?.contentWindow === src) sendPricesToIframe(modalIframeRef.current);
+      }
+      if (d.type === "cornhole-config") {
+        if (d.data) setConfiguratorData(d.data);
+        if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
+
 
   const selectedOptionsList: SelectedOption[] = useMemo(() => {
     return optionCategories
@@ -199,6 +261,52 @@ function ProductPage() {
       selectedOptions: selectedOptionsList.length > 0 ? selectedOptionsList : undefined,
     });
     toast.success(t("product.added"), { icon: <Check className="size-4" /> });
+  };
+
+  /**
+   * Add the current 3D-configurator selection as a cart line.
+   * We translate the iframe payload into synthetic SelectedOption[] entries so it
+   * flows through the existing cart / quote pipeline (pricing, recap, email).
+   */
+  const handleAddConfiguredToQuote = () => {
+    if (!product || !configuratorData) return;
+    const opts = product.configurator_options || {};
+    const synthetic: SelectedOption[] = [];
+    for (const [groupKey, choices] of Object.entries(opts)) {
+      const selectedValue = configuratorData[`${groupKey}Finition`] ?? configuratorData[`${groupKey}Option`] ?? configuratorData[groupKey];
+      if (typeof selectedValue !== "string") continue;
+      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
+      if (!match) continue;
+      const label = match.label;
+      synthetic.push({
+        categoryId: `cfg-${groupKey}`,
+        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        optionId: `cfg-${groupKey}-${match.value}`,
+        name_fr: label,
+        name_en: label,
+        price: Number(match.price) || 0,
+      });
+    }
+    add({
+      productId: product.id,
+      slug: product.slug,
+      name_fr: product.name_fr,
+      name_en: product.name_en,
+      category_slug: product.category_slug,
+      image_url: product.image_url,
+      price_day: product.price_day,
+      deposit: product.deposit,
+      quantity: qty,
+      days,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      selectedOptions: synthetic.length > 0 ? synthetic : undefined,
+    });
+    toast.success(
+      lang === "fr" ? "Configuration ajoutée au devis" : "Configuration added to quote",
+      { icon: <Check className="size-4" /> },
+    );
   };
 
   return (
@@ -478,16 +586,65 @@ function ProductPage() {
               {lang === "fr" ? "Plein écran" : "Fullscreen"}
             </button>
           </div>
-          <div className="rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev">
-            <iframe
-              src={product.configurator_url}
-              title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
-              className="w-full block border-0 h-[400px] md:h-[500px]"
-              loading="lazy"
-              allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            />
+          <div className="grid lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev">
+              <iframe
+                ref={inlineIframeRef}
+                src={product.configurator_url}
+                title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
+                className="w-full block border-0 h-[480px] md:h-[560px]"
+                loading="lazy"
+                allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
+              />
+            </div>
+
+            {/* Configuration summary panel */}
+            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {lang === "fr" ? "Votre configuration" : "Your configuration"}
+              </div>
+              <h3 className="mt-1 font-display text-lg font-semibold tracking-tight">
+                {lang === "fr" ? "Récapitulatif" : "Summary"}
+              </h3>
+              {configuratorData ? (
+                <>
+                  <pre className="mt-4 flex-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
+                    {configuratorRecap || JSON.stringify(configuratorData, null, 2)}
+                  </pre>
+                  {typeof configuratorData.price === "number" && (
+                    <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
+                      <span className="text-muted-foreground">
+                        {lang === "fr" ? "Prix configuré" : "Configured price"}
+                      </span>
+                      <span className="font-display text-xl font-semibold text-gold">
+                        {formatPrice(Number(configuratorData.price), lang)}
+                        <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
+                          /{t("product.day")}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddConfiguredToQuote}
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md bg-gold text-gold-foreground px-4 py-3 text-sm font-semibold hover:bg-gold/90 transition-all shadow-md shadow-gold/20"
+                  >
+                    <Wand2 className="size-4" />
+                    {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
+                  </button>
+                </>
+              ) : (
+                <div className="mt-4 flex-1 flex items-center justify-center text-xs text-muted-foreground text-center px-4">
+                  {lang === "fr"
+                    ? "Personnalisez le produit dans le configurateur pour voir le récapitulatif ici."
+                    : "Customize the product in the configurator to see the summary here."}
+                </div>
+              )}
+            </aside>
           </div>
+
         </section>
       )}
 
@@ -509,11 +666,13 @@ function ProductPage() {
               <X className="size-5" />
             </button>
             <iframe
+              ref={modalIframeRef}
               src={product.configurator_url}
               title={`Configurateur 3D — ${pickLang(product, "name", lang)}`}
               className="w-full h-full border-0"
               allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              onLoad={() => sendPricesToIframe(modalIframeRef.current)}
             />
           </div>
         </div>

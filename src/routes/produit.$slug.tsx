@@ -78,6 +78,12 @@ function ProductPage() {
   const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
 
+  // 3D configurator integration
+  const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const modalIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
+  const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
+
   useEffect(() => {
     setLoading(true);
     supabase

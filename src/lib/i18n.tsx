@@ -128,7 +128,6 @@ export function useI18n() {
   return ctx;
 }
 
-export function pickLang<T extends Record<string, unknown>>(obj: T, base: string, lang: Lang): string {
-  const key = `${base}_${lang}` as keyof T;
-  return (obj[key] as string) ?? "";
+export function pickLang(obj: Record<string, unknown>, base: string, lang: Lang): string {
+  return (obj[`${base}_${lang}`] as string) ?? "";
 }

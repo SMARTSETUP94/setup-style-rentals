@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, MousePointerClick, FileCheck2, Headset } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
-import { categoryColor } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface Category {

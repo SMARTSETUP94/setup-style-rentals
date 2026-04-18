@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal, volumeDiscount } from "@/lib/cart";
-import { formatPrice, categoryColor } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 

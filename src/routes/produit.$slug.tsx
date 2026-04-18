@@ -193,9 +193,16 @@ function ProductPage() {
             ].map((p, i) => (
               <div key={i} className="rounded-lg border border-border p-4 bg-white">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.label}</div>
-                <div className="mt-2 font-display font-semibold text-xl">
-                  {p.value != null ? formatPrice(p.value, lang) : "—"}
-                </div>
+                {p.value != null ? (
+                  <>
+                    <div className="text-[10px] text-muted-foreground mt-1">{t("catalog.from")}</div>
+                    <div className="font-display font-semibold text-xl">
+                      {formatPrice(p.value, lang)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-2 font-display font-semibold text-xl">—</div>
+                )}
               </div>
             ))}
           </div>

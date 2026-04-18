@@ -36,6 +36,7 @@ type Product = {
   price_month: number | null;
   deposit: number;
   configurator_url: string | null;
+  configurator_options: unknown;
   image_url: string | null;
   sort_order: number;
   is_active: boolean;
@@ -56,6 +57,7 @@ const empty: Partial<Product> = {
   price_month: null,
   deposit: 0,
   configurator_url: "",
+  configurator_options: {},
   image_url: "",
   sort_order: 0,
   is_active: true,

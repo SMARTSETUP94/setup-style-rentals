@@ -97,8 +97,15 @@ function AdminAuthPage() {
               />
             </div>
             <Button type="submit" disabled={busy} className="w-full">
-              {busy ? "Connexion…" : "Se connecter"}
+              {busy ? "…" : mode === "signup" ? "Créer le compte" : "Se connecter"}
             </Button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {mode === "signin" ? "Créer un compte admin" : "J'ai déjà un compte"}
+            </button>
           </form>
           {user && !isAdmin && !loading && (
             <p className="mt-4 text-sm text-destructive text-center">

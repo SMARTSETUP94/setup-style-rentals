@@ -173,15 +173,18 @@ function QuotePage() {
 
     const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     doc.setFontSize(10);
-    doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, finalY, { align: "right" });
-    doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, finalY + 6, { align: "right" });
-    doc.text(`${t("cart.totalHT")}: ${formatPrice(netWithDelivery, lang)}`, 196, finalY + 12, { align: "right" });
-    doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, finalY + 18, { align: "right" });
+    let y = finalY;
+    doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, y, { align: "right" }); y += 6;
+    if (delivery > 0) { doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, y, { align: "right" }); y += 6; }
+    if (setupFee > 0) { doc.text(`${lang === "fr" ? "Installation" : "Setup"}: ${formatPrice(setupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
+    if (pickupFee > 0) { doc.text(`${lang === "fr" ? "Reprise" : "Pickup"}: ${formatPrice(pickupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
+    doc.text(`${t("cart.totalHT")}: ${formatPrice(netWithDelivery, lang)}`, 196, y, { align: "right" }); y += 6;
+    doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, y, { align: "right" }); y += 8;
     doc.setFont("helvetica", "bold");
-    doc.text(`${t("cart.totalTTC")}: ${formatPrice(ttc, lang)}`, 196, finalY + 26, { align: "right" });
+    doc.text(`${t("cart.totalTTC")}: ${formatPrice(ttc, lang)}`, 196, y, { align: "right" }); y += 8;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, finalY + 34, { align: "right" });
+    doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, y, { align: "right" });
 
     doc.save(`devis-setup-paris-${Date.now()}.pdf`);
   };

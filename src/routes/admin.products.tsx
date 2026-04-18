@@ -86,14 +86,21 @@ function AdminProductsPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: p, error: e1 }, { data: c, error: e2 }] = await Promise.all([
+    const [{ data: p, error: e1 }, { data: c, error: e2 }, { data: oc, error: e3 }] = await Promise.all([
       supabase.from("products").select("*").order("sort_order").order("name_fr"),
       supabase.from("categories").select("slug, name_fr").order("sort_order"),
+      supabase.from("product_option_categories").select("product_id"),
     ]);
     if (e1) toast.error(e1.message);
     if (e2) toast.error(e2.message);
+    if (e3) toast.error(e3.message);
     setProducts((p as Product[]) ?? []);
     setCategories((c as Category[]) ?? []);
+    const counts: Record<string, number> = {};
+    ((oc as { product_id: string }[]) ?? []).forEach((row) => {
+      counts[row.product_id] = (counts[row.product_id] ?? 0) + 1;
+    });
+    setOptionCounts(counts);
     setLoading(false);
   };
 

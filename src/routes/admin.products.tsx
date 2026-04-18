@@ -349,6 +349,25 @@ function AdminProductsPage() {
                 />
                 <Label>Produit actif</Label>
               </div>
+
+              {editing.id && (
+                <div className="col-span-2 mt-4 pt-4 border-t border-border">
+                  <div className="mb-3">
+                    <h3 className="font-semibold">Options de personnalisation</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Catégories et options proposées au client (configurateur)
+                    </p>
+                  </div>
+                  <ProductOptionsManager productId={editing.id} />
+                </div>
+              )}
+              {!editing.id && (
+                <div className="col-span-2 mt-4 pt-4 border-t border-border">
+                  <p className="text-xs text-muted-foreground italic">
+                    Enregistrez le produit pour pouvoir ajouter des options de personnalisation.
+                  </p>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="mt-4">

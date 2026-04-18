@@ -217,54 +217,9 @@ function HomePage() {
         </RevealSection>
       )}
 
-      {/* CONFIGURATOR */}
-      <section id="configurator" className="bg-secondary/50 py-20 md:py-28">
-        <div className="container-x grid lg:grid-cols-2 gap-12 items-center">
-          <RevealDiv>
-            <SectionHeader num="04" title={t("config.title")} />
-            <p className="mt-6 text-lg text-muted-foreground max-w-lg leading-relaxed">
-              {lang === "fr"
-                ? "Visualisez vos produits en 3D — configurateur disponible sur demande pour personnaliser couleurs, dimensions et finitions."
-                : "Visualise your products in 3D — configurator available on request to customise colours, dimensions and finishes."}
-            </p>
-            <Link
-              to="/devis"
-              className="mt-8 inline-flex items-center gap-2 bg-foreground text-background rounded-md px-7 py-4 text-sm font-semibold hover:bg-foreground/90 transition-all duration-300"
-            >
-              <Sparkles className="size-4" />
-              {lang === "fr" ? "Demander une démo" : "Request a demo"}
-            </Link>
-          </RevealDiv>
-          <RevealDiv className="aspect-[4/3] rounded-2xl bg-card shadow-elev border border-border overflow-hidden relative">
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(60% 60% at 50% 50%, rgba(201,169,110,0.18) 0%, rgba(255,255,255,0) 70%)",
-              }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center px-6">
-                <div className="inline-flex items-center justify-center size-20 rounded-full bg-gold/15 text-gold mb-5">
-                  <Sparkles className="size-9" />
-                </div>
-                <div className="font-display font-semibold text-2xl">
-                  {lang === "fr" ? "Visualisation 3D" : "3D Visualisation"}
-                </div>
-                <div className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
-                  {lang === "fr"
-                    ? "Aperçu temps réel de vos configurations."
-                    : "Real-time preview of your configurations."}
-                </div>
-              </div>
-            </div>
-          </RevealDiv>
-        </div>
-      </section>
-
       {/* HOW */}
       <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="05" title={t("how.title")} />
+        <SectionHeader num="04" title={t("how.title")} />
         <div className="mt-12 grid md:grid-cols-3 gap-5">
           {[
             { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },

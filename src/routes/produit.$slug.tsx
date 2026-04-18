@@ -326,14 +326,48 @@ function ProductPage() {
       </div>
 
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
-        {/* Image — 60% on desktop */}
-        <div className="lg:col-span-3 aspect-[4/3] rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start">
-          <ProductImage
-            name={pickLang(product, "name", lang)}
-            category_slug={product.category_slug}
-            image_url={product.image_url}
-            className="w-full h-full object-cover"
-          />
+        {/* Visual — configurator if available, otherwise product image */}
+        <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
+          {product.configurator_url ? (
+            <>
+              <iframe
+                ref={inlineIframeRef}
+                src={product.configurator_url}
+                title={`${lang === "fr" ? "Configurateur 3D" : "3D configurator"} — ${pickLang(product, "name", lang)}`}
+                className="block w-full"
+                style={{ height: `${Math.min(iframeHeight, 650)}px`, minHeight: "600px", maxHeight: "650px", border: "none" }}
+                allow="clipboard-write; fullscreen"
+                onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const el = inlineIframeRef.current as (HTMLIFrameElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
+                  if (!el) return;
+                  const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
+                  if (req) {
+                    req().catch(() => setShow3D(true));
+                  } else {
+                    setShow3D(true);
+                  }
+                }}
+                className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
+                aria-label={lang === "fr" ? "Plein écran" : "Fullscreen"}
+              >
+                <Sparkles className="size-3.5" />
+                {lang === "fr" ? "Plein écran" : "Fullscreen"}
+              </button>
+            </>
+          ) : (
+            <div className="aspect-[4/3]">
+              <ProductImage
+                name={pickLang(product, "name", lang)}
+                category_slug={product.category_slug}
+                image_url={product.image_url}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
         </div>
 
         {/* Details — 40% on desktop */}

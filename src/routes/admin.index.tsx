@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Eye } from "lucide-react";
+import { Trash2, Eye, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +38,17 @@ type Quote = {
   total_deposit: number;
   status: string;
   created_at: string;
+  delivery_fee: number;
+  setup_fee: number;
+  pickup_fee: number;
+  logistics_notes: string | null;
 };
+
+const finalTotal = (q: Quote) =>
+  Number(q.total_ttc) +
+  Number(q.delivery_fee || 0) +
+  Number(q.setup_fee || 0) +
+  Number(q.pickup_fee || 0);
 
 const STATUSES = ["pending", "contacted", "validated", "rejected"] as const;
 

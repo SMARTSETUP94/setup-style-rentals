@@ -54,16 +54,30 @@ const escapeHtml = (s: string) =>
 
 function itemsTable(items: z.infer<typeof ItemSchema>[]) {
   const rows = items
-    .map(
-      (i) => `
+    .map((i) => {
+      const optionsRows = (i.options ?? [])
+        .map(
+          (o) => `
+        <tr>
+          <td colspan="4" style="padding:4px 8px 4px 24px;border-bottom:1px solid #f5f5f5;color:#666;font-size:13px;">
+            • <strong style="color:#1a1a1a;">${escapeHtml(o.categoryName_fr)}:</strong> ${escapeHtml(o.name_fr)}
+          </td>
+          <td style="padding:4px 8px;border-bottom:1px solid #f5f5f5;text-align:right;color:#666;font-size:13px;">
+            ${o.price > 0 ? `+${fmt(o.price)}/j` : "—"}
+          </td>
+        </tr>`,
+        )
+        .join("");
+      return `
         <tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(i.name_fr)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.days}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmt(i.price_day)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(i.line_net)}</td>
-        </tr>`,
-    )
+        </tr>
+        ${optionsRows}`;
+    })
     .join("");
   return `
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
@@ -83,7 +97,9 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
 function totalsBlock(p: z.infer<typeof PayloadSchema>) {
   return `
     <table style="margin-left:auto;font-size:14px;">
-      ${p.delivery_fee > 0 ? `<tr><td style="padding:4px 12px;color:#666;">Livraison & Reprise</td><td style="padding:4px 0;text-align:right;">${fmt(p.delivery_fee)}</td></tr>` : ""}
+      ${p.delivery_fee > 0 ? `<tr><td style="padding:4px 12px;color:#666;">Livraison</td><td style="padding:4px 0;text-align:right;">${fmt(p.delivery_fee)}</td></tr>` : ""}
+      ${p.setup_fee > 0 ? `<tr><td style="padding:4px 12px;color:#666;">Installation</td><td style="padding:4px 0;text-align:right;">${fmt(p.setup_fee)}</td></tr>` : ""}
+      ${p.pickup_fee > 0 ? `<tr><td style="padding:4px 12px;color:#666;">Reprise</td><td style="padding:4px 0;text-align:right;">${fmt(p.pickup_fee)}</td></tr>` : ""}
       <tr><td style="padding:4px 12px;color:#666;">Total HT</td><td style="padding:4px 0;text-align:right;">${fmt(p.total_ht)}</td></tr>
       <tr><td style="padding:4px 12px;color:#666;">TVA 20%</td><td style="padding:4px 0;text-align:right;">${fmt(p.vat)}</td></tr>
       <tr><td style="padding:8px 12px;font-weight:700;border-top:2px solid #1a1a1a;">Total TTC</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:2px solid #1a1a1a;">${fmt(p.total_ttc)}</td></tr>

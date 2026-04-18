@@ -353,7 +353,10 @@ function AdminProductsPage() {
               <div className="col-span-2">
                 <Label>Configurateur 3D (HTML)</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Téléversez un fichier <code className="text-[10px] bg-muted px-1 rounded">.html</code> autonome ou collez l'URL d'un configurateur externe.
+                  Téléversez un fichier <code className="text-[10px] bg-muted px-1 rounded">.html</code> simple, ou collez l'URL d'un configurateur externe (ex: Spline, page hébergée).
+                </p>
+                <p className="text-[11px] text-destructive mt-1">
+                  ⚠️ Les fichiers téléversés ici sont servis avec une politique de sécurité restrictive et <strong>ne peuvent pas exécuter de JavaScript</strong> (Three.js, WebGL…). Pour un configurateur interactif, hébergez-le sur un service externe et collez son URL.
                 </p>
                 <ConfiguratorUploader
                   value={editing.configurator_url || ""}

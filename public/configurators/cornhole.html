@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Configurateur Cornhole</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; height:100%; background:#0b0b12; color:#e9e9f1; font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  #app { position:fixed; inset:0; display:grid; grid-template-columns: 1fr 370px; }
+  #stage { position:relative; background:#0b0b12; min-width:0; }
+  #stage canvas { display:block; width:100%; height:100%; }
+  #side { background:#141420; border-left:1px solid #25253a; padding:18px 18px 24px; overflow-y:auto; }
+  h1 { font-size:18px; margin:0 0 4px; letter-spacing:.2px; }
+  .muted { color:#9a9ab2; font-size:12px; line-height:1.5; }
+  .pill { display:inline-block; padding:4px 9px; border-radius:999px; background:#1c1c2e; color:#cfcfe2; font-size:11px; margin-right:6px; margin-top:6px; border:1px solid #2a2a40; }
+  .price-tag { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:999px; background:rgba(212,175,55,.12); color:#e6c568; font-size:12px; font-weight:600; border:1px solid rgba(212,175,55,.35); margin-top:10px; }
+  section.block { margin-top:18px; padding-top:14px; border-top:1px solid #25253a; }
+  section.block:first-of-type { border-top:none; padding-top:0; margin-top:14px; }
+  label.lbl { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:#9a9ab2; margin-bottom:6px; }
+  select, textarea, input[type=color], input[type=file] { width:100%; background:#0f0f1a; color:#e9e9f1; border:1px solid #2a2a40; border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; }
+  select:focus, textarea:focus { outline:none; border-color:#d4af37; }
+  .row { display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .row > * { flex:1; }
+  .row label { font-size:11px; color:#9a9ab2; flex:0 0 auto; }
+  textarea { min-height:130px; resize:vertical; font-size:12px; line-height:1.5; }
+  button { cursor:pointer; background:#1c1c2e; color:#e9e9f1; border:1px solid #2a2a40; border-radius:8px; padding:8px 12px; font-size:12px; font-family:inherit; transition:all .15s; }
+  button:hover { background:#26263c; border-color:#d4af37; }
+  .upload-zone { margin-top:8px; padding:14px; border:1px dashed #2a2a40; border-radius:8px; text-align:center; font-size:11px; color:#9a9ab2; }
+  .upload-zone.has-file { border-color:#d4af37; color:#e6c568; }
+  .swatch { width:34px; height:34px; border-radius:8px; border:1px solid #2a2a40; padding:0; flex:0 0 auto; }
+  @media (max-width: 720px){
+    #app { grid-template-columns: 1fr; grid-template-rows: 55vh 1fr; }
+    #side { border-left:none; border-top:1px solid #25253a; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"></div>
+  <aside id="side">
+    <h1>Cornhole</h1>
+    <div class="muted">Peinture blanche mate. Inclus : 6 sacs (3 bleus + 3 rouges).</div>
+    <div>
+      <span class="pill">600 × 1200 mm</span>
+      <span class="pill">Inclinaison 10°</span>
+      <span class="pill">Trou Ø 120 mm</span>
+    </div>
+    <div id="priceTag" class="price-tag">Base : 50€/jour HT</div>
+
+    <section class="block">
+      <label class="lbl" for="selPlateau">Plateau (surface de jeu)</label>
+      <select id="selPlateau"></select>
+      <div class="row" id="rowPlateauColor" style="display:none">
+        <label>Couleur</label>
+        <input type="color" id="colPlateau" class="swatch" value="#c0392b" />
+      </div>
+      <div id="rowPlateauImage" class="upload-zone" style="display:none">
+        Glissez une image ou cliquez<br/>
+        <input type="file" id="imgPlateau" accept="image/*" style="margin-top:8px" />
+      </div>
+    </section>
+
+    <section class="block">
+      <label class="lbl" for="selChamps">Champs (cadre / pieds)</label>
+      <select id="selChamps"></select>
+      <div class="row" id="rowChampsColor" style="display:none">
+        <label>Couleur</label>
+        <input type="color" id="colChamps" class="swatch" value="#222831" />
+      </div>
+    </section>
+
+    <section class="block">
+      <label class="lbl" for="selSacs">Sacs de sable (×6)</label>
+      <select id="selSacs"></select>
+      <div class="row" id="rowSacsColor" style="display:none">
+        <label>Tissu</label>
+        <input type="color" id="colSacs" class="swatch" value="#2c7a7b" />
+      </div>
+    </section>
+
+    <section class="block">
+      <label class="lbl" for="recapText">Récapitulatif</label>
+      <textarea id="recapText" readonly></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="btnCopy" type="button">Copier</button>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  var NL = String.fromCharCode(10);
+
+  var OPTS = {
+    plateau: [
+      { value:"blanc",   label:"Peinture blanche mate", price:0 },
+      { value:"couleur", label:"Peinture couleur au choix", price:50 },
+      { value:"placage", label:"Placage dibond/tôle/stratifié", price:100 },
+      { value:"adhesif", label:"Adhésif surface", price:75 }
+    ],
+    champs: [
+      { value:"blanc",   label:"Peinture blanche mate", price:0 },
+      { value:"couleur", label:"Peinture couleur au choix", price:25 },
+      { value:"placage", label:"Placage dibond/tôle/stratifié", price:50 }
+    ],
+    sacs: [
+      { value:"standard", label:"Standard bleu+rouge ×6", price:0 },
+      { value:"couleur",  label:"Tissu couleur au choix ×6", price:100 }
+    ]
+  };
+  var BASE_PRICE = 50;
+
+  var stage = document.getElementById("stage");
+  var selPlateau = document.getElementById("selPlateau");
+  var selChamps  = document.getElementById("selChamps");
+  var selSacs    = document.getElementById("selSacs");
+  var rowPC = document.getElementById("rowPlateauColor");
+  var rowPI = document.getElementById("rowPlateauImage");
+  var rowCC = document.getElementById("rowChampsColor");
+  var rowSC = document.getElementById("rowSacsColor");
+  var colPlateau = document.getElementById("colPlateau");
+  var colChamps  = document.getElementById("colChamps");
+  var colSacs    = document.getElementById("colSacs");
+  var imgPlateau = document.getElementById("imgPlateau");
+  var recapText  = document.getElementById("recapText");
+  var priceTag   = document.getElementById("priceTag");
+  var btnCopy    = document.getElementById("btnCopy");
+
+  function fillSelect(sel, arr){
+    sel.innerHTML = "";
+    for (var i=0;i<arr.length;i++){
+      var o = arr[i];
+      var op = document.createElement("option");
+      op.value = o.value;
+      var suffix = o.price > 0 ? " (+" + o.price + "€)" : " (Inclus)";
+      op.textContent = o.label + suffix;
+      sel.appendChild(op);
+    }
+  }
+  function rebuildSelects(){
+    fillSelect(selPlateau, OPTS.plateau);
+    fillSelect(selChamps,  OPTS.champs);
+    fillSelect(selSacs,    OPTS.sacs);
+  }
+  rebuildSelects();
+
+  // ---------- THREE setup ----------
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0b12);
+  scene.fog = new THREE.Fog(0x0b0b12, 8, 22);
+
+  var camera = new THREE.PerspectiveCamera(38, 1, 0.05, 100);
+  camera.position.set(2.4, 1.7, 3.4);
+
+  var renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.appendChild(renderer.domElement);
+
+  function resize(){
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w === 0 || h === 0) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize);
+
+  var hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 0.55);
+  scene.add(hemi);
+  var key = new THREE.DirectionalLight(0xffffff, 0.95);
+  key.position.set(3, 5, 4); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.left = -4; key.shadow.camera.right = 4;
+  key.shadow.camera.top = 4;  key.shadow.camera.bottom = -4;
+  scene.add(key);
+  var fill = new THREE.DirectionalLight(0xa0b4ff, 0.25);
+  fill.position.set(-3, 2, -2);
+  scene.add(fill);
+
+  var floorMat = new THREE.MeshStandardMaterial({ color:0x14141e, roughness:1, metalness:0 });
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  var grid = new THREE.GridHelper(20, 40, 0x2a2a40, 0x1c1c2e);
+  grid.position.y = 0.001;
+  scene.add(grid);
+
+  // ---------- Cornhole board ----------
+  var BOARD_W = 0.6, BOARD_L = 1.2, BOARD_T = 0.022;
+  var HOLE_R = 0.06;
+  var TILT = THREE.MathUtils.degToRad(10);
+
+  var shape = new THREE.Shape();
+  var hw = BOARD_W / 2, hl = BOARD_L / 2, r = 0.02;
+  shape.moveTo(-hw + r, -hl);
+  shape.lineTo( hw - r, -hl);
+  shape.quadraticCurveTo(hw, -hl, hw, -hl + r);
+  shape.lineTo( hw,  hl - r);
+  shape.quadraticCurveTo(hw, hl, hw - r, hl);
+  shape.lineTo(-hw + r,  hl);
+  shape.quadraticCurveTo(-hw, hl, -hw, hl - r);
+  shape.lineTo(-hw, -hl + r);
+  shape.quadraticCurveTo(-hw, -hl, -hw + r, -hl);
+
+  var holePath = new THREE.Path();
+  var holeCx = 0, holeCy = hl - 0.225;
+  var seg = 48;
+  holePath.moveTo(holeCx + HOLE_R, holeCy);
+  for (var i = 1; i <= seg; i++){
+    var a = (i / seg) * Math.PI * 2;
+    holePath.lineTo(holeCx + Math.cos(a) * HOLE_R, holeCy + Math.sin(a) * HOLE_R);
+  }
+  shape.holes.push(holePath);
+
+  var extrude = new THREE.ExtrudeGeometry(shape, {
+    depth: BOARD_T,
+    bevelEnabled: true,
+    bevelSize: 0.002,
+    bevelThickness: 0.002,
+    bevelSegments: 1,
+    steps: 1
+  });
+  extrude.rotateX(-Math.PI / 2);
+  extrude.translate(0, BOARD_T, 0);
+
+  // Materials
+  var matWhite = new THREE.MeshStandardMaterial({ color:0xf2f2ee, roughness:0.85, metalness:0.02 });
+  var matColor = new THREE.MeshStandardMaterial({ color:0xc0392b, roughness:0.6, metalness:0.05 });
+  var matMetal = new THREE.MeshStandardMaterial({ color:0xb8b8be, roughness:0.32, metalness:0.85 });
+  var matAdhesif = new THREE.MeshStandardMaterial({ color:0xeeeeee, roughness:0.7, metalness:0.05 });
+
+  var champsWhite = new THREE.MeshStandardMaterial({ color:0xf2f2ee, roughness:0.9 });
+  var champsColor = new THREE.MeshStandardMaterial({ color:0x222831, roughness:0.7 });
+  var champsMetal = new THREE.MeshStandardMaterial({ color:0xc6c6cc, roughness:0.3, metalness:0.85 });
+
+  var boardGroup = new THREE.Group();
+  var plateau = new THREE.Mesh(extrude, matWhite);
+  plateau.castShadow = true; plateau.receiveShadow = true;
+  boardGroup.add(plateau);
+
+  var railH = 0.05, railT = 0.018;
+  var railGeo = new THREE.BoxGeometry(railT, railH, BOARD_L);
+  var railL = new THREE.Mesh(railGeo, champsWhite);
+  railL.position.set(-BOARD_W / 2 - railT / 2 + 0.001, -railH / 2 + BOARD_T, 0);
+  var railR = new THREE.Mesh(railGeo, champsWhite);
+  railR.position.set( BOARD_W / 2 + railT / 2 - 0.001, -railH / 2 + BOARD_T, 0);
+  railL.castShadow = true; railR.castShadow = true;
+  boardGroup.add(railL); boardGroup.add(railR);
+
+  var legH = 0.30;
+  var legGeo = new THREE.BoxGeometry(0.025, legH, 0.025);
+  var legBL = new THREE.Mesh(legGeo, champsWhite);
+  var legBR = new THREE.Mesh(legGeo, champsWhite);
+  legBL.position.set(-BOARD_W / 2 + 0.04, -legH / 2, BOARD_L / 2 - 0.04);
+  legBR.position.set( BOARD_W / 2 - 0.04, -legH / 2, BOARD_L / 2 - 0.04);
+  legBL.castShadow = true; legBR.castShadow = true;
+  boardGroup.add(legBL); boardGroup.add(legBR);
+
+  var braceGeo = new THREE.BoxGeometry(BOARD_W - 0.08, 0.018, 0.018);
+  var brace = new THREE.Mesh(braceGeo, champsWhite);
+  brace.position.set(0, -legH + 0.06, BOARD_L / 2 - 0.04);
+  brace.castShadow = true;
+  boardGroup.add(brace);
+
+  // Tilt around front edge: shift board so its front edge is at local origin, then rotate the wrapper
+  var pivot = new THREE.Group();
+  scene.add(pivot);
+  pivot.add(boardGroup);
+  boardGroup.position.set(0, 0, -BOARD_L / 2);
+  pivot.rotation.x = -TILT;
+  pivot.position.set(0, 0.005, BOARD_L / 2 - 0.1);
+
+  // ---------- Sand bags (6) ----------
+  var bagsGroup = new THREE.Group();
+  scene.add(bagsGroup);
+
+  function makeBag(color){
+    var g = new THREE.SphereGeometry(0.075, 24, 18);
+    g.scale(1.0, 0.42, 1.25);
+    var m = new THREE.MeshStandardMaterial({ color:color, roughness:0.95, metalness:0.0 });
+    var mesh = new THREE.Mesh(g, m);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    return mesh;
+  }
+  function rebuildBags(colorBlue, colorRed){
+    while (bagsGroup.children.length) bagsGroup.remove(bagsGroup.children[0]);
+    var positions = [
+      [-0.22, 0.04, -0.95], [-0.05, 0.04, -0.92], [ 0.13, 0.04, -0.96],
+      [-0.18, 0.04, -1.10], [ 0.02, 0.04, -1.12], [ 0.20, 0.04, -1.08]
+    ];
+    for (var i = 0; i < 6; i++){
+      var c = i < 3 ? colorBlue : colorRed;
+      var b = makeBag(c);
+      b.position.set(positions[i][0], positions[i][1], positions[i][2]);
+      b.rotation.y = (Math.random() - 0.5) * 0.8;
+      bagsGroup.add(b);
+    }
+  }
+  rebuildBags(0x2256a8, 0xb8232a);
+
+  // ---------- Camera orbit ----------
+  var target = new THREE.Vector3(0, 0.25, 0);
+  var spherical = new THREE.Spherical();
+  spherical.setFromVector3(new THREE.Vector3().subVectors(camera.position, target));
+  var dragging = false, lastX = 0, lastY = 0;
+  stage.addEventListener("pointerdown", function(e){
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    try { stage.setPointerCapture(e.pointerId); } catch(_){}
+  });
+  stage.addEventListener("pointerup", function(e){
+    dragging = false;
+    try { stage.releasePointerCapture(e.pointerId); } catch(_){}
+  });
+  stage.addEventListener("pointermove", function(e){
+    if (!dragging) return;
+    var dx = (e.clientX - lastX) / stage.clientWidth;
+    var dy = (e.clientY - lastY) / stage.clientHeight;
+    lastX = e.clientX; lastY = e.clientY;
+    spherical.theta -= dx * Math.PI * 1.2;
+    spherical.phi   -= dy * Math.PI * 0.8;
+    spherical.phi = Math.max(0.15, Math.min(Math.PI / 2 - 0.05, spherical.phi));
+  });
+  stage.addEventListener("wheel", function(e){
+    e.preventDefault();
+    spherical.radius *= (1 + (e.deltaY > 0 ? 0.08 : -0.08));
+    spherical.radius = Math.max(1.5, Math.min(8, spherical.radius));
+  }, { passive:false });
+
+  function tick(){
+    var pos = new THREE.Vector3().setFromSpherical(spherical).add(target);
+    camera.position.copy(pos);
+    camera.lookAt(target);
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  resize();
+  // Resize once more after the layout settles
+  setTimeout(resize, 0);
+  tick();
+
+  // ---------- State ----------
+  var state = {
+    plateauFinition: "blanc",
+    plateauColor: "#c0392b",
+    champsFinition: "blanc",
+    champsColor: "#222831",
+    sacsOption: "standard",
+    sacsColor: "#2c7a7b",
+    hasImage: false
+  };
+  var uploadedTexture = null;
+
+  function findOpt(arr, val){
+    for (var i = 0; i < arr.length; i++) if (arr[i].value === val) return arr[i];
+    return null;
+  }
+  function priceFor(){
+    var p = BASE_PRICE;
+    var a = findOpt(OPTS.plateau, state.plateauFinition); if (a) p += a.price;
+    var b = findOpt(OPTS.champs,  state.champsFinition);  if (b) p += b.price;
+    var c = findOpt(OPTS.sacs,    state.sacsOption);      if (c) p += c.price;
+    return p;
+  }
+
+  function applyMaterials(){
+    if (state.plateauFinition === "blanc") {
+      plateau.material = matWhite;
+    } else if (state.plateauFinition === "couleur") {
+      matColor.color.set(state.plateauColor);
+      matColor.map = null; matColor.needsUpdate = true;
+      plateau.material = matColor;
+    } else if (state.plateauFinition === "placage") {
+      plateau.material = matMetal;
+    } else if (state.plateauFinition === "adhesif") {
+      if (uploadedTexture) {
+        matAdhesif.map = uploadedTexture;
+        matAdhesif.color.set(0xffffff);
+      } else {
+        matAdhesif.map = null;
+        matAdhesif.color.set(0xeeeeee);
+      }
+      matAdhesif.needsUpdate = true;
+      plateau.material = matAdhesif;
+    }
+
+    var champMat;
+    if (state.champsFinition === "blanc") champMat = champsWhite;
+    else if (state.champsFinition === "couleur") {
+      champsColor.color.set(state.champsColor);
+      champMat = champsColor;
+    } else champMat = champsMetal;
+    railL.material = champMat; railR.material = champMat;
+    legBL.material = champMat; legBR.material = champMat;
+    brace.material = champMat;
+
+    if (state.sacsOption === "standard") {
+      rebuildBags(0x2256a8, 0xb8232a);
+    } else {
+      var col = new THREE.Color(state.sacsColor).getHex();
+      rebuildBags(col, col);
+    }
+  }
+
+  function buildRecap(){
+    var lines = [];
+    lines.push("CORNHOLE — Configuration");
+    lines.push("------------------------");
+    lines.push("Dimensions : 600 × 1200 mm, inclinaison 10°, trou Ø 120 mm");
+    var pl = findOpt(OPTS.plateau, state.plateauFinition);
+    var ch = findOpt(OPTS.champs,  state.champsFinition);
+    var sa = findOpt(OPTS.sacs,    state.sacsOption);
+    var lP = "Plateau : " + (pl ? pl.label : state.plateauFinition);
+    if (state.plateauFinition === "couleur") lP += " (" + state.plateauColor + ")";
+    if (state.plateauFinition === "adhesif") lP += state.hasImage ? " — image fournie" : " — sans image";
+    lines.push(lP);
+    var lC = "Champs  : " + (ch ? ch.label : state.champsFinition);
+    if (state.champsFinition === "couleur") lC += " (" + state.champsColor + ")";
+    lines.push(lC);
+    var lS = "Sacs    : " + (sa ? sa.label : state.sacsOption);
+    if (state.sacsOption === "couleur") lS += " (" + state.sacsColor + ")";
+    lines.push(lS);
+    lines.push("------------------------");
+    lines.push("Prix estimé : " + priceFor() + "€/jour HT");
+    return lines.join(NL);
+  }
+
+  function syncUI(){
+    rowPC.style.display = state.plateauFinition === "couleur" ? "" : "none";
+    rowPI.style.display = state.plateauFinition === "adhesif" ? "" : "none";
+    rowCC.style.display = state.champsFinition === "couleur" ? "" : "none";
+    rowSC.style.display = state.sacsOption     === "couleur" ? "" : "none";
+    if (state.plateauFinition === "adhesif") {
+      rowPI.classList.toggle("has-file", state.hasImage);
+    }
+  }
+  function refreshPriceTag(){
+    priceTag.textContent = "Total : " + priceFor() + "€/jour HT";
+  }
+
+  function emit(){
+    syncUI();
+    applyMaterials();
+    var recap = buildRecap();
+    recapText.value = recap;
+    refreshPriceTag();
+    try {
+      window.parent.postMessage({
+        type: "cornhole-config",
+        data: {
+          plateauFinition: state.plateauFinition,
+          plateauColor: state.plateauColor,
+          champsFinition: state.champsFinition,
+          champsColor: state.champsColor,
+          sacsOption: state.sacsOption,
+          sacsColor: state.sacsColor,
+          hasImage: state.hasImage,
+          price: priceFor()
+        },
+        recap: recap
+      }, "*");
+    } catch(_){}
+  }
+
+  selPlateau.addEventListener("change", function(){ state.plateauFinition = selPlateau.value; emit(); });
+  selChamps .addEventListener("change", function(){ state.champsFinition  = selChamps.value;  emit(); });
+  selSacs   .addEventListener("change", function(){ state.sacsOption      = selSacs.value;    emit(); });
+  colPlateau.addEventListener("input",  function(){ state.plateauColor = colPlateau.value; emit(); });
+  colChamps .addEventListener("input",  function(){ state.champsColor  = colChamps.value;  emit(); });
+  colSacs   .addEventListener("input",  function(){ state.sacsColor    = colSacs.value;    emit(); });
+
+  imgPlateau.addEventListener("change", function(){
+    var f = imgPlateau.files && imgPlateau.files[0];
+    if (!f) return;
+    var url = URL.createObjectURL(f);
+    var loader = new THREE.TextureLoader();
+    loader.load(url, function(tex){
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.anisotropy = 8;
+      uploadedTexture = tex;
+      state.hasImage = true;
+      emit();
+    });
+  });
+
+  btnCopy.addEventListener("click", function(){
+    recapText.select();
+    try { document.execCommand("copy"); } catch(_){}
+    btnCopy.textContent = "Copié ✓";
+    setTimeout(function(){ btnCopy.textContent = "Copier"; }, 1400);
+  });
+
+  // ---------- Listen for parent (dynamic prices) ----------
+  window.addEventListener("message", function(e){
+    var d = e.data;
+    if (!d || typeof d !== "object") return;
+    if (d.type === "set-prices" && d.options) {
+      if (Array.isArray(d.options.plateau)) OPTS.plateau = d.options.plateau;
+      if (Array.isArray(d.options.champs))  OPTS.champs  = d.options.champs;
+      if (Array.isArray(d.options.sacs))    OPTS.sacs    = d.options.sacs;
+      if (typeof d.basePrice === "number") BASE_PRICE = d.basePrice;
+      var prevP = state.plateauFinition, prevC = state.champsFinition, prevS = state.sacsOption;
+      rebuildSelects();
+      if (findOpt(OPTS.plateau, prevP)) selPlateau.value = prevP; else state.plateauFinition = selPlateau.value;
+      if (findOpt(OPTS.champs,  prevC)) selChamps.value  = prevC; else state.champsFinition  = selChamps.value;
+      if (findOpt(OPTS.sacs,    prevS)) selSacs.value    = prevS; else state.sacsOption      = selSacs.value;
+      emit();
+    }
+  });
+
+  emit();
+  try { window.parent.postMessage({ type:"cornhole-ready" }, "*"); } catch(_){}
+})();
+</script>
+</body>
+</html>

@@ -14,16 +14,209 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name_en: string
+          name_fr: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name_en: string
+          name_fr: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name_en?: string
+          name_fr?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category_slug: string
+          configurator_url: string | null
+          created_at: string
+          deposit: number
+          description_en: string | null
+          description_fr: string | null
+          dimensions: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name_en: string
+          name_fr: string
+          options: Json
+          price_day: number
+          price_month: number | null
+          price_week: number | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category_slug: string
+          configurator_url?: string | null
+          created_at?: string
+          deposit?: number
+          description_en?: string | null
+          description_fr?: string | null
+          dimensions?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_en: string
+          name_fr: string
+          options?: Json
+          price_day?: number
+          price_month?: number | null
+          price_week?: number | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          configurator_url?: string | null
+          created_at?: string
+          deposit?: number
+          description_en?: string | null
+          description_fr?: string | null
+          dimensions?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_en?: string
+          name_fr?: string
+          options?: Json
+          price_day?: number
+          price_month?: number | null
+          price_week?: number | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      quote_requests: {
+        Row: {
+          company: string | null
+          created_at: string
+          customer_name: string
+          email: string
+          event_date: string | null
+          event_location: string | null
+          id: string
+          items: Json
+          message: string | null
+          phone: string | null
+          status: string
+          subtotal_ht: number
+          total_deposit: number
+          total_ht: number
+          total_ttc: number
+          updated_at: string
+          vat: number
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          customer_name: string
+          email: string
+          event_date?: string | null
+          event_location?: string | null
+          id?: string
+          items?: Json
+          message?: string | null
+          phone?: string | null
+          status?: string
+          subtotal_ht?: number
+          total_deposit?: number
+          total_ht?: number
+          total_ttc?: number
+          updated_at?: string
+          vat?: number
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          customer_name?: string
+          email?: string
+          event_date?: string | null
+          event_location?: string | null
+          id?: string
+          items?: Json
+          message?: string | null
+          phone?: string | null
+          status?: string
+          subtotal_ht?: number
+          total_deposit?: number
+          total_ht?: number
+          total_ttc?: number
+          updated_at?: string
+          vat?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +343,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

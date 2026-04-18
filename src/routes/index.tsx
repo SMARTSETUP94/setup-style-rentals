@@ -99,13 +99,6 @@ function HomePage() {
               {t("hero.cta")}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
-            <a
-              href="#configurator"
-              className="inline-flex items-center gap-2 rounded-md px-7 py-4 text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors duration-300"
-            >
-              <Sparkles className="size-4" />
-              {t("hero.cta2")}
-            </a>
           </div>
         </div>
       </section>

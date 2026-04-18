@@ -166,6 +166,9 @@ function ProductPage() {
         if (d.data) setConfiguratorData(d.data);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
       }
+      if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
+        setIframeHeight(Math.max(400, Math.min(3000, d.height)));
+      }
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);

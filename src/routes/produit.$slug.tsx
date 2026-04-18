@@ -411,7 +411,17 @@ function ProductPage() {
           {/* Calc */}
           {calc && (
             <div className="mt-6 rounded-lg border border-border p-4 space-y-2 text-sm">
-              <Row label={t("product.subtotal")} value={formatPrice(calc.gross, lang)} />
+              <Row
+                label={`${t("product.subtotal")} (${formatPrice(product.price_day, lang)} ${t("catalog.perDay")})`}
+                value={formatPrice(product.price_day * days * qty, lang)}
+              />
+              {selectedOptionsList.map((o) => (
+                <Row
+                  key={o.optionId}
+                  label={`+ ${pickLang(o, "name", lang)}`}
+                  value={`+${formatPrice(o.price * days * qty, lang)}`}
+                />
+              ))}
               {calc.discountRate > 0 && (
                 <Row
                   label={`${t("product.discount")} (-${Math.round(calc.discountRate * 100)}%)`}

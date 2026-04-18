@@ -63,7 +63,7 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
             • <strong style="color:#1a1a1a;">${escapeHtml(o.categoryName_fr)}:</strong> ${escapeHtml(o.name_fr)}
           </td>
           <td style="padding:4px 8px;border-bottom:1px solid #f5f5f5;text-align:right;color:#666;font-size:13px;">
-            ${o.price > 0 ? `+${fmt(o.price)}/j` : "—"}
+            ${o.price > 0 ? `+${fmt(o.price)}` : "—"}
           </td>
         </tr>`,
         )

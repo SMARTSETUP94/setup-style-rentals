@@ -84,7 +84,8 @@ function QuotePage() {
       status: "pending",
     };
 
-    const { error } = await supabase.from("quote_requests").insert(payload);
+    const { delivery_fee: _df, ...dbPayload } = payload;
+    const { error } = await supabase.from("quote_requests").insert(dbPayload);
     if (error) {
       console.error(error);
       setSubmitting(false);

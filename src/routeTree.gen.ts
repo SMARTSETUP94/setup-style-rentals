@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as DevisRouteImport } from './routes/devis'
 import { Route as CglRouteImport } from './routes/cgl'
 import { Route as CatalogueRouteImport } from './routes/catalogue'
@@ -22,6 +23,11 @@ import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevisRoute = DevisRouteImport.update({
   id: '/devis',
   path: '/devis',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/catalogue'
     | '/cgl'
     | '/devis'
+    | '/mentions-legales'
     | '/admin/auth'
     | '/admin/categories'
     | '/admin/products'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/catalogue'
     | '/cgl'
     | '/devis'
+    | '/mentions-legales'
     | '/admin/auth'
     | '/admin/categories'
     | '/admin/products'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/catalogue'
     | '/cgl'
     | '/devis'
+    | '/mentions-legales'
     | '/admin/auth'
     | '/admin/categories'
     | '/admin/products'
@@ -175,12 +187,20 @@ export interface RootRouteChildren {
   CatalogueRoute: typeof CatalogueRoute
   CglRoute: typeof CglRoute
   DevisRoute: typeof DevisRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/devis': {
       id: '/devis'
       path: '/devis'
@@ -292,6 +312,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogueRoute: CatalogueRoute,
   CglRoute: CglRoute,
   DevisRoute: DevisRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   ProduitSlugRoute: ProduitSlugRoute,
 }

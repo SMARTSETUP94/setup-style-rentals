@@ -128,35 +128,18 @@ html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-sy
 (function(){
 "use strict";
 
-/*
-  CORNHOLE — geometrie 100% procedurale, simple et propre.
-
-  Construction :
-  1. Un plateau rectangulaire 600x1200mm, epaisseur 19mm
-  2. Cadre perimétrique (rails lateraux + barre avant/arriere) hauteur 40mm
-  3. Trou circulaire 150mm diametre, centre a 225mm du bord haut
-  4. Deux pieds arriere repliables (triangles droits) hauteur ~210mm
-  5. Le tout incliné de 10 degrés
-
-  Stratégie : on modélise TOUT A PLAT (Y=up = épaisseur), puis on tilt le group entier.
-  Le pivot est le bord avant bas (le coté au sol).
-*/
-
-var BW  = 600;    // largeur
-var BL  = 1200;   // longueur
-var BT  = 19;     // epaisseur plateau
+var BW = 600;
+var BL = 1200;
+var BT = 19;
 var TILT_DEG = 10;
 var TILT = TILT_DEG * Math.PI / 180;
-var HOLE_D = 120; // diametre trou
-var HOLE_R = HOLE_D / 2;
-var HOLE_DIST = 230; // centre trou depuis le bord haut (coté sureleve)
-var RAIL_T = 19;  // epaisseur rail lateral
-var RAIL_H = 38;  // hauteur rail au dessus du plateau
-var LEG_T = 22;   // epaisseur pieds
-var LEG_W = 50;   // largeur pieds
-
-// Hauteur du bord arriere au sol quand incliné
-var BACK_RISE = Math.sin(TILT) * BL; // ~208mm
+var HOLE_D = 120;
+var HOLE_R = 60;
+var HOLE_DIST = 230;
+var RAIL_T = 19;
+var RAIL_H = 38;
+var LEG_T = 22;
+var LEG_W = 50;
 
 var state = {
   boards: 1,
@@ -164,13 +147,16 @@ var state = {
   surfaceColor: "#1a4a8e"
 };
 
-/* ===== THREE ===== */
 var viewer = document.getElementById("viewer");
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(40, viewer.clientWidth / viewer.clientHeight, 1, 20000);
-var renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize(viewer.clientWidth, viewer.clientHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+scene.background = new THREE.Color(0x101018);
+
+var width = Math.max(viewer.clientWidth, 1);
+var height = Math.max(viewer.clientHeight, 1);
+var camera = new THREE.PerspectiveCamera(40, width / height, 1, 20000);
+var renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(width, height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
@@ -179,102 +165,153 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 viewer.insertBefore(renderer.domElement, viewer.firstChild);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-var dL = new THREE.DirectionalLight(0xffffff, 0.7);
-dL.position.set(500, 800, 600);
-dL.castShadow = true;
-dL.shadow.mapSize.set(2048, 2048);
-dL.shadow.camera.left = -1500; dL.shadow.camera.right = 1500;
-dL.shadow.camera.top = 1500; dL.shadow.camera.bottom = -1500;
-scene.add(dL);
-var fL = new THREE.DirectionalLight(0x99aacc, 0.25);
-fL.position.set(-400, 300, -300); scene.add(fL);
-var bkL = new THREE.DirectionalLight(0xffffff, 0.15);
-bkL.position.set(0, 200, -600); scene.add(bkL);
+
+var keyLight = new THREE.DirectionalLight(0xffffff, 0.7);
+keyLight.position.set(500, 800, 600);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.left = -1500;
+keyLight.shadow.camera.right = 1500;
+keyLight.shadow.camera.top = 1500;
+keyLight.shadow.camera.bottom = -1500;
+scene.add(keyLight);
+
+var fillLight = new THREE.DirectionalLight(0x99aacc, 0.25);
+fillLight.position.set(-400, 300, -300);
+scene.add(fillLight);
+
+var backLight = new THREE.DirectionalLight(0xffffff, 0.15);
+backLight.position.set(0, 200, -600);
+scene.add(backLight);
 
 var ground = new THREE.Mesh(
   new THREE.PlaneGeometry(6000, 6000),
-  new THREE.MeshStandardMaterial({color: 0x0d0d12, roughness: 1})
+  new THREE.MeshStandardMaterial({ color: 0x0d0d12, roughness: 1 })
 );
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
+ground.position.y = -2;
 scene.add(ground);
 
-/* Orbit controls */
-var orbState = {r: 1600, phi: 1.05, theta: 0.4};
-var orbTgt = new THREE.Vector3(0, 120, 0);
-var orbPan = new THREE.Vector3();
-var orbDrag = false, orbRight = false, orbPrev = {x: 0, y: 0};
-function orbUpdate(){
-  var sp = Math.sin(orbState.phi);
+var orbit = {
+  r: 1600,
+  phi: 1.05,
+  theta: 0.4,
+  target: new THREE.Vector3(0, 120, 0)
+};
+var drag = false;
+var rightDrag = false;
+var prevX = 0;
+var prevY = 0;
+
+function updateCamera(){
+  var sp = Math.sin(orbit.phi);
   camera.position.set(
-    orbTgt.x + orbPan.x + orbState.r * sp * Math.sin(orbState.theta),
-    orbTgt.y + orbPan.y + orbState.r * Math.cos(orbState.phi),
-    orbTgt.z + orbPan.z + orbState.r * sp * Math.cos(orbState.theta)
+    orbit.target.x + orbit.r * sp * Math.sin(orbit.theta),
+    orbit.target.y + orbit.r * Math.cos(orbit.phi),
+    orbit.target.z + orbit.r * sp * Math.cos(orbit.theta)
   );
-  camera.lookAt(orbTgt.x + orbPan.x, orbTgt.y + orbPan.y, orbTgt.z + orbPan.z);
+  camera.lookAt(orbit.target);
 }
+
 renderer.domElement.addEventListener("mousedown", function(e){
-  orbDrag = true; orbRight = e.button === 2;
-  orbPrev.x = e.clientX; orbPrev.y = e.clientY;
+  drag = true;
+  rightDrag = e.button === 2;
+  prevX = e.clientX;
+  prevY = e.clientY;
 });
+
+window.addEventListener("mouseup", function(){
+  drag = false;
+});
+
 renderer.domElement.addEventListener("mousemove", function(e){
-  if (!orbDrag) return;
-  var dx = e.clientX - orbPrev.x, dy = e.clientY - orbPrev.y;
-  if (orbRight) { orbPan.x -= dx * 1.2; orbPan.y += dy * 1.2; }
-  else { orbState.theta -= dx * 0.005; orbState.phi = Math.max(0.15, Math.min(Math.PI - 0.15, orbState.phi - dy * 0.005)); }
-  orbPrev.x = e.clientX; orbPrev.y = e.clientY;
-  orbUpdate();
+  if (!drag) return;
+
+  var dx = e.clientX - prevX;
+  var dy = e.clientY - prevY;
+
+  if (rightDrag) {
+    var panScale = orbit.r * 0.0009;
+    orbit.target.x -= dx * Math.cos(orbit.theta) * panScale;
+    orbit.target.z += dx * Math.sin(orbit.theta) * panScale;
+    orbit.target.y += dy * panScale * 1.15;
+  } else {
+    orbit.theta -= dx * 0.005;
+    orbit.phi = Math.max(0.15, Math.min(Math.PI - 0.15, orbit.phi - dy * 0.005));
+  }
+
+  prevX = e.clientX;
+  prevY = e.clientY;
+  updateCamera();
 });
-window.addEventListener("mouseup", function(){ orbDrag = false; });
+
 renderer.domElement.addEventListener("wheel", function(e){
   e.preventDefault();
-  orbState.r = Math.max(500, Math.min(5000, orbState.r + e.deltaY * 2));
-  orbUpdate();
-}, {passive: false});
-renderer.domElement.addEventListener("contextmenu", function(e){ e.preventDefault(); });
-orbUpdate();
+  orbit.r = Math.max(500, Math.min(5000, orbit.r + e.deltaY * 0.8));
+  updateCamera();
+}, { passive: false });
 
-/* ===== MODEL ===== */
-var mdl = new THREE.Group();
-scene.add(mdl);
+renderer.domElement.addEventListener("contextmenu", function(e){
+  e.preventDefault();
+});
 
-function clearMdl(){
-  while (mdl.children.length > 0) {
-    var ch = mdl.children[0]; mdl.remove(ch);
-    if (ch.traverse) ch.traverse(function(c){ if(c.geometry) c.geometry.dispose(); if(c.material && c.material.dispose) c.material.dispose(); });
-    else { if(ch.geometry) ch.geometry.dispose(); if(ch.material && ch.material.dispose) ch.material.dispose(); }
+updateCamera();
+
+var modelRoot = new THREE.Group();
+scene.add(modelRoot);
+
+function setShadow(mesh){
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function disposeMaterial(material, seen){
+  if (!material) return;
+  if (Array.isArray(material)) {
+    for (var i = 0; i < material.length; i++) disposeMaterial(material[i], seen);
+    return;
+  }
+  if (seen.has(material)) return;
+  seen.add(material);
+  material.dispose();
+}
+
+function clearModel(){
+  while (modelRoot.children.length > 0) {
+    var child = modelRoot.children[0];
+    modelRoot.remove(child);
+    var geometries = new Set();
+    var materials = new Set();
+    child.traverse(function(node){
+      if (node.geometry && !geometries.has(node.geometry)) {
+        geometries.add(node.geometry);
+        node.geometry.dispose();
+      }
+      disposeMaterial(node.material, materials);
+    });
   }
 }
 
 function makeSingleBoard(offX, offZ, rotY){
-  var fc = new THREE.Color(state.frameColor);
-  var sc = new THREE.Color(state.surfaceColor);
-
-  // Materials
-  var frameMat = new THREE.MeshStandardMaterial({color: fc, roughness: 0.4, metalness: 0.02});
-  var surfMat = new THREE.MeshStandardMaterial({color: sc, roughness: 0.3, metalness: 0.02});
-  var legMat  = new THREE.MeshStandardMaterial({color: fc.clone().multiplyScalar(0.8), roughness: 0.45});
-  var blackMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.9});
-
-  /*
-    Tout est construit A PLAT :
-    - Le plateau est dans le plan XZ (X=largeur, Z=longueur)
-    - Y = vers le haut (épaisseur)
-    - Z negatif = vers le haut de la planche (coté trou)
-    - Z positif = vers le bas (coté joueur, bord avant au sol)
-    Ensuite on tilt autour de l'axe X au bord avant (Z = +BL/2)
-  */
-  var boardGrp = new THREE.Group();
-
-  // ---- PLATEAU (surface de jeu) ----
-  // On utilise un plan simple pour la surface visible du dessus
-  // et un box pour le corps du plateau
-  // Mais pour avoir le trou, on utilise Shape + Extrude
-
   var hw = BW / 2;
   var hl = BL / 2;
+  var holeY = hl - HOLE_DIST;
 
-  // Shape du plateau avec trou
+  var frameColor = new THREE.Color(state.frameColor);
+  var frameDark = frameColor.clone().multiplyScalar(0.8);
+  var surfaceColor = new THREE.Color(state.surfaceColor);
+
+  var frameMat = new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.4, metalness: 0.02 });
+  var legMat = new THREE.MeshStandardMaterial({ color: frameDark, roughness: 0.4, metalness: 0.02 });
+  var surfaceMat = new THREE.MeshStandardMaterial({ color: surfaceColor, roughness: 0.3, metalness: 0.02 });
+  var holeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0 });
+
+  var wholeBoard = new THREE.Group();
+  var tiltPivot = new THREE.Group();
+  var boardGrp = new THREE.Group();
+
   var shape = new THREE.Shape();
   shape.moveTo(-hw, -hl);
   shape.lineTo(hw, -hl);
@@ -282,151 +319,92 @@ function makeSingleBoard(offX, offZ, rotY){
   shape.lineTo(-hw, hl);
   shape.lineTo(-hw, -hl);
 
-  // Trou en haut de la planche (coté sureleve = Y_shape negatif -> Z positif apres rotation)
-  // Y_shape negatif = coté qui sera en haut apres tilt
-  var holeZ = hl - HOLE_DIST;
   var holePath = new THREE.Path();
-  for (var i = 0; i <= 32; i++) {
-    var ang = (i / 32) * Math.PI * 2;
-    var hx = Math.cos(ang) * HOLE_R;
-    var hz = holeZ + Math.sin(ang) * HOLE_R;
-    if (i === 0) holePath.moveTo(hx, hz);
-    else holePath.lineTo(hx, hz);
+  for (var i = 32; i >= 0; i--) {
+    var angle = (i / 32) * Math.PI * 2;
+    var hx = Math.cos(angle) * HOLE_R;
+    var hy = holeY + Math.sin(angle) * HOLE_R;
+    if (i === 32) holePath.moveTo(hx, hy);
+    else holePath.lineTo(hx, hy);
   }
   shape.holes.push(holePath);
 
-  // Extrude vers le haut (depth = epaisseur)
-  var plateGeo = new THREE.ExtrudeGeometry(shape, {depth: BT, bevelEnabled: false});
-  // L'extrusion crée la forme dans XY, extrudée en Z.
-  // On veut : X = largeur, Z = longueur, Y = épaisseur
-  // Shape est en XY (X=largeur, Y=longueur), extrude Z = BT (épaisseur)
-  // Rotation : swap Y et Z -> rotateX(-PI/2)
-  // Mais attention : la Shape Y correspond a notre Z (longueur)
-  // Après rotateX(-PI/2) : (x, y_shape, z_extrude) -> (x, z_extrude, -y_shape)
-  // Donc Y = épaisseur (bon), Z = -y_shape (il faut inverser)
+  var boardGeo = new THREE.ExtrudeGeometry(shape, { depth: BT, bevelEnabled: false });
+  boardGeo.rotateX(-Math.PI / 2);
+  boardGeo.computeVertexNormals();
+  boardGrp.add(setShadow(new THREE.Mesh(boardGeo, surfaceMat)));
 
-  plateGeo.rotateX(-Math.PI / 2);
-  // Maintenant : surface en XZ, épaisseur en Y, mais Z inversé
-  // Centrons en Y sur le dessus = 0 -> décaler vers le bas
-  plateGeo.translate(0, 0, 0);
+  var holeDisk = new THREE.Mesh(new THREE.CylinderGeometry(58, 58, 3, 24), holeMat);
+  holeDisk.position.set(0, BT / 2, -holeY);
+  holeDisk.receiveShadow = true;
+  boardGrp.add(holeDisk);
 
-  // Le dessus du plateau est à Y = BT (après rotation), le dessous à Y = 0
-  var plate = new THREE.Mesh(plateGeo, surfMat);
-  plate.castShadow = true;
-  plate.receiveShadow = true;
-  boardGrp.add(plate);
+  var sideRailGeo = new THREE.BoxGeometry(RAIL_T, RAIL_H, BL);
+  var leftRail = setShadow(new THREE.Mesh(sideRailGeo, frameMat));
+  leftRail.position.set(-hw + RAIL_T / 2, BT + RAIL_H / 2, 0);
+  boardGrp.add(leftRail);
 
-  // ---- TROU : disque noir au fond ----
-  var holeVizGeo = new THREE.CylinderGeometry(HOLE_R - 2, HOLE_R - 2, 3, 24);
-  var holeViz = new THREE.Mesh(holeVizGeo, blackMat);
-  holeViz.position.set(0, BT / 2, -holeZ); // Z inverse apres rotateX(-PI/2)
-  boardGrp.add(holeViz);
+  var rightRail = setShadow(new THREE.Mesh(sideRailGeo, frameMat));
+  rightRail.position.set(hw - RAIL_T / 2, BT + RAIL_H / 2, 0);
+  boardGrp.add(rightRail);
 
-  // ---- CADRE / RAILS ----
-  // Rail gauche
-  var railSideGeo = new THREE.BoxGeometry(RAIL_T, RAIL_H, BL);
-  var railL = new THREE.Mesh(railSideGeo, frameMat);
-  railL.position.set(-hw + RAIL_T / 2, BT + RAIL_H / 2, 0);
-  railL.castShadow = true;
-  boardGrp.add(railL);
+  var backRail = setShadow(new THREE.Mesh(new THREE.BoxGeometry(BW - 2 * RAIL_T, RAIL_H, 19), frameMat));
+  backRail.position.set(0, BT + RAIL_H / 2, -(hl - RAIL_T / 2));
+  boardGrp.add(backRail);
 
-  // Rail droit
-  var railR = new THREE.Mesh(railSideGeo, frameMat);
-  railR.position.set(hw - RAIL_T / 2, BT + RAIL_H / 2, 0);
-  railR.castShadow = true;
-  boardGrp.add(railR);
+  var frontRail = setShadow(new THREE.Mesh(new THREE.BoxGeometry(BW - 2 * RAIL_T, 19, 19), frameMat));
+  frontRail.position.set(0, BT + 9.5, hl - RAIL_T / 2);
+  boardGrp.add(frontRail);
 
-  // Barre arriere (coté trou, haut)
-  var railBackGeo = new THREE.BoxGeometry(BW - 2 * RAIL_T, RAIL_H, RAIL_T);
-  var railBack = new THREE.Mesh(railBackGeo, frameMat);
-  railBack.position.set(0, BT + RAIL_H / 2, -(hl - RAIL_T / 2));
-  railBack.castShadow = true;
-  boardGrp.add(railBack);
-
-  // Barre avant basse (coté joueur)
-  var railFrontGeo = new THREE.BoxGeometry(BW - 2 * RAIL_T, RAIL_H * 0.5, RAIL_T);
-  var railFront = new THREE.Mesh(railFrontGeo, frameMat);
-  railFront.position.set(0, BT + RAIL_H * 0.25, hl - RAIL_T / 2);
-  boardGrp.add(railFront);
-
-  // ---- DESSOUS : traverses ----
   var braceGeo = new THREE.BoxGeometry(BW - 60, 18, 20);
-  for (var bi = 0; bi < 3; bi++) {
-    var bz = -hl + 100 + bi * (BL - 200) / 2;
-    var brace = new THREE.Mesh(braceGeo, frameMat);
-    brace.position.set(0, -9, bz);
+  var bracePositions = [-270, 0, 270];
+  for (var b = 0; b < bracePositions.length; b++) {
+    var brace = setShadow(new THREE.Mesh(braceGeo, frameMat));
+    brace.position.set(0, 9, bracePositions[b]);
     boardGrp.add(brace);
   }
 
-  // ---- PIEDS ARRIERE ----
-  // Les pieds sont des rectangles qui partent du bord arriere du plateau
-  // et descendent jusqu'au sol. Ils ne sont PAS inclinés avec le plateau,
-  // donc on les ajoute APRES le tilt.
-
-  // ---- TILT ----
-  // Pivot au bord avant (Z = +BL/2), le bord qui touche le sol
-  // Avant le tilt : le plateau est horizontal. On le décale pour que le pivot
-  // soit à l'origine Z, puis on tilt, puis on remet.
-  boardGrp.position.z = -hl; // décale pour que bord avant soit en Z=0
-
-  var tiltPivot = new THREE.Group();
-  tiltPivot.add(boardGrp);
+  boardGrp.position.z = -hl;
   tiltPivot.rotation.x = TILT;
-  // Après tilt, le bord avant est en Z=0, Y=0 (au sol)
-
-  var wholeBoard = new THREE.Group();
+  tiltPivot.add(boardGrp);
   wholeBoard.add(tiltPivot);
 
-  // ---- PIEDS (ajoutés dans l'espace world, droits) ----
-  // Le bord arriere, après tilt, est à :
-  //   Y_back = sin(TILT) * BL ≈ 208
-  //   Z_back = -cos(TILT) * BL ≈ -1182
-  // Les pieds vont du bord arriere au sol.
-  var backY = Math.sin(TILT) * BL;
-  var backZ = -Math.cos(TILT) * BL;
+  var legHeight = Math.sin(TILT) * BL + 18;
+  var legZ = -Math.cos(TILT) * BL + 40;
+  var legX = hw - RAIL_T - LEG_W / 2 - 8;
+  var legGeo = new THREE.BoxGeometry(LEG_W, legHeight, LEG_T);
 
-  // Pieds = rectangles verticaux, un de chaque coté
-  var legH = backY + 18; // du sol jusque sous le plateau arriere
-  var legGeo = new THREE.BoxGeometry(LEG_W, legH, LEG_T);
+  var leftLeg = setShadow(new THREE.Mesh(legGeo, legMat));
+  leftLeg.position.set(-legX, legHeight / 2, legZ);
+  wholeBoard.add(leftLeg);
 
-  var legL = new THREE.Mesh(legGeo, legMat);
-  legL.position.set(-hw + RAIL_T + LEG_W / 2 + 8, legH / 2, backZ + 40);
-  legL.castShadow = true;
-  wholeBoard.add(legL);
+  var rightLeg = setShadow(new THREE.Mesh(legGeo, legMat));
+  rightLeg.position.set(legX, legHeight / 2, legZ);
+  wholeBoard.add(rightLeg);
 
-  var legR = new THREE.Mesh(legGeo, legMat);
-  legR.position.set(hw - RAIL_T - LEG_W / 2 - 8, legH / 2, backZ + 40);
-  legR.castShadow = true;
-  wholeBoard.add(legR);
+  var crossBarWidth = BW - 2 * (RAIL_T + LEG_W + 8);
+  var crossBar = setShadow(new THREE.Mesh(new THREE.BoxGeometry(crossBarWidth, 18, LEG_T), legMat));
+  crossBar.position.set(0, 30, legZ);
+  wholeBoard.add(crossBar);
 
-  // Barre horizontale entre les deux pieds (stabilité)
-  var legBarGeo = new THREE.BoxGeometry(BW - 2 * RAIL_T - 2 * LEG_W - 16, 18, LEG_T);
-  var legBar = new THREE.Mesh(legBarGeo, legMat);
-  legBar.position.set(0, 30, backZ + 40);
-  wholeBoard.add(legBar);
+  var diagonalGeo = new THREE.BoxGeometry(16, legHeight * 0.72, LEG_T * 0.6);
+  var diagonalLeft = setShadow(new THREE.Mesh(diagonalGeo, legMat));
+  diagonalLeft.position.set(-legX, legHeight * 0.56, legZ + 14);
+  diagonalLeft.rotation.x = -0.58;
+  wholeBoard.add(diagonalLeft);
 
-  // Contreventement diagonal (chaque coté)
-  var diagLen = legH * 0.7;
-  var diagGeo = new THREE.BoxGeometry(16, diagLen, LEG_T * 0.6);
-  for (var di = 0; di < 2; di++) {
-    var dMesh = new THREE.Mesh(diagGeo, legMat);
-    var dX = di === 0 ? (-hw + RAIL_T + LEG_W / 2 + 8) : (hw - RAIL_T - LEG_W / 2 - 8);
-    dMesh.position.set(dX, legH * 0.55, backZ + 40 + LEG_T * 0.8);
-    dMesh.rotation.x = 0.45;
-    wholeBoard.add(dMesh);
-  }
+  var diagonalRight = setShadow(new THREE.Mesh(diagonalGeo, legMat));
+  diagonalRight.position.set(legX, legHeight * 0.56, legZ + 14);
+  diagonalRight.rotation.x = -0.58;
+  wholeBoard.add(diagonalRight);
 
-  // Position finale
   wholeBoard.position.set(offX, 0, offZ);
   wholeBoard.rotation.y = rotY;
-
-  ground.position.y = -2;
-
-  mdl.add(wholeBoard);
+  modelRoot.add(wholeBoard);
 }
 
 function build(){
-  clearMdl();
+  clearModel();
   if (state.boards === 1) {
     makeSingleBoard(0, 0, 0);
   } else {
@@ -435,35 +413,41 @@ function build(){
   }
 }
 
-/* ===== UI ===== */
-// Board count
 var boardOpts = document.querySelectorAll(".board-opt");
 for (var bi = 0; bi < boardOpts.length; bi++) {
   (function(btn){
     btn.addEventListener("click", function(){
       for (var j = 0; j < boardOpts.length; j++) boardOpts[j].classList.remove("active");
       btn.classList.add("active");
-      state.boards = parseInt(btn.getAttribute("data-val"));
+      state.boards = parseInt(btn.getAttribute("data-val"), 10);
       build();
     });
   })(boardOpts[bi]);
 }
 
-// Colors
 function setupCP(pid, hid, key){
-  var pk = document.getElementById(pid), hx = document.getElementById(hid);
-  pk.addEventListener("input", function(){ state[key] = pk.value; hx.value = pk.value.toUpperCase(); build(); });
-  hx.addEventListener("input", function(){ if (/^#[0-9A-Fa-f]{6}$/.test(hx.value)) { state[key] = hx.value; pk.value = hx.value; build(); } });
+  var pk = document.getElementById(pid);
+  var hx = document.getElementById(hid);
+  pk.addEventListener("input", function(){
+    state[key] = pk.value;
+    hx.value = pk.value.toUpperCase();
+    build();
+  });
+  hx.addEventListener("input", function(){
+    if (/^#[0-9A-Fa-f]{6}$/.test(hx.value)) {
+      state[key] = hx.value;
+      pk.value = hx.value;
+      build();
+    }
+  });
 }
 setupCP("colorFrame", "hexFrame", "frameColor");
 setupCP("colorSurface", "hexSurface", "surfaceColor");
 
-
-/* ===== EXPORTS ===== */
 function getMeshes(){
-  mdl.updateMatrixWorld(true);
+  modelRoot.updateMatrixWorld(true);
   var arr = [];
-  mdl.traverse(function(c){ if (c.isMesh) arr.push(c); });
+  modelRoot.traverse(function(c){ if (c.isMesh) arr.push(c); });
   return arr;
 }
 
@@ -472,28 +456,41 @@ document.getElementById("btnGLB").addEventListener("click", function(){
   if (!meshes.length) return;
   var aP = [], aN = [], aI = [], off = 0;
   for (var mi = 0; mi < meshes.length; mi++) {
-    var g = meshes[mi].geometry.clone(); g.applyMatrix4(meshes[mi].matrixWorld);
-    if (!g.index) { var ii = []; for (var vi = 0; vi < g.attributes.position.count; vi++) ii.push(vi); g.setIndex(ii); }
-    var pa = g.attributes.position.array, na = g.attributes.normal ? g.attributes.normal.array : null, ia = g.index.array;
+    var g = meshes[mi].geometry.clone();
+    g.applyMatrix4(meshes[mi].matrixWorld);
+    if (!g.index) {
+      var ii = [];
+      for (var vi = 0; vi < g.attributes.position.count; vi++) ii.push(vi);
+      g.setIndex(ii);
+    }
+    var pa = g.attributes.position.array;
+    var na = g.attributes.normal ? g.attributes.normal.array : null;
+    var ia = g.index.array;
     for (var pi = 0; pi < pa.length; pi++) aP.push(pa[pi]);
     if (na) for (var ni = 0; ni < na.length; ni++) aN.push(na[ni]);
     for (var xi = 0; xi < ia.length; xi++) aI.push(ia[xi] + off);
-    off += pa.length / 3; g.dispose();
+    off += pa.length / 3;
+    g.dispose();
   }
   var pF = new Float32Array(aP), nF = new Float32Array(aN);
   var iA = off > 65535 ? new Uint32Array(aI) : new Uint16Array(aI);
   function p4(n){ return (n + 3) & ~3; }
   var iP = p4(iA.byteLength), pP = p4(pF.byteLength), nP = p4(nF.byteLength), bLen = iP + pP + nP;
   var mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
-  for (var bi2 = 0; bi2 < pF.length; bi2 += 3) for (var d = 0; d < 3; d++) { if (pF[bi2+d] < mn[d]) mn[d] = pF[bi2+d]; if (pF[bi2+d] > mx[d]) mx[d] = pF[bi2+d]; }
-  var json = {asset:{version:"2.0",generator:"SetupParis"},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0,name:"Cornhole"}],
-    meshes:[{primitives:[{attributes:{POSITION:1},indices:0,mode:4}]}],
-    accessors:[{bufferView:0,componentType:iA.BYTES_PER_ELEMENT===4?5125:5123,count:aI.length,type:"SCALAR",max:[Math.max.apply(null,aI)],min:[0]},
-    {bufferView:1,componentType:5126,count:pF.length/3,type:"VEC3",max:mx,min:mn}],
-    bufferViews:[{buffer:0,byteOffset:0,byteLength:iA.byteLength,target:34963},{buffer:0,byteOffset:iP,byteLength:pF.byteLength,target:34962}],
-    buffers:[{byteLength:bLen}]};
-  if (nF.length > 0) { json.meshes[0].primitives[0].attributes.NORMAL = 2; json.accessors.push({bufferView:2,componentType:5126,count:nF.length/3,type:"VEC3",max:[1,1,1],min:[-1,-1,-1]}); json.bufferViews.push({buffer:0,byteOffset:iP+pP,byteLength:nF.byteLength,target:34962}); }
-  var js = JSON.stringify(json); while (js.length % 4 !== 0) js += " ";
+  for (var bi2 = 0; bi2 < pF.length; bi2 += 3) {
+    for (var d = 0; d < 3; d++) {
+      if (pF[bi2 + d] < mn[d]) mn[d] = pF[bi2 + d];
+      if (pF[bi2 + d] > mx[d]) mx[d] = pF[bi2 + d];
+    }
+  }
+  var json = {asset:{version:"2.0",generator:"SetupParis"},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0,name:"Cornhole"}],meshes:[{primitives:[{attributes:{POSITION:1},indices:0,mode:4}]}],accessors:[{bufferView:0,componentType:iA.BYTES_PER_ELEMENT===4?5125:5123,count:aI.length,type:"SCALAR",max:[Math.max.apply(null,aI)],min:[0]},{bufferView:1,componentType:5126,count:pF.length/3,type:"VEC3",max:mx,min:mn}],bufferViews:[{buffer:0,byteOffset:0,byteLength:iA.byteLength,target:34963},{buffer:0,byteOffset:iP,byteLength:pF.byteLength,target:34962}],buffers:[{byteLength:bLen}]};
+  if (nF.length > 0) {
+    json.meshes[0].primitives[0].attributes.NORMAL = 2;
+    json.accessors.push({bufferView:2,componentType:5126,count:nF.length/3,type:"VEC3",max:[1,1,1],min:[-1,-1,-1]});
+    json.bufferViews.push({buffer:0,byteOffset:iP + pP,byteLength:nF.byteLength,target:34962});
+  }
+  var js = JSON.stringify(json);
+  while (js.length % 4 !== 0) js += " ";
   var jb = new TextEncoder().encode(js);
   var tot = 12 + 8 + jb.byteLength + 8 + bLen, glb = new ArrayBuffer(tot), dv = new DataView(glb);
   dv.setUint32(0,0x46546C67,true); dv.setUint32(4,2,true); dv.setUint32(8,tot,true);
@@ -509,24 +506,29 @@ document.getElementById("btnGLB").addEventListener("click", function(){
 document.getElementById("btnOBJ").addEventListener("click", function(){
   var meshes = getMeshes();
   var obj = ["# Cornhole - Setup Paris","mtllib cornhole.mtl",""], mtl = ["# Cornhole MTL",""];
-  var vO = 1, vnO = 1;
+  var vO = 1;
   for (var mi = 0; mi < meshes.length; mi++) {
     var m = meshes[mi], mn = "mat_" + mi, c = m.material.color;
-    mtl.push("newmtl "+mn,"Kd "+c.r.toFixed(4)+" "+c.g.toFixed(4)+" "+c.b.toFixed(4),"Ka 0.1 0.1 0.1","Ks 0.3 0.3 0.3","Ns 50","d 1.0","");
-    var g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+    mtl.push("newmtl " + mn,"Kd " + c.r.toFixed(4) + " " + c.g.toFixed(4) + " " + c.b.toFixed(4),"Ka 0.1 0.1 0.1","Ks 0.3 0.3 0.3","Ns 50","d 1.0","");
+    var g = m.geometry.clone();
+    g.applyMatrix4(m.matrixWorld);
     var pos = g.attributes.position, nor = g.attributes.normal, idx = g.index;
-    obj.push("o Piece_"+mi, "usemtl "+mn);
-    for (var vi = 0; vi < pos.count; vi++) obj.push("v "+pos.getX(vi).toFixed(4)+" "+pos.getY(vi).toFixed(4)+" "+pos.getZ(vi).toFixed(4));
-    if (nor) for (var ni = 0; ni < nor.count; ni++) obj.push("vn "+nor.getX(ni).toFixed(4)+" "+nor.getY(ni).toFixed(4)+" "+nor.getZ(ni).toFixed(4));
+    obj.push("o Piece_" + mi, "usemtl " + mn);
+    for (var vi = 0; vi < pos.count; vi++) obj.push("v " + pos.getX(vi).toFixed(4) + " " + pos.getY(vi).toFixed(4) + " " + pos.getZ(vi).toFixed(4));
+    if (nor) for (var ni = 0; ni < nor.count; ni++) obj.push("vn " + nor.getX(ni).toFixed(4) + " " + nor.getY(ni).toFixed(4) + " " + nor.getZ(ni).toFixed(4));
     if (idx) for (var fi = 0; fi < idx.count; fi += 3) {
-      var a = idx.getX(fi)+vO, b = idx.getX(fi+1)+vO, cc = idx.getX(fi+2)+vO;
-      if (nor) obj.push("f "+a+"//"+a+" "+b+"//"+b+" "+cc+"//"+cc);
-      else obj.push("f "+a+" "+b+" "+cc);
+      var a = idx.getX(fi) + vO, b = idx.getX(fi + 1) + vO, cc = idx.getX(fi + 2) + vO;
+      if (nor) obj.push("f " + a + "//" + a + " " + b + "//" + b + " " + cc + "//" + cc);
+      else obj.push("f " + a + " " + b + " " + cc);
     }
-    vO += pos.count; if (nor) vnO += nor.count; obj.push(""); g.dispose();
+    vO += pos.count;
+    obj.push("");
+    g.dispose();
   }
-  dlB(new Blob([obj.join("\n")],{type:"text/plain"}),"cornhole.obj");
-  dlB(new Blob([mtl.join("\n")],{type:"text/plain"}),"cornhole.mtl");
+  dlB(new Blob([obj.join("
+")],{type:"text/plain"}),"cornhole.obj");
+  dlB(new Blob([mtl.join("
+")],{type:"text/plain"}),"cornhole.mtl");
 });
 
 document.getElementById("btnDXF").addEventListener("click", function(){
@@ -534,10 +536,11 @@ document.getElementById("btnDXF").addEventListener("click", function(){
   var L = ["0","SECTION","2","HEADER","9","$ACADVER","1","AC1015","9","$INSUNITS","70","4","0","ENDSEC","0","SECTION","2","ENTITIES"];
   function aci(r,g,b){ if(r>.7&&g<.3&&b<.3)return 1; if(r>.7&&g>.7&&b<.3)return 2; if(r<.3&&g>.5&&b<.3)return 3; if(r<.3&&g<.3&&b>.7)return 5; return 8; }
   for (var mi = 0; mi < meshes.length; mi++) {
-    var m = meshes[mi], g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+    var m = meshes[mi], g = m.geometry.clone();
+    g.applyMatrix4(m.matrixWorld);
     var pos = g.attributes.position, idx = g.index, cl = m.material.color, ac = aci(cl.r,cl.g,cl.b);
     if (idx) for (var fi = 0; fi < idx.count; fi += 3) {
-      var i0=idx.getX(fi), i1=idx.getX(fi+1), i2=idx.getX(fi+2);
+      var i0 = idx.getX(fi), i1 = idx.getX(fi + 1), i2 = idx.getX(fi + 2);
       L.push("0","3DFACE","8","0","62",String(ac));
       L.push("10",pos.getX(i0).toFixed(2),"20",pos.getY(i0).toFixed(2),"30",pos.getZ(i0).toFixed(2));
       L.push("11",pos.getX(i1).toFixed(2),"21",pos.getY(i1).toFixed(2),"31",pos.getZ(i1).toFixed(2));
@@ -547,25 +550,35 @@ document.getElementById("btnDXF").addEventListener("click", function(){
     g.dispose();
   }
   L.push("0","ENDSEC","0","EOF");
-  dlB(new Blob([L.join("\n")],{type:"application/dxf"}),"cornhole.dxf");
+  dlB(new Blob([L.join("
+")],{type:"application/dxf"}),"cornhole.dxf");
 });
 
 function dlB(blob, name){
-  var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-  a.download = name; document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
-/* ===== INIT ===== */
 build();
 
-function animate(){ requestAnimationFrame(animate); renderer.render(scene, camera); }
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
 animate();
 
 window.addEventListener("resize", function(){
-  camera.aspect = viewer.clientWidth / viewer.clientHeight;
+  var w = Math.max(viewer.clientWidth, 1);
+  var h = Math.max(viewer.clientHeight, 1);
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 });
 
 })();

@@ -169,7 +169,14 @@ function AdminQuotesPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     {q.event_date ? new Date(q.event_date).toLocaleDateString("fr-FR") : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatPrice(q.total_ttc)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
+                    {(q.delivery_fee || q.setup_fee || q.pickup_fee) ? (
+                      <div className="text-xs text-muted-foreground">
+                        produits {formatPrice(q.total_ttc)}
+                      </div>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-3">
                     <select
                       value={q.status}
@@ -184,7 +191,7 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => setSelected(q)}>
+                      <Button size="icon" variant="ghost" onClick={() => openDetail(q)}>
                         <Eye className="size-4" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => remove(q.id)}>

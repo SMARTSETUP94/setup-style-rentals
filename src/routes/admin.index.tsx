@@ -119,7 +119,16 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right font-semibold">{formatPrice(q.total_ttc)}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={q.status} />
+                    <select
+                      value={q.status}
+                      onChange={(e) => updateStatus(q.id, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-8 rounded-md border border-input bg-transparent px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring capitalize"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">

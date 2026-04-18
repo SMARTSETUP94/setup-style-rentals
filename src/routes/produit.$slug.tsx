@@ -592,10 +592,10 @@ function ProductPage() {
                 ref={inlineIframeRef}
                 src={product.configurator_url}
                 title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
-                className="w-full block border-0 h-[480px] md:h-[560px]"
+                className="block h-[480px] md:h-[560px]"
+                style={{ width: "100%", height: "100%", border: "none" }}
                 loading="lazy"
-                allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                allow="clipboard-write"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
               />
             </div>
@@ -669,9 +669,8 @@ function ProductPage() {
               ref={modalIframeRef}
               src={product.configurator_url}
               title={`Configurateur 3D — ${pickLang(product, "name", lang)}`}
-              className="w-full h-full border-0"
-              allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              style={{ width: "100%", height: "100%", border: "none" }}
+              allow="clipboard-write"
               onLoad={() => sendPricesToIframe(modalIframeRef.current)}
             />
           </div>

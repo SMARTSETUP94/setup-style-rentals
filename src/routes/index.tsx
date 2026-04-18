@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, MousePointerClick, Truck, Wand2, Zap, Ruler } from "lucide-react";
+import { ArrowRight, MousePointerClick, Truck, Wand2, Zap, Ruler, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
-import { categoryImage, HERO_IMAGE } from "@/lib/category-images";
+import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
 
 interface Category {
@@ -99,13 +99,6 @@ function HomePage() {
               {t("hero.cta")}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
-            <a
-              href="#configurator"
-              className="inline-flex items-center gap-2 rounded-md px-7 py-4 text-sm font-medium border border-white/40 text-white hover:bg-white/10 transition-colors duration-300"
-            >
-              <Sparkles className="size-4" />
-              {t("hero.cta2")}
-            </a>
           </div>
         </div>
       </section>
@@ -138,13 +131,19 @@ function HomePage() {
               key={cat.id}
               to="/catalogue"
               search={{ category: cat.slug }}
-              className="group relative h-64 rounded-xl overflow-hidden border border-border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium reveal"
-              style={{ transitionDelay: `${idx * 60}ms` }}
+              className="group relative h-64 rounded-xl overflow-hidden border border-border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium"
+              style={{
+                animation: `hero-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${idx * 80}ms both`,
+                background: categoryGradient(cat.slug),
+              }}
             >
               <img
                 src={categoryImage(cat.slug)}
                 alt={pickLang(cat, "name", lang)}
                 loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
               <div
@@ -218,54 +217,9 @@ function HomePage() {
         </RevealSection>
       )}
 
-      {/* CONFIGURATOR */}
-      <section id="configurator" className="bg-secondary/50 py-20 md:py-28">
-        <div className="container-x grid lg:grid-cols-2 gap-12 items-center">
-          <RevealDiv>
-            <SectionHeader num="04" title={t("config.title")} />
-            <p className="mt-6 text-lg text-muted-foreground max-w-lg leading-relaxed">
-              {lang === "fr"
-                ? "Visualisez vos produits en 3D — configurateur disponible sur demande pour personnaliser couleurs, dimensions et finitions."
-                : "Visualise your products in 3D — configurator available on request to customise colours, dimensions and finishes."}
-            </p>
-            <Link
-              to="/devis"
-              className="mt-8 inline-flex items-center gap-2 bg-foreground text-background rounded-md px-7 py-4 text-sm font-semibold hover:bg-foreground/90 transition-all duration-300"
-            >
-              <Sparkles className="size-4" />
-              {lang === "fr" ? "Demander une démo" : "Request a demo"}
-            </Link>
-          </RevealDiv>
-          <RevealDiv className="aspect-[4/3] rounded-2xl bg-card shadow-elev border border-border overflow-hidden relative">
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(60% 60% at 50% 50%, rgba(201,169,110,0.18) 0%, rgba(255,255,255,0) 70%)",
-              }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center px-6">
-                <div className="inline-flex items-center justify-center size-20 rounded-full bg-gold/15 text-gold mb-5">
-                  <Sparkles className="size-9" />
-                </div>
-                <div className="font-display font-semibold text-2xl">
-                  {lang === "fr" ? "Visualisation 3D" : "3D Visualisation"}
-                </div>
-                <div className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
-                  {lang === "fr"
-                    ? "Aperçu temps réel de vos configurations."
-                    : "Real-time preview of your configurations."}
-                </div>
-              </div>
-            </div>
-          </RevealDiv>
-        </div>
-      </section>
-
       {/* HOW */}
       <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="05" title={t("how.title")} />
+        <SectionHeader num="04" title={t("how.title")} />
         <div className="mt-12 grid md:grid-cols-3 gap-5">
           {[
             { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },

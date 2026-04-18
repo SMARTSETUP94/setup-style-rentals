@@ -245,7 +245,14 @@ function AdminProductsPage() {
               filtered.map((p) => (
                 <tr key={p.id} className="border-t border-border hover:bg-muted/30">
                   <td className="px-4 py-3">
-                    <div className="font-medium">{p.name_fr}</div>
+                    <div className="font-medium flex items-center gap-2 flex-wrap">
+                      <span>{p.name_fr}</span>
+                      {optionCounts[p.id] > 0 && (
+                        <span className="inline-flex items-center rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-semibold text-gold-foreground">
+                          🎨 {optionCounts[p.id]} option{optionCounts[p.id] > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">{p.slug}</div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.category_slug}</td>

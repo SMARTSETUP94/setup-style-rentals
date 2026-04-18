@@ -291,10 +291,14 @@ function QuotePage() {
                 <div className="font-display font-semibold text-lg mb-3">{t("cart.totals")}</div>
                 <Row label={t("cart.subtotalHT")} value={formatPrice(totals.gross, lang)} />
                 {totals.discount > 0 && <Row label={t("product.discount")} value={`-${formatPrice(totals.discount, lang)}`} highlight />}
-                <div>
-                  <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
-                  <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
-                </div>
+                {delivery > 0 && (
+                  <div>
+                    <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
+                    <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
+                  </div>
+                )}
+                {setupFee > 0 && <Row label={lang === "fr" ? "Installation" : "Setup"} value={formatPrice(setupFee, lang)} />}
+                {pickupFee > 0 && <Row label={lang === "fr" ? "Reprise" : "Pickup"} value={formatPrice(pickupFee, lang)} />}
                 <Row label={t("cart.totalHT")} value={formatPrice(netWithDelivery, lang)} />
                 <Row label={t("cart.vat")} value={formatPrice(vat, lang)} />
                 <div className="border-t border-border pt-3 flex items-baseline justify-between">

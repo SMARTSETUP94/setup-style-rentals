@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, MousePointerClick, Truck } from "lucide-react";
+import { ArrowRight, Sparkles, MousePointerClick, Truck, Gamepad2, Tent, Signpost, Palette, Armchair } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice, categoryColor } from "@/lib/format";
@@ -26,6 +26,14 @@ interface FeaturedProduct {
   image_url: string | null;
   sort_order: number;
 }
+
+const CATEGORY_ICONS: Record<string, typeof Sparkles> = {
+  jeux: Gamepad2,
+  structures: Tent,
+  signaletique: Signpost,
+  decoration: Palette,
+  mobilier: Armchair,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -114,35 +122,45 @@ function HomePage() {
       <section className="container-x py-14 md:py-20">
         <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
         <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to="/catalogue"
-              search={{ category: cat.slug }}
-              className="group relative aspect-[3/4] rounded-lg overflow-hidden hover-lift bg-secondary"
-            >
-              <div
-                className="absolute inset-0 transition-opacity"
-                style={{
-                  background: `linear-gradient(180deg, ${cat.color}40 0%, ${cat.color}10 50%, #ffffff 100%)`,
-                }}
-              />
-              <div className="relative h-full flex flex-col justify-between p-5">
-                <span
-                  className="text-xs font-mono"
-                  style={{ color: cat.color === "#FFE66D" ? "#1A1A1A" : cat.color }}
-                >
-                  0{cat.sort_order}
-                </span>
-                <div>
-                  <h3 className="font-display text-xl md:text-2xl font-semibold">{pickLang(cat, "name", lang)}</h3>
-                  <div className="mt-2 inline-flex items-center gap-1 text-sm text-foreground/70 group-hover:text-foreground transition-colors">
-                    <ArrowRight className="size-3.5" />
+          {categories.map((cat) => {
+            const Icon = CATEGORY_ICONS[cat.slug] ?? Sparkles;
+            const darkText = cat.color === "#FFE66D";
+            return (
+              <Link
+                key={cat.id}
+                to="/catalogue"
+                search={{ category: cat.slug }}
+                className="group relative aspect-[3/4] rounded-2xl overflow-hidden hover-lift border border-border"
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(160deg, ${cat.color} 0%, ${cat.color}cc 45%, ${cat.color}55 100%)`,
+                  }}
+                />
+                <div className="absolute inset-0 opacity-[0.08]"
+                  style={{
+                    backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+                    backgroundSize: "16px 16px",
+                    color: darkText ? "#1A1A1A" : "#fff",
+                  }}
+                />
+                <div className={cn("relative h-full flex flex-col justify-between p-5", darkText ? "text-foreground" : "text-white")}>
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] font-mono uppercase tracking-wider opacity-80">0{cat.sort_order}</span>
+                    <Icon className="size-7 md:size-8 opacity-90" strokeWidth={1.75} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-xl md:text-2xl font-semibold leading-tight">{pickLang(cat, "name", lang)}</h3>
+                    <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium opacity-90 group-hover:opacity-100 group-hover:gap-2 transition-all">
+                      {lang === "fr" ? "Découvrir" : "Discover"}
+                      <ArrowRight className="size-3.5" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 

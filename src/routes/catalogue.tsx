@@ -182,12 +182,10 @@ function CataloguePage() {
                       {cat ? pickLang(cat, "name", lang) : p.category_slug}
                     </div>
                     <h3 className="mt-2 font-medium text-base leading-snug">{pickLang(p, "name", lang)}</h3>
-                    <div className="mt-3 flex items-baseline justify-between">
-                      <div className="text-xs text-muted-foreground">{t("catalog.from")}</div>
-                      <div>
-                        <span className="font-semibold">{formatPrice(p.price_day, lang)}</span>
-                        <span className="text-xs text-muted-foreground ml-1">{t("catalog.perDay")}</span>
-                      </div>
+                    <div className="mt-3 text-sm">
+                      <span className="text-xs text-muted-foreground">{t("catalog.from")} </span>
+                      <span className="font-semibold">{formatPrice(p.price_day, lang)}</span>
+                      <span className="text-xs text-muted-foreground">{t("catalog.perDay")}</span>
                     </div>
                   </div>
                 </Link>

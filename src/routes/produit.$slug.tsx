@@ -606,7 +606,7 @@ function ProductPage() {
             </div>
 
             {/* Configuration summary panel */}
-            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
+            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col max-h-[650px] overflow-auto">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {lang === "fr" ? "Votre configuration" : "Your configuration"}
               </div>

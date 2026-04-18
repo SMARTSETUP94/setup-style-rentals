@@ -366,6 +366,17 @@ function AdminProductsPage() {
                   onChange={(url) => setEditing({ ...editing, configurator_url: url })}
                 />
               </div>
+              <div className="col-span-2">
+                <Label>Options du configurateur 3D (JSON)</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Définit les choix proposés dans l'iframe 3D et leur prix. Envoyé automatiquement au configurateur via <code className="text-[10px] bg-muted px-1 rounded">postMessage</code>. Exemple Cornhole&nbsp;:
+                  <code className="block mt-1 text-[10px] bg-muted/60 p-1.5 rounded">{`{"plateau":[{"value":"blanc","label":"…","price":0}], "champs":[…], "sacs":[…]}`}</code>
+                </p>
+                <ConfiguratorOptionsEditor
+                  value={editing.configurator_options}
+                  onChange={(v) => setEditing({ ...editing, configurator_options: v })}
+                />
+              </div>
               <div className="col-span-2 flex items-center gap-2">
                 <Switch
                   checked={editing.is_active ?? true}

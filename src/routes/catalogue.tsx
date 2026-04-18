@@ -74,8 +74,9 @@ function CataloguePage() {
     return list;
   }, [products, search, lang]);
 
-  const setSearch = (patch: Partial<z.infer<typeof searchSchema>>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }) });
+  type SearchType = z.infer<typeof searchSchema>;
+  const setSearch = (patch: Partial<SearchType>) =>
+    navigate({ search: (prev: SearchType) => ({ ...prev, ...patch }) });
 
   return (
     <div className="pt-28 md:pt-32">

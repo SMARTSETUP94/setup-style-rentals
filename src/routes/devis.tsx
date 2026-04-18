@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Trash2, FileDown, ShoppingBag, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ function QuotePage() {
   const { t, lang } = useI18n();
   const { items, update, remove, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
+  const [logistics, setLogistics] = useState({ base: 0, perItem: 0, setup: 0, pickup: 0 });
   const [form, setForm] = useState({
     customer_name: "",
     company: "",
@@ -32,6 +33,30 @@ function QuotePage() {
     event_date: "",
     event_location: "",
   });
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("key,value_fr")
+        .in("key", [
+          "logistics_base_fee",
+          "logistics_per_item_fee",
+          "logistics_setup_fee",
+          "logistics_pickup_fee",
+        ]);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => {
+        map[r.key] = Number(r.value_fr) || 0;
+      });
+      setLogistics({
+        base: map["logistics_base_fee"] ?? 0,
+        perItem: map["logistics_per_item_fee"] ?? 0,
+        setup: map["logistics_setup_fee"] ?? 0,
+        pickup: map["logistics_pickup_fee"] ?? 0,
+      });
+    })();
+  }, []);
 
   const totals = items.reduce(
     (acc, item) => {
@@ -44,8 +69,10 @@ function QuotePage() {
     },
     { gross: 0, discount: 0, net: 0, deposit: 0 },
   );
-  const delivery = items.length > 0 ? 100 + items.length * 50 : 0;
-  const netWithDelivery = totals.net + delivery;
+  const delivery = items.length > 0 ? logistics.base + items.length * logistics.perItem : 0;
+  const setupFee = items.length > 0 ? logistics.setup : 0;
+  const pickupFee = items.length > 0 ? logistics.pickup : 0;
+  const netWithDelivery = totals.net + delivery + setupFee + pickupFee;
   const vat = netWithDelivery * 0.2;
   const ttc = netWithDelivery + vat;
 

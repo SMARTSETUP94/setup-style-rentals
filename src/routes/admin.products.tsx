@@ -497,6 +497,132 @@ function ImageUploader({ value, onChange }: { value: string; onChange: (url: str
   );
 }
 
+function ConfiguratorUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const isUploadedFile = value.includes("/storage/v1/object/public/configurators/");
+
+  const upload = async (file: File) => {
+    const isHtml =
+      file.type === "text/html" ||
+      file.name.toLowerCase().endsWith(".html") ||
+      file.name.toLowerCase().endsWith(".htm");
+    if (!isHtml) {
+      toast.error("Le fichier doit être un .html");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Fichier trop lourd (max 10 Mo)");
+      return;
+    }
+    setUploading(true);
+    const safeName = file.name
+      .toLowerCase()
+      .replace(/[^a-z0-9.-]/g, "-")
+      .replace(/-+/g, "-");
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+    const { error } = await supabase.storage
+      .from("configurators")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: "text/html",
+      });
+    if (error) {
+      setUploading(false);
+      return toast.error(error.message);
+    }
+    const { data } = supabase.storage.from("configurators").getPublicUrl(path);
+    onChange(data.publicUrl);
+    setUploading(false);
+    toast.success("Configurateur téléversé");
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) upload(file);
+  };
+
+  return (
+    <div className="mt-1.5 space-y-2">
+      {value ? (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-medium text-foreground">
+              {isUploadedFile ? "📎 Fichier hébergé" : "🔗 URL externe"}
+            </div>
+            <a
+              href={value}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-primary hover:underline truncate block"
+            >
+              {value}
+            </a>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? "…" : "Remplacer"}
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => onChange("")}
+            aria-label="Retirer"
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      ) : (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+          className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors ${
+            dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+          }`}
+        >
+          <Upload className="size-6 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground text-center">
+            {uploading ? "Téléversement…" : "Glissez un fichier .html ou cliquez pour choisir"}
+          </p>
+          <p className="text-xs text-muted-foreground">HTML autonome — max 10 Mo</p>
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".html,.htm,text/html"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) upload(f);
+          e.target.value = "";
+        }}
+      />
+      <Input
+        placeholder="ou collez une URL (ex: /configurators/cornhole.html ou https://…)"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 function FieldInput({
   label, value, onChange, type = "text",
 }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {

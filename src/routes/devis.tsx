@@ -44,8 +44,10 @@ function QuotePage() {
     },
     { gross: 0, discount: 0, net: 0, deposit: 0 },
   );
-  const vat = totals.net * 0.2;
-  const ttc = totals.net + vat;
+  const delivery = items.length > 0 ? 100 + items.length * 50 : 0;
+  const netWithDelivery = totals.net + delivery;
+  const vat = netWithDelivery * 0.2;
+  const ttc = netWithDelivery + vat;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,14 +76,16 @@ function QuotePage() {
         };
       }),
       subtotal_ht: totals.gross,
-      total_ht: totals.net,
+      total_ht: netWithDelivery,
+      delivery_fee: delivery,
       vat,
       total_ttc: ttc,
       total_deposit: totals.deposit,
       status: "pending",
     };
 
-    const { error } = await supabase.from("quote_requests").insert(payload);
+    const { delivery_fee: _df, ...dbPayload } = payload;
+    const { error } = await supabase.from("quote_requests").insert(dbPayload);
     if (error) {
       console.error(error);
       setSubmitting(false);
@@ -142,13 +146,14 @@ function QuotePage() {
     const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     doc.setFontSize(10);
     doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, finalY, { align: "right" });
-    doc.text(`${t("cart.totalHT")}: ${formatPrice(totals.net, lang)}`, 196, finalY + 6, { align: "right" });
-    doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, finalY + 12, { align: "right" });
+    doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, finalY + 6, { align: "right" });
+    doc.text(`${t("cart.totalHT")}: ${formatPrice(netWithDelivery, lang)}`, 196, finalY + 12, { align: "right" });
+    doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, finalY + 18, { align: "right" });
     doc.setFont("helvetica", "bold");
-    doc.text(`${t("cart.totalTTC")}: ${formatPrice(ttc, lang)}`, 196, finalY + 20, { align: "right" });
+    doc.text(`${t("cart.totalTTC")}: ${formatPrice(ttc, lang)}`, 196, finalY + 26, { align: "right" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, finalY + 28, { align: "right" });
+    doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, finalY + 34, { align: "right" });
 
     doc.save(`devis-setup-paris-${Date.now()}.pdf`);
   };
@@ -187,7 +192,7 @@ function QuotePage() {
                             {pickLang(item, "name", lang)}
                           </Link>
                           <div className="text-xs text-muted-foreground mt-0.5">
-                            {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}
+                            {t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}
                           </div>
                           {item.startDate && item.endDate && (
                             <div className="text-xs text-muted-foreground">{item.startDate} → {item.endDate}</div>
@@ -222,7 +227,11 @@ function QuotePage() {
                 <div className="font-display font-semibold text-lg mb-3">{t("cart.totals")}</div>
                 <Row label={t("cart.subtotalHT")} value={formatPrice(totals.gross, lang)} />
                 {totals.discount > 0 && <Row label={t("product.discount")} value={`-${formatPrice(totals.discount, lang)}`} highlight />}
-                <Row label={t("cart.totalHT")} value={formatPrice(totals.net, lang)} />
+                <div>
+                  <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
+                  <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
+                </div>
+                <Row label={t("cart.totalHT")} value={formatPrice(netWithDelivery, lang)} />
                 <Row label={t("cart.vat")} value={formatPrice(vat, lang)} />
                 <div className="border-t border-border pt-3 flex items-baseline justify-between">
                   <div className="font-semibold">{t("cart.totalTTC")}</div>

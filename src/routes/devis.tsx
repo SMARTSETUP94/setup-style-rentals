@@ -239,6 +239,28 @@ function QuotePage() {
                             {item.startDate && item.endDate && (
                               <div className="text-xs text-muted-foreground">{item.startDate} → {item.endDate}</div>
                             )}
+                            {item.selectedOptions && item.selectedOptions.length > 0 && (
+                              <ul className="mt-2 space-y-0.5">
+                                {item.selectedOptions.map((o) => (
+                                  <li
+                                    key={o.optionId}
+                                    className="text-xs text-muted-foreground flex items-baseline gap-1"
+                                  >
+                                    <span className="text-foreground/70">
+                                      {pickLang(o, "categoryName", lang)}:
+                                    </span>
+                                    <span className="font-medium text-foreground">
+                                      {pickLang(o, "name", lang)}
+                                    </span>
+                                    {o.price > 0 && (
+                                      <span className="text-accent">
+                                        +{formatPrice(o.price, lang)}/{t("product.day")}
+                                      </span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
                           <button onClick={() => remove(item.productId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
                             <Trash2 className="size-4" />

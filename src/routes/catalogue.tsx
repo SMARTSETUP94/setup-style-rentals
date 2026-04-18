@@ -1,12 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
-import { formatPrice, categoryColor } from "@/lib/format";
-import { ProductImage } from "@/components/site/ProductImage";
+import { ProductCard } from "@/components/site/ProductCard";
 import { cn } from "@/lib/utils";
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string; sort_order: number }
@@ -153,44 +152,17 @@ function CataloguePage() {
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">{t("catalog.empty")}</div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {filtered.map((p) => {
-              const cat = categories.find((c) => c.slug === p.category_slug);
-              return (
-                <Link
-                  key={p.id}
-                  to="/produit/$slug"
-                  params={{ slug: p.slug }}
-                  className="group block bg-white rounded-lg overflow-hidden border border-border hover-lift"
-                >
-                  <div className="aspect-[4/3] bg-secondary overflow-hidden">
-                    <ProductImage
-                      name={pickLang(p, "name", lang)}
-                      category_slug={p.category_slug}
-                      image_url={p.image_url}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <div
-                      className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                      style={{
-                        background: `${categoryColor(p.category_slug)}22`,
-                        color: p.category_slug === "signaletique" ? "#1A1A1A" : categoryColor(p.category_slug),
-                      }}
-                    >
-                      {cat ? pickLang(cat, "name", lang) : p.category_slug}
-                    </div>
-                    <h3 className="mt-2 font-medium text-base leading-snug">{pickLang(p, "name", lang)}</h3>
-                    <div className="mt-3 text-sm">
-                      <span className="text-xs text-muted-foreground">{t("catalog.from")} </span>
-                      <span className="font-semibold">{formatPrice(p.price_day, lang)}</span>
-                      <span className="text-xs text-muted-foreground">{t("catalog.perDay")}</span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+            {filtered.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                category={categories.find((c) => c.slug === p.category_slug)}
+                lang={lang}
+                fromLabel={t("catalog.from")}
+                perDayLabel={t("catalog.perDay")}
+              />
+            ))}
           </div>
         )}
       </div>

@@ -134,6 +134,43 @@ function ProductPage() {
     }
   }, [startDate, endDate]);
 
+  // Send dynamic prices to the configurator iframe(s) whenever data is ready
+  const sendPricesToIframe = (frame: HTMLIFrameElement | null) => {
+    if (!frame || !product) return;
+    const opts = product.configurator_options;
+    if (!opts || Object.keys(opts).length === 0) return;
+    try {
+      frame.contentWindow?.postMessage(
+        { type: "set-prices", options: opts, basePrice: Number(product.price_day) || 0 },
+        "*",
+      );
+    } catch {
+      // ignore cross-origin failures
+    }
+  };
+
+  // Listen for configurator messages
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data as ConfiguratorMessage | undefined;
+      if (!d || typeof d !== "object") return;
+      if (d.type === "cornhole-ready") {
+        // Iframe just signalled it's ready: push prices to whichever iframe sent it
+        const src = e.source as Window | null;
+        if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
+        if (modalIframeRef.current?.contentWindow === src) sendPricesToIframe(modalIframeRef.current);
+      }
+      if (d.type === "cornhole-config") {
+        if (d.data) setConfiguratorData(d.data);
+        if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
+
+
   const selectedOptionsList: SelectedOption[] = useMemo(() => {
     return optionCategories
       .map((c) => {

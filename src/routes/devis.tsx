@@ -106,7 +106,7 @@ function QuotePage() {
             name_fr: o.name_fr,
             name_en: o.name_en,
             price: o.price,
-            line_total: o.price * i.days * i.quantity,
+            line_total: o.price * i.quantity,
           })),
           options_per_unit_per_day: lt.optionsPerUnit,
           options_total: lt.optionsTotal,
@@ -267,7 +267,7 @@ function QuotePage() {
                                     </span>
                                     {o.price > 0 && (
                                       <span className="text-accent">
-                                        +{formatPrice(o.price, lang)}/{t("product.day")}
+                                        +{formatPrice(o.price, lang)}
                                       </span>
                                     )}
                                   </li>

@@ -351,10 +351,13 @@ function AdminProductsPage() {
                 onChange={(v) => setEditing({ ...editing, price_month: v ? Number(v) : null })}
               />
               <div className="col-span-2">
-                <FieldInput
-                  label="URL configurateur 3D"
+                <Label>Configurateur 3D (HTML)</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Téléversez un fichier <code className="text-[10px] bg-muted px-1 rounded">.html</code> autonome ou collez l'URL d'un configurateur externe.
+                </p>
+                <ConfiguratorUploader
                   value={editing.configurator_url || ""}
-                  onChange={(v) => setEditing({ ...editing, configurator_url: v })}
+                  onChange={(url) => setEditing({ ...editing, configurator_url: url })}
                 />
               </div>
               <div className="col-span-2 flex items-center gap-2">

@@ -118,13 +118,6 @@ function AdminQuotesPage() {
     load();
   }, []);
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("quote_requests").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Statut mis à jour");
-    setQuotes((q) => q.map((x) => (x.id === id ? { ...x, status } : x)));
-    if (selected?.id === id) setSelected({ ...selected, status });
-  };
 
   const remove = async (id: string) => {
     if (!confirm("Supprimer ce devis ?")) return;

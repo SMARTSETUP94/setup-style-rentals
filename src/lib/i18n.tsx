@@ -19,6 +19,10 @@ const DICT: Dict = {
   "cats.title": { fr: "Univers", en: "Categories" },
   "cats.sub": { fr: "Cinq univers pour composer votre événement", en: "Five worlds to compose your event" },
 
+  "featured.title": { fr: "Sélection", en: "Featured" },
+  "featured.sub": { fr: "Une sélection d'objets prêts à louer", en: "A handpicked selection ready to rent" },
+  "featured.all": { fr: "Voir tout le catalogue", en: "Browse all products" },
+
   "config.title": { fr: "Configurateur 3D", en: "3D Configurator" },
   "config.desc": { fr: "Personnalisez chaque produit en temps réel : dimensions, couleurs, marquage. Visualisez le rendu final avant de louer.", en: "Customize each product in real time: dimensions, colors, branding. Preview the final result before renting." },
 

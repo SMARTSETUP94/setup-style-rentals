@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Sparkles, MousePointerClick, FileCheck2, Headset } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
+import { formatPrice, categoryColor } from "@/lib/format";
+import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 
 interface Category {
@@ -11,6 +13,17 @@ interface Category {
   name_en: string;
   slug: string;
   color: string;
+  sort_order: number;
+}
+
+interface FeaturedProduct {
+  id: string;
+  slug: string;
+  name_fr: string;
+  name_en: string;
+  category_slug: string;
+  price_day: number;
+  image_url: string | null;
   sort_order: number;
 }
 
@@ -29,6 +42,7 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const { t, lang } = useI18n();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
 
   useEffect(() => {
     supabase
@@ -36,6 +50,14 @@ function HomePage() {
       .select("*")
       .order("sort_order")
       .then(({ data }) => setCategories((data as Category[]) ?? []));
+
+    supabase
+      .from("products")
+      .select("id, slug, name_fr, name_en, category_slug, price_day, image_url, sort_order")
+      .eq("is_active", true)
+      .order("sort_order")
+      .limit(8)
+      .then(({ data }) => setFeatured((data as FeaturedProduct[]) ?? []));
   }, []);
 
   return (
@@ -123,6 +145,36 @@ function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* FEATURED PRODUCTS */}
+      {featured.length > 0 && (
+        <section className="container-x py-14 md:py-20">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <SectionHeader num="03" title={t("featured.title")} sub={t("featured.sub")} />
+            <Link
+              to="/catalogue"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-accent transition-colors shrink-0"
+            >
+              {t("featured.all")}
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+
+          {/* Mobile: horizontal scroll. md+: grid */}
+          <div className="mt-8 -mx-5 md:mx-0 md:hidden overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 px-5 snap-x snap-mandatory">
+              {featured.map((p) => (
+                <FeaturedCard key={p.id} p={p} categories={categories} lang={lang} t={t} className="w-[70%] shrink-0 snap-start" />
+              ))}
+            </div>
+          </div>
+          <div className="mt-8 hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {featured.map((p) => (
+              <FeaturedCard key={p.id} p={p} categories={categories} lang={lang} t={t} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CONFIGURATOR */}
       <section id="configurator" className="bg-secondary/50 py-14 md:py-20">
@@ -212,5 +264,57 @@ function SectionHeader({ num, title, sub }: { num: string; title: string; sub?: 
       </h2>
       {sub && <p className="mt-4 text-lg text-muted-foreground max-w-2xl">{sub}</p>}
     </div>
+  );
+}
+
+function FeaturedCard({
+  p,
+  categories,
+  lang,
+  t,
+  className,
+}: {
+  p: FeaturedProduct;
+  categories: Category[];
+  lang: "fr" | "en";
+  t: (key: string) => string;
+  className?: string;
+}) {
+  const cat = categories.find((c) => c.slug === p.category_slug);
+  return (
+    <Link
+      to="/produit/$slug"
+      params={{ slug: p.slug }}
+      className={cn(
+        "group block bg-white rounded-lg overflow-hidden border border-border hover-lift",
+        className,
+      )}
+    >
+      <div className="aspect-[4/3] bg-secondary overflow-hidden">
+        <ProductImage
+          name={pickLang(p, "name", lang)}
+          category_slug={p.category_slug}
+          image_url={p.image_url}
+          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+        />
+      </div>
+      <div className="p-4">
+        <div
+          className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
+          style={{
+            background: `${categoryColor(p.category_slug)}22`,
+            color: p.category_slug === "signaletique" ? "#1A1A1A" : categoryColor(p.category_slug),
+          }}
+        >
+          {cat ? pickLang(cat, "name", lang) : p.category_slug}
+        </div>
+        <h3 className="mt-2 font-medium text-base leading-snug">{pickLang(p, "name", lang)}</h3>
+        <div className="mt-2 text-sm">
+          <span className="text-xs text-muted-foreground">{t("catalog.from")} </span>
+          <span className="font-semibold">{formatPrice(p.price_day, lang)}</span>
+          <span className="text-xs text-muted-foreground">{t("catalog.perDay")}</span>
+        </div>
+      </div>
+    </Link>
   );
 }

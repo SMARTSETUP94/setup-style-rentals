@@ -43,6 +43,7 @@ interface ConfiguratorMessage {
   type: string;
   data?: ConfiguratorConfigData;
   recap?: string;
+  height?: number;
 }
 
 interface Product {
@@ -83,6 +84,7 @@ function ProductPage() {
   const modalIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
+  const [iframeHeight, setIframeHeight] = useState<number>(900);
 
   useEffect(() => {
     setLoading(true);
@@ -163,6 +165,9 @@ function ProductPage() {
       if (d.type === "cornhole-config") {
         if (d.data) setConfiguratorData(d.data);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+      }
+      if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
+        setIframeHeight(Math.max(400, Math.min(3000, d.height)));
       }
     };
     window.addEventListener("message", onMsg);
@@ -592,8 +597,8 @@ function ProductPage() {
                 ref={inlineIframeRef}
                 src={product.configurator_url}
                 title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
-                className="block h-[480px] md:h-[560px]"
-                style={{ width: "100%", height: "100%", border: "none" }}
+                className="block"
+                style={{ width: "100%", height: `${iframeHeight}px`, minHeight: "900px", border: "none" }}
                 loading="lazy"
                 allow="clipboard-write"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
@@ -608,12 +613,12 @@ function ProductPage() {
               <h3 className="mt-1 font-display text-lg font-semibold tracking-tight">
                 {lang === "fr" ? "Récapitulatif" : "Summary"}
               </h3>
-              {configuratorData ? (
+              {configuratorData || configuratorRecap ? (
                 <>
                   <pre className="mt-4 flex-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
-                    {configuratorRecap || JSON.stringify(configuratorData, null, 2)}
+                    {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
                   </pre>
-                  {typeof configuratorData.price === "number" && (
+                  {configuratorData && typeof configuratorData.price === "number" && (
                     <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
                       <span className="text-muted-foreground">
                         {lang === "fr" ? "Prix configuré" : "Configured price"}

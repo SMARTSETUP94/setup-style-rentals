@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/format";
+import { ProductOptionsManager } from "@/components/admin/ProductOptionsManager";
 
 export const Route = createFileRoute("/admin/products")({
   component: AdminProductsPage,

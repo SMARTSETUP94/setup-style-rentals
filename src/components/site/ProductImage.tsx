@@ -1,4 +1,4 @@
-import { categoryColor, initialsFromName } from "@/lib/format";
+import { Package } from "lucide-react";
 
 interface Props {
   name: string;
@@ -8,10 +8,10 @@ interface Props {
 }
 
 /**
- * Elegant placeholder when no image is set: large initials over a soft tinted
- * gradient using the category color. Falls back to image_url when provided.
+ * Elegant placeholder when no image is set: light gray background with a
+ * centered Package icon. Falls back to image_url when provided.
  */
-export function ProductImage({ name, category_slug, image_url, className }: Props) {
+export function ProductImage({ name, category_slug: _category_slug, image_url, className }: Props) {
   if (image_url) {
     return (
       <img
@@ -23,30 +23,15 @@ export function ProductImage({ name, category_slug, image_url, className }: Prop
     );
   }
 
-  const color = categoryColor(category_slug);
-  const initials = initialsFromName(name);
-
   return (
     <div
-      className={className ?? "w-full h-full"}
-      style={{
-        background: `radial-gradient(120% 120% at 30% 20%, ${color}33 0%, ${color}10 45%, #ffffff 100%)`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className={
+        (className ?? "w-full h-full") +
+        " bg-secondary flex items-center justify-center"
+      }
       aria-label={name}
     >
-      <span
-        className="font-display font-bold tracking-tight"
-        style={{
-          color: "#1A1A1A",
-          fontSize: "clamp(2.5rem, 8vw, 5rem)",
-          letterSpacing: "-0.04em",
-        }}
-      >
-        {initials}
-      </span>
+      <Package className="size-14 text-muted-foreground/50" strokeWidth={1.25} />
     </div>
   );
 }

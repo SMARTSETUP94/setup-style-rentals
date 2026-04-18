@@ -264,7 +264,7 @@ function AdminProductsPage() {
       </div>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Modifier" : "Nouveau produit"}</DialogTitle>
           </DialogHeader>

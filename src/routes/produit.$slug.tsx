@@ -597,8 +597,8 @@ function ProductPage() {
                 ref={inlineIframeRef}
                 src={product.configurator_url}
                 title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
-                className="block h-[480px] md:h-[560px]"
-                style={{ width: "100%", height: "100%", border: "none" }}
+                className="block"
+                style={{ width: "100%", height: `${iframeHeight}px`, minHeight: "900px", border: "none" }}
                 loading="lazy"
                 allow="clipboard-write"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}

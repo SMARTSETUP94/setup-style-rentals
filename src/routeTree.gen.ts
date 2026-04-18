@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DevisRouteImport } from './routes/devis'
+import { Route as CglRouteImport } from './routes/cgl'
 import { Route as CatalogueRouteImport } from './routes/catalogue'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,11 @@ import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 const DevisRoute = DevisRouteImport.update({
   id: '/devis',
   path: '/devis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CglRoute = CglRouteImport.update({
+  id: '/cgl',
+  path: '/cgl',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogueRoute = CatalogueRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/catalogue': typeof CatalogueRoute
+  '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogue': typeof CatalogueRoute
+  '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/catalogue': typeof CatalogueRoute
+  '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/catalogue'
+    | '/cgl'
     | '/devis'
     | '/admin/auth'
     | '/admin/categories'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/catalogue'
+    | '/cgl'
     | '/devis'
     | '/admin/auth'
     | '/admin/categories'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/catalogue'
+    | '/cgl'
     | '/devis'
     | '/admin/auth'
     | '/admin/categories'
@@ -161,6 +173,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   CatalogueRoute: typeof CatalogueRoute
+  CglRoute: typeof CglRoute
   DevisRoute: typeof DevisRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       path: '/devis'
       fullPath: '/devis'
       preLoaderRoute: typeof DevisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgl': {
+      id: '/cgl'
+      path: '/cgl'
+      fullPath: '/cgl'
+      preLoaderRoute: typeof CglRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalogue': {
@@ -270,6 +290,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CatalogueRoute: CatalogueRoute,
+  CglRoute: CglRoute,
   DevisRoute: DevisRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   ProduitSlugRoute: ProduitSlugRoute,

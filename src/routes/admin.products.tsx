@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,18 @@ const empty: Partial<Product> = {
   is_active: true,
 };
 
+function slugify(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,6 +79,8 @@ function AdminProductsPage() {
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -84,6 +98,26 @@ function AdminProductsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const openEdit = (p: Partial<Product> | null) => {
+    setSlugManuallyEdited(!!p?.id);
+    setEditing(p);
+  };
+
+  const onNameFrChange = (v: string) => {
+    if (!editing) return;
+    const next: Partial<Product> = { ...editing, name_fr: v };
+    if (!slugManuallyEdited && !editing.id) {
+      next.slug = slugify(v);
+    }
+    setEditing(next);
+  };
+
+  const onSlugChange = (v: string) => {
+    if (!editing) return;
+    setSlugManuallyEdited(true);
+    setEditing({ ...editing, slug: slugify(v) });
+  };
 
   const save = async () => {
     if (!editing) return;
@@ -136,27 +170,46 @@ function AdminProductsPage() {
     setProducts((list) => list.map((x) => (x.id === p.id ? { ...x, is_active: !p.is_active } : x)));
   };
 
-  const filtered = products.filter(
-    (p) =>
-      p.name_fr.toLowerCase().includes(filter.toLowerCase()) ||
-      p.slug.toLowerCase().includes(filter.toLowerCase()),
-  );
+  const filtered = products.filter((p) => {
+    const q = filter.toLowerCase();
+    const matchQ =
+      !q ||
+      p.name_fr.toLowerCase().includes(q) ||
+      p.name_en.toLowerCase().includes(q) ||
+      p.slug.toLowerCase().includes(q);
+    const matchC = !categoryFilter || p.category_slug === categoryFilter;
+    return matchQ && matchC;
+  });
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Produits</h1>
-          <p className="text-sm text-muted-foreground mt-1">{products.length} produits</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {filtered.length} / {products.length} produits
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Input
-            placeholder="Rechercher…"
+            placeholder="Rechercher nom, slug…"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="w-56"
           />
-          <Button onClick={() => setEditing({ ...empty })}>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            <option value="">Toutes catégories</option>
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name_fr}
+              </option>
+            ))}
+          </select>
+          <Button onClick={() => openEdit({ ...empty })}>
             <Plus className="size-4" /> Nouveau
           </Button>
         </div>
@@ -194,7 +247,7 @@ function AdminProductsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => setEditing(p)}>
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                         <Pencil className="size-4" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => remove(p.id)}>
@@ -216,22 +269,22 @@ function AdminProductsPage() {
           </DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-4 mt-2">
-              <FieldInput label="Slug *" value={editing.slug || ""} onChange={(v) => setEditing({ ...editing, slug: v })} />
+              <FieldInput label="Nom FR *" value={editing.name_fr || ""} onChange={onNameFrChange} />
+              <FieldInput label="Nom EN *" value={editing.name_en || ""} onChange={(v) => setEditing({ ...editing, name_en: v })} />
+              <FieldInput label="Slug *" value={editing.slug || ""} onChange={onSlugChange} />
               <FieldSelect
                 label="Catégorie *"
                 value={editing.category_slug || ""}
                 onChange={(v) => setEditing({ ...editing, category_slug: v })}
                 options={categories.map((c) => ({ value: c.slug, label: c.name_fr }))}
               />
-              <FieldInput label="Nom FR *" value={editing.name_fr || ""} onChange={(v) => setEditing({ ...editing, name_fr: v })} />
-              <FieldInput label="Nom EN *" value={editing.name_en || ""} onChange={(v) => setEditing({ ...editing, name_en: v })} />
               <div className="col-span-2">
                 <Label>Description FR</Label>
                 <Textarea
                   value={editing.description_fr || ""}
                   onChange={(e) => setEditing({ ...editing, description_fr: e.target.value })}
                   className="mt-1.5"
-                  rows={2}
+                  rows={4}
                 />
               </div>
               <div className="col-span-2">
@@ -240,11 +293,23 @@ function AdminProductsPage() {
                   value={editing.description_en || ""}
                   onChange={(e) => setEditing({ ...editing, description_en: e.target.value })}
                   className="mt-1.5"
-                  rows={2}
+                  rows={4}
                 />
               </div>
               <FieldInput label="Dimensions" value={editing.dimensions || ""} onChange={(v) => setEditing({ ...editing, dimensions: v })} />
-              <FieldInput label="Image URL" value={editing.image_url || ""} onChange={(v) => setEditing({ ...editing, image_url: v })} />
+              <FieldInput
+                label="Ordre"
+                type="number"
+                value={String(editing.sort_order ?? 0)}
+                onChange={(v) => setEditing({ ...editing, sort_order: Number(v) })}
+              />
+              <div className="col-span-2">
+                <Label>Image produit</Label>
+                <ImageUploader
+                  value={editing.image_url || ""}
+                  onChange={(url) => setEditing({ ...editing, image_url: url })}
+                />
+              </div>
               <FieldInput
                 label="Prix/jour (€)"
                 type="number"
@@ -269,17 +334,13 @@ function AdminProductsPage() {
                 value={String(editing.price_month ?? "")}
                 onChange={(v) => setEditing({ ...editing, price_month: v ? Number(v) : null })}
               />
-              <FieldInput
-                label="URL configurateur 3D"
-                value={editing.configurator_url || ""}
-                onChange={(v) => setEditing({ ...editing, configurator_url: v })}
-              />
-              <FieldInput
-                label="Ordre"
-                type="number"
-                value={String(editing.sort_order ?? 0)}
-                onChange={(v) => setEditing({ ...editing, sort_order: Number(v) })}
-              />
+              <div className="col-span-2">
+                <FieldInput
+                  label="URL configurateur 3D"
+                  value={editing.configurator_url || ""}
+                  onChange={(v) => setEditing({ ...editing, configurator_url: v })}
+                />
+              </div>
               <div className="col-span-2 flex items-center gap-2">
                 <Switch
                   checked={editing.is_active ?? true}
@@ -295,6 +356,101 @@ function AdminProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function ImageUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const upload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Le fichier doit être une image");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image trop lourde (max 5 Mo)");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(path, file, { cacheControl: "3600", upsert: false });
+    if (error) {
+      setUploading(false);
+      return toast.error(error.message);
+    }
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    onChange(data.publicUrl);
+    setUploading(false);
+    toast.success("Image téléversée");
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) upload(file);
+  };
+
+  return (
+    <div className="mt-1.5 space-y-2">
+      {value ? (
+        <div className="relative inline-block">
+          <img
+            src={value}
+            alt="Aperçu"
+            className="h-32 w-32 rounded-lg object-cover border border-border"
+          />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute -top-2 -right-2 rounded-full bg-destructive text-destructive-foreground p-1 shadow"
+            aria-label="Retirer l'image"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      ) : (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+          className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors ${
+            dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+          }`}
+        >
+          <Upload className="size-6 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground text-center">
+            {uploading ? "Téléversement…" : "Glissez une image ou cliquez pour choisir"}
+          </p>
+          <p className="text-xs text-muted-foreground">PNG, JPG, WEBP — max 5 Mo</p>
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) upload(f);
+          e.target.value = "";
+        }}
+      />
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="ou collez une URL d'image"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1"
+        />
+      </div>
     </div>
   );
 }

@@ -282,6 +282,82 @@ function ProductPage() {
             </div>
           </div>
 
+          {/* Customization options */}
+          {optionCategories.length > 0 && (
+            <div className="mt-8 space-y-5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {lang === "fr" ? "Personnalisation" : "Customization"}
+              </div>
+              {optionCategories.map((cat) => {
+                const opts = productOptions
+                  .filter((o) => o.category_id === cat.id)
+                  .sort((a, b) => a.sort_order - b.sort_order);
+                if (opts.length === 0) return null;
+                const selected = selectedOptionIds[cat.id];
+                return (
+                  <div key={cat.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium">{pickLang(cat, "name", lang)}</label>
+                      {cat.is_required ? (
+                        <span className="text-[10px] uppercase tracking-wider text-destructive">
+                          {lang === "fr" ? "Requis" : "Required"}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOptionIds((prev) => {
+                              const next = { ...prev };
+                              delete next[cat.id];
+                              return next;
+                            });
+                          }}
+                          className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-auto"
+                        >
+                          {lang === "fr" ? "Désélectionner" : "Clear"}
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {opts.map((o) => {
+                        const active = selected === o.id;
+                        return (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }))
+                            }
+                            className={cn(
+                              "text-left rounded-lg border p-3 transition-all",
+                              active
+                                ? "border-gold bg-gold/5 ring-1 ring-gold"
+                                : "border-border hover:border-foreground/30",
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-sm font-medium">
+                                {pickLang(o, "name", lang)}
+                              </span>
+                              {active && <Check className="size-4 text-gold shrink-0" />}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {o.price > 0
+                                ? `+${formatPrice(o.price, lang)} ${t("catalog.perDay")}`
+                                : lang === "fr"
+                                  ? "Inclus"
+                                  : "Included"}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Quantity & dates */}
           <div className="mt-8 space-y-4">
             <div className="grid grid-cols-2 gap-3">

@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurateur — Cornhole</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0d0d12;color:#e0e0e0}
+.app{display:grid;grid-template-columns:1fr 370px;height:100vh}
+
+.viewer{position:relative;overflow:hidden;background:radial-gradient(ellipse at center,#1a1a2e 0%,#0d0d12 70%)}
+.viewer canvas{display:block;width:100%;height:100%}
+.viewer-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:12px;color:rgba(255,255,255,.35);pointer-events:none}
+
+.sidebar{background:#141420;border-left:1px solid rgba(255,255,255,.06);overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:22px}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.4);margin-bottom:10px}
+.section-title{font-size:18px;font-weight:600;margin-bottom:2px}
+.section-desc{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px;line-height:1.4}
+
+.picker-row{display:flex;align-items:center;gap:12px}
+.picker-wrapper{position:relative;width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid rgba(160,140,255,.5);cursor:pointer;flex-shrink:0}
+.picker-wrapper input[type=color]{position:absolute;inset:-8px;width:60px;height:60px;border:none;cursor:pointer;background:none}
+.hex-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 12px;color:#e0e0e0;font-family:monospace;font-size:14px;outline:none;transition:border-color .2s}
+.hex-input:focus{border-color:rgba(160,140,255,.6)}
+
+.color-duo{display:flex;gap:14px;margin-top:4px}
+.color-duo-item{flex:1;display:flex;flex-direction:column;gap:6px}
+.color-duo-label{font-size:12px;color:rgba(255,255,255,.55);font-weight:500}
+.color-duo-picker{display:flex;align-items:center;gap:10px}
+.color-duo-preview{width:38px;height:38px;border-radius:50%;border:2px solid rgba(160,140,255,.5);overflow:hidden;position:relative;cursor:pointer;flex-shrink:0}
+.color-duo-preview input[type=color]{position:absolute;inset:-8px;width:54px;height:54px;border:none;cursor:pointer;background:none}
+.color-duo-hex{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px;color:#e0e0e0;font-family:monospace;font-size:13px;outline:none}
+.color-duo-hex:focus{border-color:rgba(160,140,255,.6)}
+
+.upload-zone{border:2px dashed rgba(160,140,255,.35);border-radius:12px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .25s;background:rgba(160,140,255,.03)}
+.upload-zone:hover{border-color:rgba(160,140,255,.6);background:rgba(160,140,255,.06)}
+.upload-icon{font-size:28px;margin-bottom:6px}
+.upload-text{font-size:12px;color:rgba(255,255,255,.45);line-height:1.4}
+.upload-text b{color:rgba(160,140,255,.8)}
+.upload-preview{margin-top:10px;border-radius:8px;overflow:hidden;position:relative;display:none}
+.upload-preview img{width:100%;display:block;border-radius:8px;max-height:120px;object-fit:cover}
+.upload-preview .remove-btn{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+.board-select{display:flex;gap:8px}
+.board-opt{flex:1;padding:10px 6px;border:2px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.03);color:rgba(255,255,255,.6);font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:all .2s}
+.board-opt:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.06)}
+.board-opt.active{border-color:rgba(160,140,255,.7);background:rgba(160,140,255,.1);color:#c0b0ff}
+
+.dim-info{display:flex;gap:12px;margin-top:2px;flex-wrap:wrap}
+.dim-tag{font-size:11px;color:rgba(160,140,255,.6);background:rgba(160,140,255,.08);padding:3px 8px;border-radius:6px;font-weight:600}
+
+.export-group{display:flex;gap:8px;flex-wrap:wrap}
+.export-btn{flex:1;min-width:90px;padding:10px 8px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;letter-spacing:.5px}
+.export-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-glb{background:linear-gradient(135deg,#7c5cbf,#a08cff);color:#fff}
+.btn-obj{background:linear-gradient(135deg,#3a8a5c,#5ece7b);color:#fff}
+.btn-dxf{background:linear-gradient(135deg,#c06030,#e8945a);color:#fff}
+
+.brand{text-align:center;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+.brand-name{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="viewer" id="viewer">
+    <div class="viewer-hint">Cliquer-glisser pour tourner | Molette pour zoomer</div>
+  </div>
+  <div class="sidebar">
+    <div>
+      <div class="section-label">Produit</div>
+      <div class="section-title">Cornhole</div>
+      <div class="section-desc">Planche de jeu inclinee, dimensions fixes.</div>
+      <div class="dim-info">
+        <span class="dim-tag">600 x 1200 mm</span>
+        <span class="dim-tag">Inclinaison 10&deg;</span>
+        <span class="dim-tag">Trou &Oslash;120 mm</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Affichage</div>
+      <div class="section-title">Nombre de planches</div>
+      <div class="board-select" id="boardSelect">
+        <div class="board-opt active" data-val="1">1 planche</div>
+        <div class="board-opt" data-val="2">2 planches</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Peinture</div>
+      <div class="section-title">Couleurs</div>
+      <div class="section-desc">Couleur du cadre et de la surface de jeu.</div>
+      <div class="color-duo">
+        <div class="color-duo-item">
+          <div class="color-duo-label">Cadre / pieds</div>
+          <div class="color-duo-picker">
+            <div class="color-duo-preview"><input type="color" id="colorFrame" value="#5a3a1e"></div>
+            <input type="text" class="color-duo-hex" id="hexFrame" value="#5A3A1E" maxlength="7">
+          </div>
+        </div>
+        <div class="color-duo-item">
+          <div class="color-duo-label">Surface de jeu</div>
+          <div class="color-duo-picker">
+            <div class="color-duo-preview"><input type="color" id="colorSurface" value="#1a4a8e"></div>
+            <input type="text" class="color-duo-hex" id="hexSurface" value="#1A4A8E" maxlength="7">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="imageSection">
+      <div class="section-label">Motif</div>
+      <div class="section-title">Papier peint / visuel imprime</div>
+      <div class="section-desc">Importez une image a appliquer sur la surface.</div>
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">&#128444;</div>
+        <div class="upload-text">Cliquez ou glissez une image<br><b>.jpg .png .webp</b></div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none">
+      </div>
+      <div class="upload-preview" id="uploadPreview">
+        <img id="previewImg">
+        <button class="remove-btn" id="removeBtn">&times;</button>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Export</div>
+      <div class="section-title">Telecharger le 3D</div>
+      <div class="export-group">
+        <button class="export-btn btn-glb" id="btnGLB">.GLB</button>
+        <button class="export-btn btn-obj" id="btnOBJ">.OBJ</button>
+        <button class="export-btn btn-dxf" id="btnDXF">.DXF</button>
+      </div>
+    </div>
+    <div class="brand"><div class="brand-name">Setup Paris</div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/*
+  CORNHOLE — geometrie 100% procedurale, simple et propre.
+
+  Construction :
+  1. Un plateau rectangulaire 600x1200mm, epaisseur 19mm
+  2. Cadre perimétrique (rails lateraux + barre avant/arriere) hauteur 40mm
+  3. Trou circulaire 150mm diametre, centre a 225mm du bord haut
+  4. Deux pieds arriere repliables (triangles droits) hauteur ~210mm
+  5. Le tout incliné de 10 degrés
+
+  Stratégie : on modélise TOUT A PLAT (Y=up = épaisseur), puis on tilt le group entier.
+  Le pivot est le bord avant bas (le coté au sol).
+*/
+
+var BW  = 600;    // largeur
+var BL  = 1200;   // longueur
+var BT  = 19;     // epaisseur plateau
+var TILT_DEG = 10;
+var TILT = TILT_DEG * Math.PI / 180;
+var HOLE_D = 120; // diametre trou
+var HOLE_R = HOLE_D / 2;
+var HOLE_DIST = 230; // centre trou depuis le bord haut (coté sureleve)
+var RAIL_T = 19;  // epaisseur rail lateral
+var RAIL_H = 38;  // hauteur rail au dessus du plateau
+var LEG_T = 22;   // epaisseur pieds
+var LEG_W = 50;   // largeur pieds
+
+// Hauteur du bord arriere au sol quand incliné
+var BACK_RISE = Math.sin(TILT) * BL; // ~208mm
+
+var state = {
+  boards: 1,
+  frameColor: "#5a3a1e",
+  surfaceColor: "#1a4a8e",
+  imgTex: null
+};
+
+/* ===== THREE ===== */
+var viewer = document.getElementById("viewer");
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(40, viewer.clientWidth / viewer.clientHeight, 1, 20000);
+var renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+viewer.insertBefore(renderer.domElement, viewer.firstChild);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+var dL = new THREE.DirectionalLight(0xffffff, 0.7);
+dL.position.set(500, 800, 600);
+dL.castShadow = true;
+dL.shadow.mapSize.set(2048, 2048);
+dL.shadow.camera.left = -1500; dL.shadow.camera.right = 1500;
+dL.shadow.camera.top = 1500; dL.shadow.camera.bottom = -1500;
+scene.add(dL);
+var fL = new THREE.DirectionalLight(0x99aacc, 0.25);
+fL.position.set(-400, 300, -300); scene.add(fL);
+var bkL = new THREE.DirectionalLight(0xffffff, 0.15);
+bkL.position.set(0, 200, -600); scene.add(bkL);
+
+var ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(6000, 6000),
+  new THREE.MeshStandardMaterial({color: 0x0d0d12, roughness: 1})
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+/* Orbit controls */
+var orbState = {r: 1600, phi: 1.05, theta: 0.4};
+var orbTgt = new THREE.Vector3(0, 120, 0);
+var orbPan = new THREE.Vector3();
+var orbDrag = false, orbRight = false, orbPrev = {x: 0, y: 0};
+function orbUpdate(){
+  var sp = Math.sin(orbState.phi);
+  camera.position.set(
+    orbTgt.x + orbPan.x + orbState.r * sp * Math.sin(orbState.theta),
+    orbTgt.y + orbPan.y + orbState.r * Math.cos(orbState.phi),
+    orbTgt.z + orbPan.z + orbState.r * sp * Math.cos(orbState.theta)
+  );
+  camera.lookAt(orbTgt.x + orbPan.x, orbTgt.y + orbPan.y, orbTgt.z + orbPan.z);
+}
+renderer.domElement.addEventListener("mousedown", function(e){
+  orbDrag = true; orbRight = e.button === 2;
+  orbPrev.x = e.clientX; orbPrev.y = e.clientY;
+});
+renderer.domElement.addEventListener("mousemove", function(e){
+  if (!orbDrag) return;
+  var dx = e.clientX - orbPrev.x, dy = e.clientY - orbPrev.y;
+  if (orbRight) { orbPan.x -= dx * 1.2; orbPan.y += dy * 1.2; }
+  else { orbState.theta -= dx * 0.005; orbState.phi = Math.max(0.15, Math.min(Math.PI - 0.15, orbState.phi - dy * 0.005)); }
+  orbPrev.x = e.clientX; orbPrev.y = e.clientY;
+  orbUpdate();
+});
+window.addEventListener("mouseup", function(){ orbDrag = false; });
+renderer.domElement.addEventListener("wheel", function(e){
+  e.preventDefault();
+  orbState.r = Math.max(500, Math.min(5000, orbState.r + e.deltaY * 2));
+  orbUpdate();
+}, {passive: false});
+renderer.domElement.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+orbUpdate();
+
+/* ===== MODEL ===== */
+var mdl = new THREE.Group();
+scene.add(mdl);
+
+function clearMdl(){
+  while (mdl.children.length > 0) {
+    var ch = mdl.children[0]; mdl.remove(ch);
+    if (ch.traverse) ch.traverse(function(c){ if(c.geometry) c.geometry.dispose(); if(c.material && c.material.dispose) c.material.dispose(); });
+    else { if(ch.geometry) ch.geometry.dispose(); if(ch.material && ch.material.dispose) ch.material.dispose(); }
+  }
+}
+
+function makeSingleBoard(offX, offZ, rotY){
+  var fc = new THREE.Color(state.frameColor);
+  var sc = new THREE.Color(state.surfaceColor);
+
+  // Materials
+  var frameMat = new THREE.MeshStandardMaterial({color: fc, roughness: 0.4, metalness: 0.02});
+  var surfParams = {color: sc, roughness: 0.3, metalness: 0.02};
+  if (state.imgTex) {
+    surfParams.map = state.imgTex;
+    surfParams.color = new THREE.Color(0xffffff);
+  }
+  var surfMat = new THREE.MeshStandardMaterial(surfParams);
+  var legMat  = new THREE.MeshStandardMaterial({color: fc.clone().multiplyScalar(0.8), roughness: 0.45});
+  var blackMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.9});
+
+  /*
+    Tout est construit A PLAT :
+    - Le plateau est dans le plan XZ (X=largeur, Z=longueur)
+    - Y = vers le haut (épaisseur)
+    - Z negatif = vers le haut de la planche (coté trou)
+    - Z positif = vers le bas (coté joueur, bord avant au sol)
+    Ensuite on tilt autour de l'axe X au bord avant (Z = +BL/2)
+  */
+  var boardGrp = new THREE.Group();
+
+  // ---- PLATEAU (surface de jeu) ----
+  // On utilise un plan simple pour la surface visible du dessus
+  // et un box pour le corps du plateau
+  // Mais pour avoir le trou, on utilise Shape + Extrude
+
+  var hw = BW / 2;
+  var hl = BL / 2;
+
+  // Shape du plateau avec trou
+  var shape = new THREE.Shape();
+  shape.moveTo(-hw, -hl);
+  shape.lineTo(hw, -hl);
+  shape.lineTo(hw, hl);
+  shape.lineTo(-hw, hl);
+  shape.lineTo(-hw, -hl);
+
+  // Trou en haut de la planche (coté sureleve = Y_shape negatif -> Z positif apres rotation)
+  // Y_shape negatif = coté qui sera en haut apres tilt
+  var holeZ = hl - HOLE_DIST;
+  var holePath = new THREE.Path();
+  for (var i = 0; i <= 32; i++) {
+    var ang = (i / 32) * Math.PI * 2;
+    var hx = Math.cos(ang) * HOLE_R;
+    var hz = holeZ + Math.sin(ang) * HOLE_R;
+    if (i === 0) holePath.moveTo(hx, hz);
+    else holePath.lineTo(hx, hz);
+  }
+  shape.holes.push(holePath);
+
+  // Extrude vers le haut (depth = epaisseur)
+  var plateGeo = new THREE.ExtrudeGeometry(shape, {depth: BT, bevelEnabled: false});
+  // L'extrusion crée la forme dans XY, extrudée en Z.
+  // On veut : X = largeur, Z = longueur, Y = épaisseur
+  // Shape est en XY (X=largeur, Y=longueur), extrude Z = BT (épaisseur)
+  // Rotation : swap Y et Z -> rotateX(-PI/2)
+  // Mais attention : la Shape Y correspond a notre Z (longueur)
+  // Après rotateX(-PI/2) : (x, y_shape, z_extrude) -> (x, z_extrude, -y_shape)
+  // Donc Y = épaisseur (bon), Z = -y_shape (il faut inverser)
+
+  plateGeo.rotateX(-Math.PI / 2);
+  // Maintenant : surface en XZ, épaisseur en Y, mais Z inversé
+  // Centrons en Y sur le dessus = 0 -> décaler vers le bas
+  plateGeo.translate(0, 0, 0);
+
+  // Le dessus du plateau est à Y = BT (après rotation), le dessous à Y = 0
+  var plate = new THREE.Mesh(plateGeo, surfMat);
+  plate.castShadow = true;
+  plate.receiveShadow = true;
+  boardGrp.add(plate);
+
+  // ---- TROU : disque noir au fond ----
+  var holeVizGeo = new THREE.CylinderGeometry(HOLE_R - 2, HOLE_R - 2, 3, 24);
+  var holeViz = new THREE.Mesh(holeVizGeo, blackMat);
+  holeViz.position.set(0, BT / 2, -holeZ); // Z inverse apres rotateX(-PI/2)
+  boardGrp.add(holeViz);
+
+  // ---- CADRE / RAILS ----
+  // Rail gauche
+  var railSideGeo = new THREE.BoxGeometry(RAIL_T, RAIL_H, BL);
+  var railL = new THREE.Mesh(railSideGeo, frameMat);
+  railL.position.set(-hw + RAIL_T / 2, BT + RAIL_H / 2, 0);
+  railL.castShadow = true;
+  boardGrp.add(railL);
+
+  // Rail droit
+  var railR = new THREE.Mesh(railSideGeo, frameMat);
+  railR.position.set(hw - RAIL_T / 2, BT + RAIL_H / 2, 0);
+  railR.castShadow = true;
+  boardGrp.add(railR);
+
+  // Barre arriere (coté trou, haut)
+  var railBackGeo = new THREE.BoxGeometry(BW - 2 * RAIL_T, RAIL_H, RAIL_T);
+  var railBack = new THREE.Mesh(railBackGeo, frameMat);
+  railBack.position.set(0, BT + RAIL_H / 2, -(hl - RAIL_T / 2));
+  railBack.castShadow = true;
+  boardGrp.add(railBack);
+
+  // Barre avant basse (coté joueur)
+  var railFrontGeo = new THREE.BoxGeometry(BW - 2 * RAIL_T, RAIL_H * 0.5, RAIL_T);
+  var railFront = new THREE.Mesh(railFrontGeo, frameMat);
+  railFront.position.set(0, BT + RAIL_H * 0.25, hl - RAIL_T / 2);
+  boardGrp.add(railFront);
+
+  // ---- DESSOUS : traverses ----
+  var braceGeo = new THREE.BoxGeometry(BW - 60, 18, 20);
+  for (var bi = 0; bi < 3; bi++) {
+    var bz = -hl + 100 + bi * (BL - 200) / 2;
+    var brace = new THREE.Mesh(braceGeo, frameMat);
+    brace.position.set(0, -9, bz);
+    boardGrp.add(brace);
+  }
+
+  // ---- PIEDS ARRIERE ----
+  // Les pieds sont des rectangles qui partent du bord arriere du plateau
+  // et descendent jusqu'au sol. Ils ne sont PAS inclinés avec le plateau,
+  // donc on les ajoute APRES le tilt.
+
+  // ---- TILT ----
+  // Pivot au bord avant (Z = +BL/2), le bord qui touche le sol
+  // Avant le tilt : le plateau est horizontal. On le décale pour que le pivot
+  // soit à l'origine Z, puis on tilt, puis on remet.
+  boardGrp.position.z = -hl; // décale pour que bord avant soit en Z=0
+
+  var tiltPivot = new THREE.Group();
+  tiltPivot.add(boardGrp);
+  tiltPivot.rotation.x = TILT;
+  // Après tilt, le bord avant est en Z=0, Y=0 (au sol)
+
+  var wholeBoard = new THREE.Group();
+  wholeBoard.add(tiltPivot);
+
+  // ---- PIEDS (ajoutés dans l'espace world, droits) ----
+  // Le bord arriere, après tilt, est à :
+  //   Y_back = sin(TILT) * BL ≈ 208
+  //   Z_back = -cos(TILT) * BL ≈ -1182
+  // Les pieds vont du bord arriere au sol.
+  var backY = Math.sin(TILT) * BL;
+  var backZ = -Math.cos(TILT) * BL;
+
+  // Pieds = rectangles verticaux, un de chaque coté
+  var legH = backY + 18; // du sol jusque sous le plateau arriere
+  var legGeo = new THREE.BoxGeometry(LEG_W, legH, LEG_T);
+
+  var legL = new THREE.Mesh(legGeo, legMat);
+  legL.position.set(-hw + RAIL_T + LEG_W / 2 + 8, legH / 2, backZ + 40);
+  legL.castShadow = true;
+  wholeBoard.add(legL);
+
+  var legR = new THREE.Mesh(legGeo, legMat);
+  legR.position.set(hw - RAIL_T - LEG_W / 2 - 8, legH / 2, backZ + 40);
+  legR.castShadow = true;
+  wholeBoard.add(legR);
+
+  // Barre horizontale entre les deux pieds (stabilité)
+  var legBarGeo = new THREE.BoxGeometry(BW - 2 * RAIL_T - 2 * LEG_W - 16, 18, LEG_T);
+  var legBar = new THREE.Mesh(legBarGeo, legMat);
+  legBar.position.set(0, 30, backZ + 40);
+  wholeBoard.add(legBar);
+
+  // Contreventement diagonal (chaque coté)
+  var diagLen = legH * 0.7;
+  var diagGeo = new THREE.BoxGeometry(16, diagLen, LEG_T * 0.6);
+  for (var di = 0; di < 2; di++) {
+    var dMesh = new THREE.Mesh(diagGeo, legMat);
+    var dX = di === 0 ? (-hw + RAIL_T + LEG_W / 2 + 8) : (hw - RAIL_T - LEG_W / 2 - 8);
+    dMesh.position.set(dX, legH * 0.55, backZ + 40 + LEG_T * 0.8);
+    dMesh.rotation.x = 0.45;
+    wholeBoard.add(dMesh);
+  }
+
+  // Position finale
+  wholeBoard.position.set(offX, 0, offZ);
+  wholeBoard.rotation.y = rotY;
+
+  ground.position.y = -2;
+
+  mdl.add(wholeBoard);
+}
+
+function build(){
+  clearMdl();
+  if (state.boards === 1) {
+    makeSingleBoard(0, 0, 0);
+  } else {
+    makeSingleBoard(0, -700, 0);
+    makeSingleBoard(0, 700, Math.PI);
+  }
+}
+
+/* ===== UI ===== */
+// Board count
+var boardOpts = document.querySelectorAll(".board-opt");
+for (var bi = 0; bi < boardOpts.length; bi++) {
+  (function(btn){
+    btn.addEventListener("click", function(){
+      for (var j = 0; j < boardOpts.length; j++) boardOpts[j].classList.remove("active");
+      btn.classList.add("active");
+      state.boards = parseInt(btn.getAttribute("data-val"));
+      build();
+    });
+  })(boardOpts[bi]);
+}
+
+// Colors
+function setupCP(pid, hid, key){
+  var pk = document.getElementById(pid), hx = document.getElementById(hid);
+  pk.addEventListener("input", function(){ state[key] = pk.value; hx.value = pk.value.toUpperCase(); build(); });
+  hx.addEventListener("input", function(){ if (/^#[0-9A-Fa-f]{6}$/.test(hx.value)) { state[key] = hx.value; pk.value = hx.value; build(); } });
+}
+setupCP("colorFrame", "hexFrame", "frameColor");
+setupCP("colorSurface", "hexSurface", "surfaceColor");
+
+// Image upload
+var uploadZone = document.getElementById("uploadZone");
+var fileInput = document.getElementById("fileInput");
+var uploadPreview = document.getElementById("uploadPreview");
+var previewImg = document.getElementById("previewImg");
+var removeBtn = document.getElementById("removeBtn");
+
+uploadZone.addEventListener("click", function(){ fileInput.click(); });
+uploadZone.addEventListener("dragover", function(e){ e.preventDefault(); uploadZone.style.borderColor = "rgba(160,140,255,.8)"; });
+uploadZone.addEventListener("dragleave", function(){ uploadZone.style.borderColor = ""; });
+uploadZone.addEventListener("drop", function(e){
+  e.preventDefault(); uploadZone.style.borderColor = "";
+  if (e.dataTransfer.files.length > 0) loadImg(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", function(){
+  if (fileInput.files.length > 0) loadImg(fileInput.files[0]);
+});
+removeBtn.addEventListener("click", function(){
+  state.imgTex = null;
+  uploadPreview.style.display = "none";
+  uploadZone.style.display = "block";
+  fileInput.value = "";
+  build();
+});
+
+function loadImg(file){
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var url = ev.target.result;
+    previewImg.src = url;
+    uploadPreview.style.display = "block";
+    uploadZone.style.display = "none";
+    var img = new Image();
+    img.onload = function(){
+      var tex = new THREE.Texture(img);
+      tex.needsUpdate = true;
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      state.imgTex = tex;
+      build();
+    };
+    img.src = url;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ===== EXPORTS ===== */
+function getMeshes(){
+  mdl.updateMatrixWorld(true);
+  var arr = [];
+  mdl.traverse(function(c){ if (c.isMesh) arr.push(c); });
+  return arr;
+}
+
+document.getElementById("btnGLB").addEventListener("click", function(){
+  var meshes = getMeshes();
+  if (!meshes.length) return;
+  var aP = [], aN = [], aI = [], off = 0;
+  for (var mi = 0; mi < meshes.length; mi++) {
+    var g = meshes[mi].geometry.clone(); g.applyMatrix4(meshes[mi].matrixWorld);
+    if (!g.index) { var ii = []; for (var vi = 0; vi < g.attributes.position.count; vi++) ii.push(vi); g.setIndex(ii); }
+    var pa = g.attributes.position.array, na = g.attributes.normal ? g.attributes.normal.array : null, ia = g.index.array;
+    for (var pi = 0; pi < pa.length; pi++) aP.push(pa[pi]);
+    if (na) for (var ni = 0; ni < na.length; ni++) aN.push(na[ni]);
+    for (var xi = 0; xi < ia.length; xi++) aI.push(ia[xi] + off);
+    off += pa.length / 3; g.dispose();
+  }
+  var pF = new Float32Array(aP), nF = new Float32Array(aN);
+  var iA = off > 65535 ? new Uint32Array(aI) : new Uint16Array(aI);
+  function p4(n){ return (n + 3) & ~3; }
+  var iP = p4(iA.byteLength), pP = p4(pF.byteLength), nP = p4(nF.byteLength), bLen = iP + pP + nP;
+  var mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+  for (var bi2 = 0; bi2 < pF.length; bi2 += 3) for (var d = 0; d < 3; d++) { if (pF[bi2+d] < mn[d]) mn[d] = pF[bi2+d]; if (pF[bi2+d] > mx[d]) mx[d] = pF[bi2+d]; }
+  var json = {asset:{version:"2.0",generator:"SetupParis"},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0,name:"Cornhole"}],
+    meshes:[{primitives:[{attributes:{POSITION:1},indices:0,mode:4}]}],
+    accessors:[{bufferView:0,componentType:iA.BYTES_PER_ELEMENT===4?5125:5123,count:aI.length,type:"SCALAR",max:[Math.max.apply(null,aI)],min:[0]},
+    {bufferView:1,componentType:5126,count:pF.length/3,type:"VEC3",max:mx,min:mn}],
+    bufferViews:[{buffer:0,byteOffset:0,byteLength:iA.byteLength,target:34963},{buffer:0,byteOffset:iP,byteLength:pF.byteLength,target:34962}],
+    buffers:[{byteLength:bLen}]};
+  if (nF.length > 0) { json.meshes[0].primitives[0].attributes.NORMAL = 2; json.accessors.push({bufferView:2,componentType:5126,count:nF.length/3,type:"VEC3",max:[1,1,1],min:[-1,-1,-1]}); json.bufferViews.push({buffer:0,byteOffset:iP+pP,byteLength:nF.byteLength,target:34962}); }
+  var js = JSON.stringify(json); while (js.length % 4 !== 0) js += " ";
+  var jb = new TextEncoder().encode(js);
+  var tot = 12 + 8 + jb.byteLength + 8 + bLen, glb = new ArrayBuffer(tot), dv = new DataView(glb);
+  dv.setUint32(0,0x46546C67,true); dv.setUint32(4,2,true); dv.setUint32(8,tot,true);
+  dv.setUint32(12,jb.byteLength,true); dv.setUint32(16,0x4E4F534A,true);
+  new Uint8Array(glb,20,jb.byteLength).set(jb);
+  var bo = 20 + jb.byteLength; dv.setUint32(bo,bLen,true); dv.setUint32(bo+4,0x004E4942,true);
+  var bd = new Uint8Array(glb, bo + 8, bLen);
+  bd.set(new Uint8Array(iA.buffer), 0); bd.set(new Uint8Array(pF.buffer), iP);
+  if (nF.length > 0) bd.set(new Uint8Array(nF.buffer), iP + pP);
+  dlB(new Blob([glb], {type:"model/gltf-binary"}), "cornhole.glb");
+});
+
+document.getElementById("btnOBJ").addEventListener("click", function(){
+  var meshes = getMeshes();
+  var obj = ["# Cornhole - Setup Paris","mtllib cornhole.mtl",""], mtl = ["# Cornhole MTL",""];
+  var vO = 1, vnO = 1;
+  for (var mi = 0; mi < meshes.length; mi++) {
+    var m = meshes[mi], mn = "mat_" + mi, c = m.material.color;
+    mtl.push("newmtl "+mn,"Kd "+c.r.toFixed(4)+" "+c.g.toFixed(4)+" "+c.b.toFixed(4),"Ka 0.1 0.1 0.1","Ks 0.3 0.3 0.3","Ns 50","d 1.0","");
+    var g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+    var pos = g.attributes.position, nor = g.attributes.normal, idx = g.index;
+    obj.push("o Piece_"+mi, "usemtl "+mn);
+    for (var vi = 0; vi < pos.count; vi++) obj.push("v "+pos.getX(vi).toFixed(4)+" "+pos.getY(vi).toFixed(4)+" "+pos.getZ(vi).toFixed(4));
+    if (nor) for (var ni = 0; ni < nor.count; ni++) obj.push("vn "+nor.getX(ni).toFixed(4)+" "+nor.getY(ni).toFixed(4)+" "+nor.getZ(ni).toFixed(4));
+    if (idx) for (var fi = 0; fi < idx.count; fi += 3) {
+      var a = idx.getX(fi)+vO, b = idx.getX(fi+1)+vO, cc = idx.getX(fi+2)+vO;
+      if (nor) obj.push("f "+a+"//"+a+" "+b+"//"+b+" "+cc+"//"+cc);
+      else obj.push("f "+a+" "+b+" "+cc);
+    }
+    vO += pos.count; if (nor) vnO += nor.count; obj.push(""); g.dispose();
+  }
+  dlB(new Blob([obj.join("\n")],{type:"text/plain"}),"cornhole.obj");
+  dlB(new Blob([mtl.join("\n")],{type:"text/plain"}),"cornhole.mtl");
+});
+
+document.getElementById("btnDXF").addEventListener("click", function(){
+  var meshes = getMeshes();
+  var L = ["0","SECTION","2","HEADER","9","$ACADVER","1","AC1015","9","$INSUNITS","70","4","0","ENDSEC","0","SECTION","2","ENTITIES"];
+  function aci(r,g,b){ if(r>.7&&g<.3&&b<.3)return 1; if(r>.7&&g>.7&&b<.3)return 2; if(r<.3&&g>.5&&b<.3)return 3; if(r<.3&&g<.3&&b>.7)return 5; return 8; }
+  for (var mi = 0; mi < meshes.length; mi++) {
+    var m = meshes[mi], g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+    var pos = g.attributes.position, idx = g.index, cl = m.material.color, ac = aci(cl.r,cl.g,cl.b);
+    if (idx) for (var fi = 0; fi < idx.count; fi += 3) {
+      var i0=idx.getX(fi), i1=idx.getX(fi+1), i2=idx.getX(fi+2);
+      L.push("0","3DFACE","8","0","62",String(ac));
+      L.push("10",pos.getX(i0).toFixed(2),"20",pos.getY(i0).toFixed(2),"30",pos.getZ(i0).toFixed(2));
+      L.push("11",pos.getX(i1).toFixed(2),"21",pos.getY(i1).toFixed(2),"31",pos.getZ(i1).toFixed(2));
+      L.push("12",pos.getX(i2).toFixed(2),"22",pos.getY(i2).toFixed(2),"32",pos.getZ(i2).toFixed(2));
+      L.push("13",pos.getX(i2).toFixed(2),"23",pos.getY(i2).toFixed(2),"33",pos.getZ(i2).toFixed(2));
+    }
+    g.dispose();
+  }
+  L.push("0","ENDSEC","0","EOF");
+  dlB(new Blob([L.join("\n")],{type:"application/dxf"}),"cornhole.dxf");
+});
+
+function dlB(blob, name){
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = name; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+/* ===== INIT ===== */
+build();
+
+);
+  var shirtMat=new THREE.MeshStandardMaterial({color:0x555555,roughness:0.5});
+  var pantMat=new THREE.MeshStandardMaterial({color:0x333344,roughness:0.5});
+  var shoeMat=new THREE.MeshStandardMaterial({color:0x222222,roughness:0.7});
+  var hg=new THREE.Group();
+  var head=new THREE.Mesh(new THREE.SphereGeometry(0.1,12,10),skinMat);head.position.y=1.6;head.castShadow=true;hg.add(head);
+  var neck=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.04,0.08,8),skinMat);neck.position.y=1.47;hg.add(neck);
+  var torso=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.11,0.5,10),shirtMat);torso.position.y=1.18;torso.castShadow=true;hg.add(torso);
+  var hips=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.1,0.15,10),pantMat);hips.position.y=0.86;hg.add(hips);
+  [-0.06,0.06].forEach(function(x){
+    var thigh=new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.045,0.4,8),pantMat);thigh.position.set(x,0.59,0);thigh.castShadow=true;hg.add(thigh);
+    var shin=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.035,0.38,8),pantMat);shin.position.set(x,0.2,0);shin.castShadow=true;hg.add(shin);
+    var shoe=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.04,0.14),shoeMat);shoe.position.set(x,0.02,0.02);hg.add(shoe);
+  });
+  [-0.18,0.18].forEach(function(x){
+    var upperArm=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.03,0.3,8),shirtMat);upperArm.position.set(x,1.22,0);upperArm.rotation.z=x>0?0.12:-0.12;hg.add(upperArm);
+    var foreArm=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.025,0.28,8),skinMat);foreArm.position.set(x*1.15,0.94,0);foreArm.rotation.z=x>0?0.06:-0.06;hg.add(foreArm);
+  });
+  hg.position.set(2.0,0,0);
+  scene.add(hg);
+  hg._isHuman=true;
+}
+}
+function animate(){ requestAnimationFrame(animate); renderer.render(scene, camera); }
+animate();
+window.addEventListener("resize", function(){
+  camera.aspect = viewer.clientWidth / viewer.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+});
+
+})();
+</script>
+</body>
+</html>

@@ -18,7 +18,10 @@ export type Database = {
         Row: {
           color: string
           created_at: string
+          icon: string | null
           id: string
+          image_url: string | null
+          is_active: boolean
           name_en: string
           name_fr: string
           slug: string
@@ -28,7 +31,10 @@ export type Database = {
         Insert: {
           color?: string
           created_at?: string
+          icon?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean
           name_en: string
           name_fr: string
           slug: string
@@ -38,7 +44,10 @@ export type Database = {
         Update: {
           color?: string
           created_at?: string
+          icon?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean
           name_en?: string
           name_fr?: string
           slug?: string
@@ -126,13 +135,17 @@ export type Database = {
           company: string | null
           created_at: string
           customer_name: string
+          delivery_fee: number
           email: string
           event_date: string | null
           event_location: string | null
           id: string
           items: Json
+          logistics_notes: string | null
           message: string | null
           phone: string | null
+          pickup_fee: number
+          setup_fee: number
           status: string
           subtotal_ht: number
           total_deposit: number
@@ -145,13 +158,17 @@ export type Database = {
           company?: string | null
           created_at?: string
           customer_name: string
+          delivery_fee?: number
           email: string
           event_date?: string | null
           event_location?: string | null
           id?: string
           items?: Json
+          logistics_notes?: string | null
           message?: string | null
           phone?: string | null
+          pickup_fee?: number
+          setup_fee?: number
           status?: string
           subtotal_ht?: number
           total_deposit?: number
@@ -164,13 +181,17 @@ export type Database = {
           company?: string | null
           created_at?: string
           customer_name?: string
+          delivery_fee?: number
           email?: string
           event_date?: string | null
           event_location?: string | null
           id?: string
           items?: Json
+          logistics_notes?: string | null
           message?: string | null
           phone?: string | null
+          pickup_fee?: number
+          setup_fee?: number
           status?: string
           subtotal_ht?: number
           total_deposit?: number
@@ -178,6 +199,27 @@ export type Database = {
           total_ttc?: number
           updated_at?: string
           vat?: number
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value_en: string | null
+          value_fr: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value_en?: string | null
+          value_fr?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value_en?: string | null
+          value_fr?: string | null
         }
         Relationships: []
       }

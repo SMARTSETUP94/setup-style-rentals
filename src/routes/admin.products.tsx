@@ -670,3 +670,90 @@ function FieldSelect({
     </div>
   );
 }
+
+function ConfiguratorOptionsEditor({
+  value,
+  onChange,
+}: {
+  value: unknown;
+  onChange: (v: unknown) => void;
+}) {
+  const initial = (() => {
+    try {
+      return JSON.stringify(value ?? {}, null, 2);
+    } catch {
+      return "{}";
+    }
+  })();
+  const [text, setText] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+
+  // Re-sync if the parent swaps to another product
+  useEffect(() => {
+    setText(initial);
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(value ?? {})]);
+
+  const handleChange = (raw: string) => {
+    setText(raw);
+    if (raw.trim() === "") {
+      setError(null);
+      onChange({});
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      setError(null);
+      onChange(parsed);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "JSON invalide");
+    }
+  };
+
+  const loadCornholePreset = () => {
+    const preset = {
+      plateau: [
+        { value: "blanc", label: "Peinture blanche mate", price: 0 },
+        { value: "couleur", label: "Peinture couleur au choix", price: 50 },
+        { value: "placage", label: "Placage dibond/tôle/stratifié", price: 100 },
+        { value: "adhesif", label: "Adhésif surface", price: 75 },
+      ],
+      champs: [
+        { value: "blanc", label: "Peinture blanche mate", price: 0 },
+        { value: "couleur", label: "Peinture couleur au choix", price: 25 },
+        { value: "placage", label: "Placage dibond/tôle/stratifié", price: 50 },
+      ],
+      sacs: [
+        { value: "standard", label: "Standard bleu+rouge ×6", price: 0 },
+        { value: "couleur", label: "Tissu couleur au choix ×6", price: 100 },
+      ],
+    };
+    handleChange(JSON.stringify(preset, null, 2));
+  };
+
+  return (
+    <div className="mt-1.5 space-y-2">
+      <Textarea
+        value={text}
+        onChange={(e) => handleChange(e.target.value)}
+        className="font-mono text-xs"
+        rows={10}
+        placeholder='{"plateau":[{"value":"blanc","label":"…","price":0}]}'
+      />
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px]">
+          {error ? (
+            <span className="text-destructive">⚠ {error}</span>
+          ) : (
+            <span className="text-muted-foreground">JSON valide ✓</span>
+          )}
+        </div>
+        <Button type="button" size="sm" variant="outline" onClick={loadCornholePreset}>
+          Charger preset Cornhole
+        </Button>
+      </div>
+    </div>
+  );
+}
+

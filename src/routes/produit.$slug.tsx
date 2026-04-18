@@ -244,15 +244,15 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Configurator */}
+          {/* Configurator CTA — scrolls to inline preview below */}
           {product.configurator_url && (
-            <button
-              onClick={() => setShow3D(true)}
+            <a
+              href="#configurator-preview"
               className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
             >
               <Sparkles className="size-4" />
               {t("product.config3d")}
-            </button>
+            </a>
           )}
 
           {/* Price grid */}

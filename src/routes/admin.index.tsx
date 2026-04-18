@@ -243,11 +243,67 @@ function AdminQuotesPage() {
                     ))}
                   </div>
                 </div>
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Frais logistiques</p>
+                    <Button size="sm" onClick={saveLogistics} disabled={savingLogistics}>
+                      <Save className="size-3.5" /> {savingLogistics ? "…" : "Enregistrer"}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Livraison (€)</Label>
+                      <Input
+                        type="number"
+                        className="mt-1"
+                        value={String(logistics.delivery_fee)}
+                        onChange={(e) => setLogistics({ ...logistics, delivery_fee: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Installation (€)</Label>
+                      <Input
+                        type="number"
+                        className="mt-1"
+                        value={String(logistics.setup_fee)}
+                        onChange={(e) => setLogistics({ ...logistics, setup_fee: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Reprise (€)</Label>
+                      <Input
+                        type="number"
+                        className="mt-1"
+                        value={String(logistics.pickup_fee)}
+                        onChange={(e) => setLogistics({ ...logistics, pickup_fee: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Notes logistiques</Label>
+                    <Textarea
+                      rows={2}
+                      className="mt-1"
+                      value={logistics.logistics_notes}
+                      onChange={(e) => setLogistics({ ...logistics, logistics_notes: e.target.value })}
+                    />
+                  </div>
+                </div>
                 <div className="rounded-lg bg-muted/30 p-4 space-y-1 text-sm">
                   <Row label="Sous-total HT" value={formatPrice(selected.subtotal_ht)} />
                   <Row label="Total HT" value={formatPrice(selected.total_ht)} />
                   <Row label="TVA 20%" value={formatPrice(selected.vat)} />
-                  <Row label="Total TTC" value={formatPrice(selected.total_ttc)} bold />
+                  <Row label="Total produits TTC" value={formatPrice(selected.total_ttc)} />
+                  {Number(selected.delivery_fee) > 0 && (
+                    <Row label="Livraison" value={formatPrice(selected.delivery_fee)} />
+                  )}
+                  {Number(selected.setup_fee) > 0 && (
+                    <Row label="Installation" value={formatPrice(selected.setup_fee)} />
+                  )}
+                  {Number(selected.pickup_fee) > 0 && (
+                    <Row label="Reprise" value={formatPrice(selected.pickup_fee)} />
+                  )}
+                  <Row label="TOTAL FINAL TTC" value={formatPrice(finalTotal(selected))} bold />
                   <Row label="Caution" value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>

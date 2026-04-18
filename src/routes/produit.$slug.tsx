@@ -126,8 +126,8 @@ function ProductPage() {
   };
 
   return (
-    <div className="pt-24 md:pt-28">
-      <div className="container-x py-8">
+    <div className="pt-20 md:pt-24">
+      <div className="container-x py-5">
         <button
           onClick={() => router.history.back()}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -136,7 +136,7 @@ function ProductPage() {
         </button>
       </div>
 
-      <div className="container-x grid lg:grid-cols-2 gap-12 lg:gap-16 pb-16">
+      <div className="container-x grid lg:grid-cols-2 gap-8 lg:gap-12 pb-16">
         {/* Image */}
         <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-secondary border border-border sticky top-24 self-start">
           <ProductImage

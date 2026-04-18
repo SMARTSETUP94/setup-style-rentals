@@ -58,7 +58,7 @@ function HomePage() {
           }}
         />
 
-        <div className="container-x relative pb-20 pt-40 md:pb-32 md:pt-32 w-full">
+        <div className="container-x relative pb-16 pt-32 md:pb-20 md:pt-28 w-full">
           <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-white/60">
             <span className="inline-block w-8 h-px bg-white/40" />
             <span>01 — {t("hero.eyebrow")}</span>
@@ -89,9 +89,9 @@ function HomePage() {
       </section>
 
       {/* CATEGORIES */}
-      <section className="container-x py-24 md:py-32">
+      <section className="container-x py-14 md:py-20">
         <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {categories.map((cat) => (
             <Link
               key={cat.id}
@@ -125,8 +125,8 @@ function HomePage() {
       </section>
 
       {/* CONFIGURATOR */}
-      <section id="configurator" className="bg-secondary/50 py-24 md:py-32">
-        <div className="container-x grid lg:grid-cols-2 gap-12 items-center">
+      <section id="configurator" className="bg-secondary/50 py-14 md:py-20">
+        <div className="container-x grid lg:grid-cols-2 gap-10 items-center">
           <div>
             <SectionHeader num="03" title={t("config.title")} />
             <p className="mt-6 text-lg text-muted-foreground max-w-lg">{t("config.desc")}</p>
@@ -160,9 +160,9 @@ function HomePage() {
       </section>
 
       {/* HOW */}
-      <section className="container-x py-24 md:py-32">
+      <section className="container-x py-14 md:py-20">
         <SectionHeader num="04" title={t("how.title")} />
-        <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },
             { i: Sparkles, t: t("how.s2.t"), d: t("how.s2.d") },
@@ -182,8 +182,8 @@ function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="container-x pb-24">
-        <div className="rounded-2xl bg-foreground text-background p-10 md:p-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <section className="container-x pb-16 md:pb-20">
+        <div className="rounded-2xl bg-foreground text-background p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-white/50">— Setup Paris</div>
             <h3 className="mt-3 font-display text-3xl md:text-4xl font-semibold text-balance max-w-xl">

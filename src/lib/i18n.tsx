@@ -100,6 +100,7 @@ const DICT: Dict = {
   "footer.rights": { fr: "Tous droits réservés.", en: "All rights reserved." },
   "footer.legal": { fr: "Légal", en: "Legal" },
   "footer.cgl": { fr: "Conditions générales de location", en: "General rental terms" },
+  "footer.legalNotice": { fr: "Mentions légales", en: "Legal notice" },
 };
 
 interface I18nContextValue {

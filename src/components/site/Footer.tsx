@@ -44,6 +44,7 @@ export function Footer() {
             <li><Link to="/catalogue" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.catalog")}</Link></li>
             <li><Link to="/devis" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.quote")}</Link></li>
             <li><Link to="/cgl" className="text-background/80 hover:text-gold transition-colors duration-300">{t("footer.cgl")}</Link></li>
+            <li><Link to="/mentions-legales" className="text-background/80 hover:text-gold transition-colors duration-300">{t("footer.legalNotice")}</Link></li>
           </ul>
         </div>
 

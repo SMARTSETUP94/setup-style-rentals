@@ -54,15 +54,15 @@ export function Footer() {
           <ul className="space-y-3 text-sm text-background/80">
             <li className="flex items-start gap-2.5">
               <MapPin className="size-4 mt-0.5 text-gold shrink-0" />
-              <span>Paris, France</span>
+              <span>8 avenue du Président Salvador Allende<br />Vitry-sur-Seine</span>
             </li>
             <li className="flex items-start gap-2.5">
               <Mail className="size-4 mt-0.5 text-gold shrink-0" />
-              <a href="mailto:contact@setup.paris" className="hover:text-gold transition-colors">contact@setup.paris</a>
+              <a href="mailto:smart@setup.paris" className="hover:text-gold transition-colors">smart@setup.paris</a>
             </li>
             <li className="flex items-start gap-2.5">
               <Phone className="size-4 mt-0.5 text-gold shrink-0" />
-              <span>+33 (0)1 00 00 00 00</span>
+              <a href="tel:+33601416111" className="hover:text-gold transition-colors">06 01 41 61 11</a>
             </li>
           </ul>
         </div>

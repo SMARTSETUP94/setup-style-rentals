@@ -613,12 +613,12 @@ function ProductPage() {
               <h3 className="mt-1 font-display text-lg font-semibold tracking-tight">
                 {lang === "fr" ? "Récapitulatif" : "Summary"}
               </h3>
-              {configuratorData ? (
+              {configuratorData || configuratorRecap ? (
                 <>
                   <pre className="mt-4 flex-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
-                    {configuratorRecap || JSON.stringify(configuratorData, null, 2)}
+                    {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
                   </pre>
-                  {typeof configuratorData.price === "number" && (
+                  {configuratorData && typeof configuratorData.price === "number" && (
                     <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
                       <span className="text-muted-foreground">
                         {lang === "fr" ? "Prix configuré" : "Configured price"}

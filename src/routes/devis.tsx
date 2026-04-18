@@ -156,6 +156,29 @@ function QuotePage() {
     doc.text(lang === "fr" ? "Simulation de devis" : "Quote simulation", 14, 27);
     doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB"), 196, 20, { align: "right" });
 
+    const body: (string | number)[][] = [];
+    items.forEach((i) => {
+      const lt = lineTotal(i);
+      body.push([
+        pickLang(i, "name", lang),
+        i.quantity,
+        i.days,
+        formatPrice(i.price_day, lang),
+        lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
+        formatPrice(lt.net, lang),
+      ]);
+      (i.selectedOptions ?? []).forEach((o) => {
+        body.push([
+          `   • ${pickLang(o, "categoryName", lang)}: ${pickLang(o, "name", lang)}`,
+          "",
+          "",
+          o.price > 0 ? `+${formatPrice(o.price, lang)}` : "—",
+          "",
+          "",
+        ]);
+      });
+    });
+
     autoTable(doc, {
       startY: 35,
       head: [[
@@ -166,17 +189,7 @@ function QuotePage() {
         lang === "fr" ? "Remise" : "Discount",
         "Total HT",
       ]],
-      body: items.map((i) => {
-        const lt = lineTotal(i);
-        return [
-          pickLang(i, "name", lang),
-          i.quantity,
-          i.days,
-          formatPrice(i.price_day, lang),
-          lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
-          formatPrice(lt.net, lang),
-        ];
-      }),
+      body,
       headStyles: { fillColor: [26, 26, 26] },
       styles: { fontSize: 9 },
     });

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, MousePointerClick, FileCheck2, Headset } from "lucide-react";
+import { ArrowRight, Sparkles, MousePointerClick, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice, categoryColor } from "@/lib/format";
@@ -214,12 +214,11 @@ function HomePage() {
       {/* HOW */}
       <section className="container-x py-14 md:py-20">
         <SectionHeader num="04" title={t("how.title")} />
-        <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-8 grid md:grid-cols-3 gap-4">
           {[
             { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },
             { i: Sparkles, t: t("how.s2.t"), d: t("how.s2.d") },
-            { i: FileCheck2, t: t("how.s3.t"), d: t("how.s3.d") },
-            { i: Headset, t: t("how.s4.t"), d: t("how.s4.d") },
+            { i: Truck, t: t("how.s3.t"), d: t("how.s3.d") },
           ].map((s, idx) => (
             <div key={idx} className="rounded-lg border border-border p-6 bg-white hover-lift">
               <div className="flex items-center justify-between">

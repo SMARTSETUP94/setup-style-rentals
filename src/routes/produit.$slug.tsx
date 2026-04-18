@@ -458,6 +458,39 @@ function ProductPage() {
         </div>
       </div>
 
+      {/* Inline 3D configurator preview (full width) */}
+      {product.configurator_url && (
+        <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
+          <div className="flex items-end justify-between gap-4 mb-4 flex-wrap">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {lang === "fr" ? "Aperçu interactif" : "Interactive preview"}
+              </div>
+              <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">
+                {lang === "fr" ? "Configurateur 3D" : "3D configurator"}
+              </h2>
+            </div>
+            <button
+              onClick={() => setShow3D(true)}
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
+            >
+              <Sparkles className="size-4" />
+              {lang === "fr" ? "Plein écran" : "Fullscreen"}
+            </button>
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev">
+            <iframe
+              src={product.configurator_url}
+              title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
+              className="w-full block border-0 h-[400px] md:h-[500px]"
+              loading="lazy"
+              allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            />
+          </div>
+        </section>
+      )}
+
       {/* 3D Modal */}
       {show3D && product.configurator_url && (
         <div

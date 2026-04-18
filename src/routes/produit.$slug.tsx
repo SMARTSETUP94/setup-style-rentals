@@ -540,16 +540,65 @@ function ProductPage() {
               {lang === "fr" ? "Plein écran" : "Fullscreen"}
             </button>
           </div>
-          <div className="rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev">
-            <iframe
-              src={product.configurator_url}
-              title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
-              className="w-full block border-0 h-[400px] md:h-[500px]"
-              loading="lazy"
-              allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            />
+          <div className="grid lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border bg-secondary shadow-elev">
+              <iframe
+                ref={inlineIframeRef}
+                src={product.configurator_url}
+                title={`${lang === "fr" ? "Aperçu configurateur" : "Configurator preview"} — ${pickLang(product, "name", lang)}`}
+                className="w-full block border-0 h-[480px] md:h-[560px]"
+                loading="lazy"
+                allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
+              />
+            </div>
+
+            {/* Configuration summary panel */}
+            <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {lang === "fr" ? "Votre configuration" : "Your configuration"}
+              </div>
+              <h3 className="mt-1 font-display text-lg font-semibold tracking-tight">
+                {lang === "fr" ? "Récapitulatif" : "Summary"}
+              </h3>
+              {configuratorData ? (
+                <>
+                  <pre className="mt-4 flex-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
+                    {configuratorRecap || JSON.stringify(configuratorData, null, 2)}
+                  </pre>
+                  {typeof configuratorData.price === "number" && (
+                    <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
+                      <span className="text-muted-foreground">
+                        {lang === "fr" ? "Prix configuré" : "Configured price"}
+                      </span>
+                      <span className="font-display text-xl font-semibold text-gold">
+                        {formatPrice(Number(configuratorData.price), lang)}
+                        <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
+                          /{t("product.day")}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddConfiguredToQuote}
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md bg-gold text-gold-foreground px-4 py-3 text-sm font-semibold hover:bg-gold/90 transition-all shadow-md shadow-gold/20"
+                  >
+                    <Wand2 className="size-4" />
+                    {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
+                  </button>
+                </>
+              ) : (
+                <div className="mt-4 flex-1 flex items-center justify-center text-xs text-muted-foreground text-center px-4">
+                  {lang === "fr"
+                    ? "Personnalisez le produit dans le configurateur pour voir le récapitulatif ici."
+                    : "Customize the product in the configurator to see the summary here."}
+                </div>
+              )}
+            </aside>
           </div>
+
         </section>
       )}
 
@@ -571,11 +620,13 @@ function ProductPage() {
               <X className="size-5" />
             </button>
             <iframe
+              ref={modalIframeRef}
               src={product.configurator_url}
               title={`Configurateur 3D — ${pickLang(product, "name", lang)}`}
               className="w-full h-full border-0"
               allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              onLoad={() => sendPricesToIframe(modalIframeRef.current)}
             />
           </div>
         </div>

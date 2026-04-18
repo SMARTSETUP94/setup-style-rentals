@@ -5,9 +5,27 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
-import { useCart, volumeDiscount } from "@/lib/cart";
+import { useCart, volumeDiscount, type SelectedOption } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
+
+interface OptionCategory {
+  id: string;
+  name_fr: string;
+  name_en: string;
+  is_required: boolean;
+  sort_order: number;
+}
+
+interface ProductOptionRow {
+  id: string;
+  category_id: string;
+  name_fr: string;
+  name_en: string;
+  price: number;
+  sort_order: number;
+  is_active: boolean;
+}
 
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;

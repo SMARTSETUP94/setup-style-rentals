@@ -56,6 +56,23 @@ function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Quote | null>(null);
+  const [logistics, setLogistics] = useState({
+    delivery_fee: 0,
+    setup_fee: 0,
+    pickup_fee: 0,
+    logistics_notes: "",
+  });
+  const [savingLogistics, setSavingLogistics] = useState(false);
+
+  const openDetail = (q: Quote) => {
+    setSelected(q);
+    setLogistics({
+      delivery_fee: Number(q.delivery_fee || 0),
+      setup_fee: Number(q.setup_fee || 0),
+      pickup_fee: Number(q.pickup_fee || 0),
+      logistics_notes: q.logistics_notes || "",
+    });
+  };
 
   const load = async () => {
     setLoading(true);
@@ -66,6 +83,35 @@ function AdminQuotesPage() {
     if (error) toast.error(error.message);
     else setQuotes((data as Quote[]) ?? []);
     setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const updateStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("quote_requests").update({ status }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Statut mis à jour");
+    setQuotes((q) => q.map((x) => (x.id === id ? { ...x, status } : x)));
+    if (selected?.id === id) setSelected({ ...selected, status });
+  };
+
+  const saveLogistics = async () => {
+    if (!selected) return;
+    setSavingLogistics(true);
+    const payload = {
+      delivery_fee: Number(logistics.delivery_fee) || 0,
+      setup_fee: Number(logistics.setup_fee) || 0,
+      pickup_fee: Number(logistics.pickup_fee) || 0,
+      logistics_notes: logistics.logistics_notes || null,
+    };
+    const { error } = await supabase.from("quote_requests").update(payload).eq("id", selected.id);
+    setSavingLogistics(false);
+    if (error) return toast.error(error.message);
+    toast.success("Frais logistiques enregistrés");
+    setQuotes((qs) => qs.map((x) => (x.id === selected.id ? { ...x, ...payload } : x)));
+    setSelected({ ...selected, ...payload });
   };
 
   useEffect(() => {

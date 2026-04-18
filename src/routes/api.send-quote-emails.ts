@@ -22,6 +22,7 @@ const PayloadSchema = z.object({
   event_location: z.string().max(500).optional().nullable(),
   items: z.array(ItemSchema).min(1).max(100),
   total_ht: z.number().min(0),
+  delivery_fee: z.number().min(0).optional().default(0),
   vat: z.number().min(0),
   total_ttc: z.number().min(0),
   total_deposit: z.number().min(0),
@@ -69,6 +70,7 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
 function totalsBlock(p: z.infer<typeof PayloadSchema>) {
   return `
     <table style="margin-left:auto;font-size:14px;">
+      ${p.delivery_fee > 0 ? `<tr><td style="padding:4px 12px;color:#666;">Livraison & Reprise</td><td style="padding:4px 0;text-align:right;">${fmt(p.delivery_fee)}</td></tr>` : ""}
       <tr><td style="padding:4px 12px;color:#666;">Total HT</td><td style="padding:4px 0;text-align:right;">${fmt(p.total_ht)}</td></tr>
       <tr><td style="padding:4px 12px;color:#666;">TVA 20%</td><td style="padding:4px 0;text-align:right;">${fmt(p.vat)}</td></tr>
       <tr><td style="padding:8px 12px;font-weight:700;border-top:2px solid #1a1a1a;">Total TTC</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:2px solid #1a1a1a;">${fmt(p.total_ttc)}</td></tr>

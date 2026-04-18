@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
@@ -27,6 +27,24 @@ interface ProductOptionRow {
   is_active: boolean;
 }
 
+interface ConfiguratorOption {
+  value: string;
+  label: string;
+  price: number;
+}
+type ConfiguratorOptionsMap = Record<string, ConfiguratorOption[]>;
+
+interface ConfiguratorConfigData {
+  // Free-shape payload from the iframe — typed loosely to support multiple configurators
+  [k: string]: unknown;
+  price?: number;
+}
+interface ConfiguratorMessage {
+  type: string;
+  data?: ConfiguratorConfigData;
+  recap?: string;
+}
+
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;
   description_fr: string | null; description_en: string | null;
@@ -34,6 +52,7 @@ interface Product {
   price_day: number; price_week: number | null; price_month: number | null;
   deposit: number; image_url: string | null;
   configurator_url: string | null;
+  configurator_options: ConfiguratorOptionsMap | null;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }

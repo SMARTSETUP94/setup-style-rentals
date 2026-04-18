@@ -22,6 +22,10 @@ const KEYS = {
   CONTACT_ADDRESS: "contact_address",
   CONTACT_CITY: "contact_city",
   CONTACT_POSTAL: "contact_postal",
+  LOG_BASE: "logistics_base_fee",
+  LOG_PER_ITEM: "logistics_per_item_fee",
+  LOG_SETUP: "logistics_setup_fee",
+  LOG_PICKUP: "logistics_pickup_fee",
 };
 
 function AdminSettingsPage() {
@@ -82,6 +86,67 @@ function AdminSettingsPage() {
       </div>
 
       <div className="space-y-8">
+        <Section
+          title="Frais logistiques (appliqués automatiquement aux devis clients)"
+          onSave={() =>
+            saveSection(
+              [KEYS.LOG_BASE, KEYS.LOG_PER_ITEM, KEYS.LOG_SETUP, KEYS.LOG_PICKUP],
+              "Frais logistiques",
+            )
+          }
+          saving={savingKey === "Frais logistiques"}
+        >
+          <p className="text-xs text-muted-foreground mb-4">
+            Ces montants HT seront automatiquement ajoutés au devis affiché au client. Le total livraison = forfait de base + (frais par produit × nombre de lignes).
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label>Forfait livraison de base (€ HT)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                className="mt-1.5"
+                value={get(KEYS.LOG_BASE, "fr")}
+                onChange={(e) => set(KEYS.LOG_BASE, "fr", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Frais par produit dans le devis (€ HT)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                className="mt-1.5"
+                value={get(KEYS.LOG_PER_ITEM, "fr")}
+                onChange={(e) => set(KEYS.LOG_PER_ITEM, "fr", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Forfait installation / montage (€ HT)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                className="mt-1.5"
+                value={get(KEYS.LOG_SETUP, "fr")}
+                onChange={(e) => set(KEYS.LOG_SETUP, "fr", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Forfait reprise / démontage (€ HT)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                className="mt-1.5"
+                value={get(KEYS.LOG_PICKUP, "fr")}
+                onChange={(e) => set(KEYS.LOG_PICKUP, "fr", e.target.value)}
+              />
+            </div>
+          </div>
+        </Section>
+
         <Section
           title="Conditions générales de location"
           onSave={() => saveSection([KEYS.TERMS], "CGV")}

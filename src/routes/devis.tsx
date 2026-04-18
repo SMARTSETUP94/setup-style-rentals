@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Trash2, FileDown, ShoppingBag, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ function QuotePage() {
   const { t, lang } = useI18n();
   const { items, update, remove, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
+  const [logistics, setLogistics] = useState({ base: 0, perItem: 0, setup: 0, pickup: 0 });
   const [form, setForm] = useState({
     customer_name: "",
     company: "",
@@ -32,6 +33,30 @@ function QuotePage() {
     event_date: "",
     event_location: "",
   });
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("key,value_fr")
+        .in("key", [
+          "logistics_base_fee",
+          "logistics_per_item_fee",
+          "logistics_setup_fee",
+          "logistics_pickup_fee",
+        ]);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => {
+        map[r.key] = Number(r.value_fr) || 0;
+      });
+      setLogistics({
+        base: map["logistics_base_fee"] ?? 0,
+        perItem: map["logistics_per_item_fee"] ?? 0,
+        setup: map["logistics_setup_fee"] ?? 0,
+        pickup: map["logistics_pickup_fee"] ?? 0,
+      });
+    })();
+  }, []);
 
   const totals = items.reduce(
     (acc, item) => {
@@ -44,8 +69,10 @@ function QuotePage() {
     },
     { gross: 0, discount: 0, net: 0, deposit: 0 },
   );
-  const delivery = items.length > 0 ? 100 + items.length * 50 : 0;
-  const netWithDelivery = totals.net + delivery;
+  const delivery = items.length > 0 ? logistics.base + items.length * logistics.perItem : 0;
+  const setupFee = items.length > 0 ? logistics.setup : 0;
+  const pickupFee = items.length > 0 ? logistics.pickup : 0;
+  const netWithDelivery = totals.net + delivery + setupFee + pickupFee;
   const vat = netWithDelivery * 0.2;
   const ttc = netWithDelivery + vat;
 
@@ -78,14 +105,15 @@ function QuotePage() {
       subtotal_ht: totals.gross,
       total_ht: netWithDelivery,
       delivery_fee: delivery,
+      setup_fee: setupFee,
+      pickup_fee: pickupFee,
       vat,
       total_ttc: ttc,
       total_deposit: totals.deposit,
       status: "pending",
     };
 
-    const { delivery_fee: _df, ...dbPayload } = payload;
-    const { error } = await supabase.from("quote_requests").insert(dbPayload);
+    const { error } = await supabase.from("quote_requests").insert(payload);
     if (error) {
       console.error(error);
       setSubmitting(false);
@@ -145,15 +173,18 @@ function QuotePage() {
 
     const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     doc.setFontSize(10);
-    doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, finalY, { align: "right" });
-    doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, finalY + 6, { align: "right" });
-    doc.text(`${t("cart.totalHT")}: ${formatPrice(netWithDelivery, lang)}`, 196, finalY + 12, { align: "right" });
-    doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, finalY + 18, { align: "right" });
+    let y = finalY;
+    doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, y, { align: "right" }); y += 6;
+    if (delivery > 0) { doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, y, { align: "right" }); y += 6; }
+    if (setupFee > 0) { doc.text(`${lang === "fr" ? "Installation" : "Setup"}: ${formatPrice(setupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
+    if (pickupFee > 0) { doc.text(`${lang === "fr" ? "Reprise" : "Pickup"}: ${formatPrice(pickupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
+    doc.text(`${t("cart.totalHT")}: ${formatPrice(netWithDelivery, lang)}`, 196, y, { align: "right" }); y += 6;
+    doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, y, { align: "right" }); y += 8;
     doc.setFont("helvetica", "bold");
-    doc.text(`${t("cart.totalTTC")}: ${formatPrice(ttc, lang)}`, 196, finalY + 26, { align: "right" });
+    doc.text(`${t("cart.totalTTC")}: ${formatPrice(ttc, lang)}`, 196, y, { align: "right" }); y += 8;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, finalY + 34, { align: "right" });
+    doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, y, { align: "right" });
 
     doc.save(`devis-setup-paris-${Date.now()}.pdf`);
   };
@@ -260,10 +291,14 @@ function QuotePage() {
                 <div className="font-display font-semibold text-lg mb-3">{t("cart.totals")}</div>
                 <Row label={t("cart.subtotalHT")} value={formatPrice(totals.gross, lang)} />
                 {totals.discount > 0 && <Row label={t("product.discount")} value={`-${formatPrice(totals.discount, lang)}`} highlight />}
-                <div>
-                  <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
-                  <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
-                </div>
+                {delivery > 0 && (
+                  <div>
+                    <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
+                    <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
+                  </div>
+                )}
+                {setupFee > 0 && <Row label={lang === "fr" ? "Installation" : "Setup"} value={formatPrice(setupFee, lang)} />}
+                {pickupFee > 0 && <Row label={lang === "fr" ? "Reprise" : "Pickup"} value={formatPrice(pickupFee, lang)} />}
                 <Row label={t("cart.totalHT")} value={formatPrice(netWithDelivery, lang)} />
                 <Row label={t("cart.vat")} value={formatPrice(vat, lang)} />
                 <div className="border-t border-border pt-3 flex items-baseline justify-between">

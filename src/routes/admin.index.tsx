@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { formatEUR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminQuotesPage,
@@ -117,7 +117,7 @@ function AdminQuotesPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     {q.event_date ? new Date(q.event_date).toLocaleDateString("fr-FR") : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatEUR(q.total_ttc)}</td>
+                  <td className="px-4 py-3 text-right font-semibold">{formatPrice(q.total_ttc)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={q.status} />
                   </td>
@@ -170,17 +170,17 @@ function AdminQuotesPage() {
                         <span>
                           {it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}j)
                         </span>
-                        <span className="font-medium">{formatEUR(it.line_total ?? 0)}</span>
+                        <span className="font-medium">{formatPrice(it.line_total ?? 0)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-4 space-y-1 text-sm">
-                  <Row label="Sous-total HT" value={formatEUR(selected.subtotal_ht)} />
-                  <Row label="Total HT" value={formatEUR(selected.total_ht)} />
-                  <Row label="TVA 20%" value={formatEUR(selected.vat)} />
-                  <Row label="Total TTC" value={formatEUR(selected.total_ttc)} bold />
-                  <Row label="Caution" value={formatEUR(selected.total_deposit)} />
+                  <Row label="Sous-total HT" value={formatPrice(selected.subtotal_ht)} />
+                  <Row label="Total HT" value={formatPrice(selected.total_ht)} />
+                  <Row label="TVA 20%" value={formatPrice(selected.vat)} />
+                  <Row label="Total TTC" value={formatPrice(selected.total_ttc)} bold />
+                  <Row label="Caution" value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>
                   <p className="text-xs uppercase text-muted-foreground mb-2">Statut</p>

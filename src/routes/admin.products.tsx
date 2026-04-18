@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatEUR } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/products")({
   component: AdminProductsPage,
@@ -187,8 +187,8 @@ function AdminProductsPage() {
                     <div className="text-xs text-muted-foreground">{p.slug}</div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.category_slug}</td>
-                  <td className="px-4 py-3 text-right font-medium">{formatEUR(p.price_day)}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">{formatEUR(p.deposit)}</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatPrice(p.price_day)}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">{formatPrice(p.deposit)}</td>
                   <td className="px-4 py-3 text-center">
                     <Switch checked={p.is_active} onCheckedChange={() => toggleActive(p)} />
                   </td>

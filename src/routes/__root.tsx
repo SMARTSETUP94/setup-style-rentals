@@ -2,6 +2,7 @@ import { Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tan
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { CartProvider } from "@/lib/cart";
+import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 
@@ -73,12 +74,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <I18nProvider>
-      <CartProvider>
-        <SiteShell />
-        <Toaster position="top-center" />
-      </CartProvider>
-    </I18nProvider>
+    <AuthProvider>
+      <I18nProvider>
+        <CartProvider>
+          <SiteShell />
+          <Toaster position="top-center" />
+        </CartProvider>
+      </I18nProvider>
+    </AuthProvider>
   );
 }
 

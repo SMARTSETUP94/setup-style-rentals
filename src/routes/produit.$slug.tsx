@@ -43,6 +43,7 @@ interface ConfiguratorMessage {
   type: string;
   data?: ConfiguratorConfigData;
   recap?: string;
+  height?: number;
 }
 
 interface Product {

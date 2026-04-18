@@ -16,7 +16,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 
 const DevisRoute = DevisRouteImport.update({
@@ -54,9 +56,19 @@ const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
   path: '/api/send-quote-emails',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAuthRoute = AdminAuthRouteImport.update({
@@ -71,7 +83,9 @@ export interface FileRoutesByFullPath {
   '/catalogue': typeof CatalogueRoute
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -81,7 +95,9 @@ export interface FileRoutesByTo {
   '/catalogue': typeof CatalogueRoute
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -93,7 +109,9 @@ export interface FileRoutesById {
   '/catalogue': typeof CatalogueRoute
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -106,7 +124,9 @@ export interface FileRouteTypes {
     | '/catalogue'
     | '/devis'
     | '/admin/auth'
+    | '/admin/categories'
     | '/admin/products'
+    | '/admin/settings'
     | '/api/send-quote-emails'
     | '/produit/$slug'
     | '/admin/'
@@ -116,7 +136,9 @@ export interface FileRouteTypes {
     | '/catalogue'
     | '/devis'
     | '/admin/auth'
+    | '/admin/categories'
     | '/admin/products'
+    | '/admin/settings'
     | '/api/send-quote-emails'
     | '/produit/$slug'
     | '/admin'
@@ -127,7 +149,9 @@ export interface FileRouteTypes {
     | '/catalogue'
     | '/devis'
     | '/admin/auth'
+    | '/admin/categories'
     | '/admin/products'
+    | '/admin/settings'
     | '/api/send-quote-emails'
     | '/produit/$slug'
     | '/admin/'
@@ -193,11 +217,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSendQuoteEmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/products': {
       id: '/admin/products'
       path: '/products'
       fullPath: '/admin/products'
       preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/auth': {
@@ -212,13 +250,17 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAuthRoute: typeof AdminAuthRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthRoute: AdminAuthRoute,
+  AdminCategoriesRoute: AdminCategoriesRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

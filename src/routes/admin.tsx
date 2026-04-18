@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { LogOut, Package, FileText } from "lucide-react";
+import { LogOut, Package, FileText, Layers, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,9 @@ function AdminLayout() {
         </Link>
         <nav className="flex-1 space-y-1 text-sm">
           <NavItem to="/admin" icon={<FileText className="size-4" />} label="Devis" exact />
+          <NavItem to="/admin/categories" icon={<Layers className="size-4" />} label="Catégories" />
           <NavItem to="/admin/products" icon={<Package className="size-4" />} label="Produits" />
+          <NavItem to="/admin/settings" icon={<Settings className="size-4" />} label="Paramètres" />
         </nav>
         <div className="border-t border-border pt-4 space-y-2">
           <p className="text-xs text-muted-foreground px-2 truncate">{user.email}</p>

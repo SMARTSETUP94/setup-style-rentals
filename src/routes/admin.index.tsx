@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Eye } from "lucide-react";
+import { Trash2, Eye, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +38,17 @@ type Quote = {
   total_deposit: number;
   status: string;
   created_at: string;
+  delivery_fee: number;
+  setup_fee: number;
+  pickup_fee: number;
+  logistics_notes: string | null;
 };
+
+const finalTotal = (q: Quote) =>
+  Number(q.total_ttc) +
+  Number(q.delivery_fee || 0) +
+  Number(q.setup_fee || 0) +
+  Number(q.pickup_fee || 0);
 
 const STATUSES = ["pending", "contacted", "validated", "rejected"] as const;
 
@@ -43,6 +56,23 @@ function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Quote | null>(null);
+  const [logistics, setLogistics] = useState({
+    delivery_fee: 0,
+    setup_fee: 0,
+    pickup_fee: 0,
+    logistics_notes: "",
+  });
+  const [savingLogistics, setSavingLogistics] = useState(false);
+
+  const openDetail = (q: Quote) => {
+    setSelected(q);
+    setLogistics({
+      delivery_fee: Number(q.delivery_fee || 0),
+      setup_fee: Number(q.setup_fee || 0),
+      pickup_fee: Number(q.pickup_fee || 0),
+      logistics_notes: q.logistics_notes || "",
+    });
+  };
 
   const load = async () => {
     setLoading(true);
@@ -66,6 +96,28 @@ function AdminQuotesPage() {
     setQuotes((q) => q.map((x) => (x.id === id ? { ...x, status } : x)));
     if (selected?.id === id) setSelected({ ...selected, status });
   };
+
+  const saveLogistics = async () => {
+    if (!selected) return;
+    setSavingLogistics(true);
+    const payload = {
+      delivery_fee: Number(logistics.delivery_fee) || 0,
+      setup_fee: Number(logistics.setup_fee) || 0,
+      pickup_fee: Number(logistics.pickup_fee) || 0,
+      logistics_notes: logistics.logistics_notes || null,
+    };
+    const { error } = await supabase.from("quote_requests").update(payload).eq("id", selected.id);
+    setSavingLogistics(false);
+    if (error) return toast.error(error.message);
+    toast.success("Frais logistiques enregistrés");
+    setQuotes((qs) => qs.map((x) => (x.id === selected.id ? { ...x, ...payload } : x)));
+    setSelected({ ...selected, ...payload });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
 
   const remove = async (id: string) => {
     if (!confirm("Supprimer ce devis ?")) return;
@@ -117,7 +169,14 @@ function AdminQuotesPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     {q.event_date ? new Date(q.event_date).toLocaleDateString("fr-FR") : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatPrice(q.total_ttc)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
+                    {(q.delivery_fee || q.setup_fee || q.pickup_fee) ? (
+                      <div className="text-xs text-muted-foreground">
+                        produits {formatPrice(q.total_ttc)}
+                      </div>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-3">
                     <select
                       value={q.status}
@@ -132,7 +191,7 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => setSelected(q)}>
+                      <Button size="icon" variant="ghost" onClick={() => openDetail(q)}>
                         <Eye className="size-4" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => remove(q.id)}>
@@ -184,11 +243,67 @@ function AdminQuotesPage() {
                     ))}
                   </div>
                 </div>
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">Frais logistiques</p>
+                    <Button size="sm" onClick={saveLogistics} disabled={savingLogistics}>
+                      <Save className="size-3.5" /> {savingLogistics ? "…" : "Enregistrer"}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Livraison (€)</Label>
+                      <Input
+                        type="number"
+                        className="mt-1"
+                        value={String(logistics.delivery_fee)}
+                        onChange={(e) => setLogistics({ ...logistics, delivery_fee: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Installation (€)</Label>
+                      <Input
+                        type="number"
+                        className="mt-1"
+                        value={String(logistics.setup_fee)}
+                        onChange={(e) => setLogistics({ ...logistics, setup_fee: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Reprise (€)</Label>
+                      <Input
+                        type="number"
+                        className="mt-1"
+                        value={String(logistics.pickup_fee)}
+                        onChange={(e) => setLogistics({ ...logistics, pickup_fee: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Notes logistiques</Label>
+                    <Textarea
+                      rows={2}
+                      className="mt-1"
+                      value={logistics.logistics_notes}
+                      onChange={(e) => setLogistics({ ...logistics, logistics_notes: e.target.value })}
+                    />
+                  </div>
+                </div>
                 <div className="rounded-lg bg-muted/30 p-4 space-y-1 text-sm">
                   <Row label="Sous-total HT" value={formatPrice(selected.subtotal_ht)} />
                   <Row label="Total HT" value={formatPrice(selected.total_ht)} />
                   <Row label="TVA 20%" value={formatPrice(selected.vat)} />
-                  <Row label="Total TTC" value={formatPrice(selected.total_ttc)} bold />
+                  <Row label="Total produits TTC" value={formatPrice(selected.total_ttc)} />
+                  {Number(selected.delivery_fee) > 0 && (
+                    <Row label="Livraison" value={formatPrice(selected.delivery_fee)} />
+                  )}
+                  {Number(selected.setup_fee) > 0 && (
+                    <Row label="Installation" value={formatPrice(selected.setup_fee)} />
+                  )}
+                  {Number(selected.pickup_fee) > 0 && (
+                    <Row label="Reprise" value={formatPrice(selected.pickup_fee)} />
+                  )}
+                  <Row label="TOTAL FINAL TTC" value={formatPrice(finalTotal(selected))} bold />
                   <Row label="Caution" value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>

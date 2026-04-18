@@ -76,6 +76,7 @@ function slugify(input: string): string {
 function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [optionCounts, setOptionCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
   const [saving, setSaving] = useState(false);

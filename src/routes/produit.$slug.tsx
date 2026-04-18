@@ -55,6 +55,9 @@ function ProductPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [show3D, setShow3D] = useState(false);
+  const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
+  const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setLoading(true);
@@ -68,12 +71,29 @@ function ProductPage() {
         const prod = data as Product | null;
         setProduct(prod);
         if (prod) {
-          const { data: cat } = await supabase
-            .from("categories")
-            .select("*")
-            .eq("slug", prod.category_slug)
-            .maybeSingle();
+          const [{ data: cat }, { data: cats }] = await Promise.all([
+            supabase.from("categories").select("*").eq("slug", prod.category_slug).maybeSingle(),
+            supabase
+              .from("product_option_categories")
+              .select("*")
+              .eq("product_id", prod.id)
+              .order("sort_order"),
+          ]);
           setCategory(cat as Category | null);
+          const catList = (cats as OptionCategory[]) ?? [];
+          setOptionCategories(catList);
+
+          if (catList.length > 0) {
+            const { data: opts } = await supabase
+              .from("product_options")
+              .select("*")
+              .in("category_id", catList.map((c) => c.id))
+              .eq("is_active", true)
+              .order("sort_order");
+            setProductOptions((opts as ProductOptionRow[]) ?? []);
+          } else {
+            setProductOptions([]);
+          }
         }
         setLoading(false);
       });
@@ -89,15 +109,41 @@ function ProductPage() {
     }
   }, [startDate, endDate]);
 
+  const selectedOptionsList: SelectedOption[] = useMemo(() => {
+    return optionCategories
+      .map((c) => {
+        const id = selectedOptionIds[c.id];
+        if (!id) return null;
+        const opt = productOptions.find((o) => o.id === id);
+        if (!opt) return null;
+        return {
+          categoryId: c.id,
+          categoryName_fr: c.name_fr,
+          categoryName_en: c.name_en,
+          optionId: opt.id,
+          name_fr: opt.name_fr,
+          name_en: opt.name_en,
+          price: Number(opt.price) || 0,
+        };
+      })
+      .filter((x): x is SelectedOption => x !== null);
+  }, [optionCategories, productOptions, selectedOptionIds]);
+
+  const optionsUnitPrice = useMemo(
+    () => selectedOptionsList.reduce((s, o) => s + o.price, 0),
+    [selectedOptionsList],
+  );
+
   const calc = useMemo(() => {
     if (!product) return null;
-    const gross = product.price_day * days * qty;
+    const unit = product.price_day + optionsUnitPrice;
+    const gross = unit * days * qty;
     const discountRate = volumeDiscount(qty);
     const discount = gross * discountRate;
     const net = gross - discount;
     const deposit = product.deposit * qty;
-    return { gross, discountRate, discount, net, deposit };
-  }, [product, days, qty]);
+    return { gross, discountRate, discount, net, deposit, optionsUnitPrice };
+  }, [product, days, qty, optionsUnitPrice]);
 
   if (loading) {
     return (

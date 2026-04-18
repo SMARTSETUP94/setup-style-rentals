@@ -98,6 +98,8 @@ const DICT: Dict = {
 
   "footer.tagline": { fr: "Création et location d'objets événementiels.", en: "Event object design and rental." },
   "footer.rights": { fr: "Tous droits réservés.", en: "All rights reserved." },
+  "footer.legal": { fr: "Légal", en: "Legal" },
+  "footer.cgl": { fr: "Conditions générales de location", en: "General rental terms" },
 };
 
 interface I18nContextValue {

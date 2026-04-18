@@ -100,6 +100,16 @@ function QuotePage() {
           line_discount: lt.discount,
           line_net: lt.net,
           line_deposit: lt.deposit,
+          options: (i.selectedOptions ?? []).map((o) => ({
+            categoryName_fr: o.categoryName_fr,
+            categoryName_en: o.categoryName_en,
+            name_fr: o.name_fr,
+            name_en: o.name_en,
+            price: o.price,
+            line_total: o.price * i.days * i.quantity,
+          })),
+          options_per_unit_per_day: lt.optionsPerUnit,
+          options_total: lt.optionsTotal,
         };
       }),
       subtotal_ht: totals.gross,
@@ -146,6 +156,29 @@ function QuotePage() {
     doc.text(lang === "fr" ? "Simulation de devis" : "Quote simulation", 14, 27);
     doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB"), 196, 20, { align: "right" });
 
+    const body: (string | number)[][] = [];
+    items.forEach((i) => {
+      const lt = lineTotal(i);
+      body.push([
+        pickLang(i, "name", lang),
+        i.quantity,
+        i.days,
+        formatPrice(i.price_day, lang),
+        lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
+        formatPrice(lt.net, lang),
+      ]);
+      (i.selectedOptions ?? []).forEach((o) => {
+        body.push([
+          `   • ${pickLang(o, "categoryName", lang)}: ${pickLang(o, "name", lang)}`,
+          "",
+          "",
+          o.price > 0 ? `+${formatPrice(o.price, lang)}` : "—",
+          "",
+          "",
+        ]);
+      });
+    });
+
     autoTable(doc, {
       startY: 35,
       head: [[
@@ -156,17 +189,7 @@ function QuotePage() {
         lang === "fr" ? "Remise" : "Discount",
         "Total HT",
       ]],
-      body: items.map((i) => {
-        const lt = lineTotal(i);
-        return [
-          pickLang(i, "name", lang),
-          i.quantity,
-          i.days,
-          formatPrice(i.price_day, lang),
-          lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
-          formatPrice(lt.net, lang),
-        ];
-      }),
+      body,
       headStyles: { fillColor: [26, 26, 26] },
       styles: { fontSize: 9 },
     });
@@ -228,6 +251,28 @@ function QuotePage() {
                             </div>
                             {item.startDate && item.endDate && (
                               <div className="text-xs text-muted-foreground">{item.startDate} → {item.endDate}</div>
+                            )}
+                            {item.selectedOptions && item.selectedOptions.length > 0 && (
+                              <ul className="mt-2 space-y-0.5">
+                                {item.selectedOptions.map((o) => (
+                                  <li
+                                    key={o.optionId}
+                                    className="text-xs text-muted-foreground flex items-baseline gap-1"
+                                  >
+                                    <span className="text-foreground/70">
+                                      {pickLang(o, "categoryName", lang)}:
+                                    </span>
+                                    <span className="font-medium text-foreground">
+                                      {pickLang(o, "name", lang)}
+                                    </span>
+                                    {o.price > 0 && (
+                                      <span className="text-accent">
+                                        +{formatPrice(o.price, lang)}/{t("product.day")}
+                                      </span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
                             )}
                           </div>
                           <button onClick={() => remove(item.productId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>

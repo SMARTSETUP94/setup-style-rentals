@@ -1,5 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
+export interface SelectedOption {
+  categoryId: string;
+  categoryName_fr: string;
+  categoryName_en: string;
+  optionId: string;
+  name_fr: string;
+  name_en: string;
+  price: number;
+}
+
 export interface CartItem {
   productId: string;
   slug: string;
@@ -13,6 +23,7 @@ export interface CartItem {
   days: number;
   startDate?: string;
   endDate?: string;
+  selectedOptions?: SelectedOption[];
 }
 
 interface CartContextValue {
@@ -45,13 +56,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
+  // Two cart lines are considered the same only if same product AND same option selection
+  const optionsKey = (opts?: SelectedOption[]) =>
+    (opts ?? [])
+      .map((o) => o.optionId)
+      .sort()
+      .join("|");
+
   const add = (item: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const key = optionsKey(item.selectedOptions);
+      const existing = prev.find(
+        (i) => i.productId === item.productId && optionsKey(i.selectedOptions) === key,
+      );
       if (existing) {
         return prev.map((i) =>
-          i.productId === item.productId
-            ? { ...i, quantity: i.quantity + item.quantity, days: item.days, startDate: item.startDate, endDate: item.endDate }
+          i.productId === item.productId && optionsKey(i.selectedOptions) === key
+            ? {
+                ...i,
+                quantity: i.quantity + item.quantity,
+                days: item.days,
+                startDate: item.startDate,
+                endDate: item.endDate,
+              }
             : i,
         );
       }
@@ -90,11 +117,31 @@ export function volumeDiscount(qty: number): number {
   return 0;
 }
 
-export function lineTotal(item: CartItem): { gross: number; discount: number; net: number; deposit: number } {
-  const gross = item.price_day * item.days * item.quantity;
+export function optionsTotal(item: CartItem): number {
+  return (item.selectedOptions ?? []).reduce((s, o) => s + (o.price || 0), 0);
+}
+
+export function lineTotal(item: CartItem): {
+  gross: number;
+  discount: number;
+  net: number;
+  deposit: number;
+  optionsPerUnit: number;
+  optionsTotal: number;
+} {
+  const optsUnit = optionsTotal(item);
+  const unitPerDay = item.price_day + optsUnit;
+  const gross = unitPerDay * item.days * item.quantity;
   const discountRate = volumeDiscount(item.quantity);
   const discount = gross * discountRate;
   const net = gross - discount;
   const deposit = item.deposit * item.quantity;
-  return { gross, discount, net, deposit };
+  return {
+    gross,
+    discount,
+    net,
+    deposit,
+    optionsPerUnit: optsUnit,
+    optionsTotal: optsUnit * item.days * item.quantity,
+  };
 }

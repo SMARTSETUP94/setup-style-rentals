@@ -5,9 +5,27 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
-import { useCart, volumeDiscount } from "@/lib/cart";
+import { useCart, volumeDiscount, type SelectedOption } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
+
+interface OptionCategory {
+  id: string;
+  name_fr: string;
+  name_en: string;
+  is_required: boolean;
+  sort_order: number;
+}
+
+interface ProductOptionRow {
+  id: string;
+  category_id: string;
+  name_fr: string;
+  name_en: string;
+  price: number;
+  sort_order: number;
+  is_active: boolean;
+}
 
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;
@@ -37,6 +55,9 @@ function ProductPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [show3D, setShow3D] = useState(false);
+  const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
+  const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setLoading(true);
@@ -50,12 +71,29 @@ function ProductPage() {
         const prod = data as Product | null;
         setProduct(prod);
         if (prod) {
-          const { data: cat } = await supabase
-            .from("categories")
-            .select("*")
-            .eq("slug", prod.category_slug)
-            .maybeSingle();
+          const [{ data: cat }, { data: cats }] = await Promise.all([
+            supabase.from("categories").select("*").eq("slug", prod.category_slug).maybeSingle(),
+            supabase
+              .from("product_option_categories")
+              .select("*")
+              .eq("product_id", prod.id)
+              .order("sort_order"),
+          ]);
           setCategory(cat as Category | null);
+          const catList = (cats as OptionCategory[]) ?? [];
+          setOptionCategories(catList);
+
+          if (catList.length > 0) {
+            const { data: opts } = await supabase
+              .from("product_options")
+              .select("*")
+              .in("category_id", catList.map((c) => c.id))
+              .eq("is_active", true)
+              .order("sort_order");
+            setProductOptions((opts as ProductOptionRow[]) ?? []);
+          } else {
+            setProductOptions([]);
+          }
         }
         setLoading(false);
       });
@@ -71,15 +109,41 @@ function ProductPage() {
     }
   }, [startDate, endDate]);
 
+  const selectedOptionsList: SelectedOption[] = useMemo(() => {
+    return optionCategories
+      .map((c) => {
+        const id = selectedOptionIds[c.id];
+        if (!id) return null;
+        const opt = productOptions.find((o) => o.id === id);
+        if (!opt) return null;
+        return {
+          categoryId: c.id,
+          categoryName_fr: c.name_fr,
+          categoryName_en: c.name_en,
+          optionId: opt.id,
+          name_fr: opt.name_fr,
+          name_en: opt.name_en,
+          price: Number(opt.price) || 0,
+        };
+      })
+      .filter((x): x is SelectedOption => x !== null);
+  }, [optionCategories, productOptions, selectedOptionIds]);
+
+  const optionsUnitPrice = useMemo(
+    () => selectedOptionsList.reduce((s, o) => s + o.price, 0),
+    [selectedOptionsList],
+  );
+
   const calc = useMemo(() => {
     if (!product) return null;
-    const gross = product.price_day * days * qty;
+    const unit = product.price_day + optionsUnitPrice;
+    const gross = unit * days * qty;
     const discountRate = volumeDiscount(qty);
     const discount = gross * discountRate;
     const net = gross - discount;
     const deposit = product.deposit * qty;
-    return { gross, discountRate, discount, net, deposit };
-  }, [product, days, qty]);
+    return { gross, discountRate, discount, net, deposit, optionsUnitPrice };
+  }, [product, days, qty, optionsUnitPrice]);
 
   if (loading) {
     return (
@@ -108,6 +172,15 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
+    const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
+    if (missing.length > 0) {
+      toast.error(
+        lang === "fr"
+          ? `Veuillez sélectionner : ${missing.map((c) => c.name_fr).join(", ")}`
+          : `Please select: ${missing.map((c) => c.name_en).join(", ")}`,
+      );
+      return;
+    }
     add({
       productId: product.id,
       slug: product.slug,
@@ -121,6 +194,7 @@ function ProductPage() {
       days,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      selectedOptions: selectedOptionsList.length > 0 ? selectedOptionsList : undefined,
     });
     toast.success(t("product.added"), { icon: <Check className="size-4" /> });
   };
@@ -208,6 +282,82 @@ function ProductPage() {
             </div>
           </div>
 
+          {/* Customization options */}
+          {optionCategories.length > 0 && (
+            <div className="mt-8 space-y-5">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {lang === "fr" ? "Personnalisation" : "Customization"}
+              </div>
+              {optionCategories.map((cat) => {
+                const opts = productOptions
+                  .filter((o) => o.category_id === cat.id)
+                  .sort((a, b) => a.sort_order - b.sort_order);
+                if (opts.length === 0) return null;
+                const selected = selectedOptionIds[cat.id];
+                return (
+                  <div key={cat.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium">{pickLang(cat, "name", lang)}</label>
+                      {cat.is_required ? (
+                        <span className="text-[10px] uppercase tracking-wider text-destructive">
+                          {lang === "fr" ? "Requis" : "Required"}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOptionIds((prev) => {
+                              const next = { ...prev };
+                              delete next[cat.id];
+                              return next;
+                            });
+                          }}
+                          className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-auto"
+                        >
+                          {lang === "fr" ? "Désélectionner" : "Clear"}
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {opts.map((o) => {
+                        const active = selected === o.id;
+                        return (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }))
+                            }
+                            className={cn(
+                              "text-left rounded-lg border p-3 transition-all",
+                              active
+                                ? "border-gold bg-gold/5 ring-1 ring-gold"
+                                : "border-border hover:border-foreground/30",
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-sm font-medium">
+                                {pickLang(o, "name", lang)}
+                              </span>
+                              {active && <Check className="size-4 text-gold shrink-0" />}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {o.price > 0
+                                ? `+${formatPrice(o.price, lang)} ${t("catalog.perDay")}`
+                                : lang === "fr"
+                                  ? "Inclus"
+                                  : "Included"}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Quantity & dates */}
           <div className="mt-8 space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -261,7 +411,17 @@ function ProductPage() {
           {/* Calc */}
           {calc && (
             <div className="mt-6 rounded-lg border border-border p-4 space-y-2 text-sm">
-              <Row label={t("product.subtotal")} value={formatPrice(calc.gross, lang)} />
+              <Row
+                label={`${t("product.subtotal")} (${formatPrice(product.price_day, lang)} ${t("catalog.perDay")})`}
+                value={formatPrice(product.price_day * days * qty, lang)}
+              />
+              {selectedOptionsList.map((o) => (
+                <Row
+                  key={o.optionId}
+                  label={`+ ${pickLang(o, "name", lang)}`}
+                  value={`+${formatPrice(o.price * days * qty, lang)}`}
+                />
+              ))}
               {calc.discountRate > 0 && (
                 <Row
                   label={`${t("product.discount")} (-${Math.round(calc.discountRate * 100)}%)`}

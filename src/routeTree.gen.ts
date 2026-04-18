@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
+import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 
@@ -48,6 +49,11 @@ const ProduitSlugRoute = ProduitSlugRouteImport.update({
   path: '/produit/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
+  id: '/api/send-quote-emails',
+  path: '/api/send-quote-emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/products': typeof AdminProductsRoute
+  '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/products': typeof AdminProductsRoute
+  '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/devis': typeof DevisRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/products': typeof AdminProductsRoute
+  '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/devis'
     | '/admin/auth'
     | '/admin/products'
+    | '/api/send-quote-emails'
     | '/produit/$slug'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/devis'
     | '/admin/auth'
     | '/admin/products'
+    | '/api/send-quote-emails'
     | '/produit/$slug'
     | '/admin'
   id:
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/devis'
     | '/admin/auth'
     | '/admin/products'
+    | '/api/send-quote-emails'
     | '/produit/$slug'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -126,6 +138,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CatalogueRoute: typeof CatalogueRoute
   DevisRoute: typeof DevisRoute
+  ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
 }
 
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProduitSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/send-quote-emails': {
+      id: '/api/send-quote-emails'
+      path: '/api/send-quote-emails'
+      fullPath: '/api/send-quote-emails'
+      preLoaderRoute: typeof ApiSendQuoteEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/products': {
       id: '/admin/products'
       path: '/products'
@@ -209,8 +229,18 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CatalogueRoute: CatalogueRoute,
   DevisRoute: DevisRoute,
+  ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   ProduitSlugRoute: ProduitSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

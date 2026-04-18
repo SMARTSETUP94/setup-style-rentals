@@ -266,3 +266,55 @@ function SectionHeader({ num, title, sub }: { num: string; title: string; sub?: 
     </div>
   );
 }
+
+function FeaturedCard({
+  p,
+  categories,
+  lang,
+  t,
+  className,
+}: {
+  p: FeaturedProduct;
+  categories: Category[];
+  lang: "fr" | "en";
+  t: (key: string) => string;
+  className?: string;
+}) {
+  const cat = categories.find((c) => c.slug === p.category_slug);
+  return (
+    <Link
+      to="/produit/$slug"
+      params={{ slug: p.slug }}
+      className={cn(
+        "group block bg-white rounded-lg overflow-hidden border border-border hover-lift",
+        className,
+      )}
+    >
+      <div className="aspect-[4/3] bg-secondary overflow-hidden">
+        <ProductImage
+          name={pickLang(p, "name", lang)}
+          category_slug={p.category_slug}
+          image_url={p.image_url}
+          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+        />
+      </div>
+      <div className="p-4">
+        <div
+          className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
+          style={{
+            background: `${categoryColor(p.category_slug)}22`,
+            color: p.category_slug === "signaletique" ? "#1A1A1A" : categoryColor(p.category_slug),
+          }}
+        >
+          {cat ? pickLang(cat, "name", lang) : p.category_slug}
+        </div>
+        <h3 className="mt-2 font-medium text-base leading-snug">{pickLang(p, "name", lang)}</h3>
+        <div className="mt-2 text-sm">
+          <span className="text-xs text-muted-foreground">{t("catalog.from")} </span>
+          <span className="font-semibold">{formatPrice(p.price_day, lang)}</span>
+          <span className="text-xs text-muted-foreground">{t("catalog.perDay")}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}

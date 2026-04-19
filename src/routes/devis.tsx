@@ -382,6 +382,11 @@ function QuotePage() {
                   <Input label={t("cart.eventDate")} type="date" value={form.event_date} onChange={(v) => setForm({ ...form, event_date: v })} />
                   <Input label={t("cart.eventLocation")} value={form.event_location} onChange={(v) => setForm({ ...form, event_location: v })} maxLength={500} />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label={t("cart.deliveryTime")} type="time" value={form.delivery_time} onChange={(v) => setForm({ ...form, delivery_time: v })} />
+                  <Input label={t("cart.pickupTime")} type="time" value={form.pickup_time} onChange={(v) => setForm({ ...form, pickup_time: v })} />
+                </div>
+                <p className="text-[11px] text-muted-foreground -mt-1">{t("cart.timesHint")}</p>
                 <div>
                   <label htmlFor="quote-message" className="text-xs text-muted-foreground">{t("cart.message")}</label>
                   <textarea

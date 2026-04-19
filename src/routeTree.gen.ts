@@ -24,6 +24,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminDevisRouteImport } from './routes/admin.devis'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -101,6 +102,11 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCalendrierRoute = AdminCalendrierRouteImport.update({
+  id: '/calendrier',
+  path: '/calendrier',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAuthRoute = AdminAuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
+  '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
+  '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
+  '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/admin/auth'
+    | '/admin/calendrier'
     | '/admin/categories'
     | '/admin/devis'
     | '/admin/products'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/admin/auth'
+    | '/admin/calendrier'
     | '/admin/categories'
     | '/admin/devis'
     | '/admin/products'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/admin/auth'
+    | '/admin/calendrier'
     | '/admin/categories'
     | '/admin/devis'
     | '/admin/products'
@@ -337,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/calendrier': {
+      id: '/admin/calendrier'
+      path: '/calendrier'
+      fullPath: '/admin/calendrier'
+      preLoaderRoute: typeof AdminCalendrierRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/auth': {
       id: '/admin/auth'
       path: '/auth'
@@ -349,6 +368,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAuthRoute: typeof AdminAuthRoute
+  AdminCalendrierRoute: typeof AdminCalendrierRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminDevisRoute: typeof AdminDevisRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -358,6 +378,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthRoute: AdminAuthRoute,
+  AdminCalendrierRoute: AdminCalendrierRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminDevisRoute: AdminDevisRoute,
   AdminProductsRoute: AdminProductsRoute,

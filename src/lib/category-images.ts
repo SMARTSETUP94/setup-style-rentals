@@ -35,6 +35,6 @@ export function categoryGradient(slug: string): string {
   return CATEGORY_GRADIENTS[slug] ?? "linear-gradient(135deg, #1a1a1a 0%, #c9a96e 100%)";
 }
 
-/** Luxury corporate evening event — lounge furniture, ambient lighting. */
-export const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1505236858219-8359eb29e329?auto=format&fit=crop&w=2000&q=75";
+/** Setup Paris signature visual — Yonex Player Support blue curtain installation. */
+import heroImg from "@/assets/hero/setup-hero.jpg";
+export const HERO_IMAGE = heroImg;

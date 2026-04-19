@@ -6,6 +6,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
+import { ClientsBand } from "@/components/site/ClientsBand";
 
 interface Category {
   id: string;
@@ -122,7 +123,10 @@ function HomePage() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {/* CLIENTS BAND */}
+      <ClientsBand label={t("clients.label")} />
+
+
       <RevealSection className="container-x py-20 md:py-28">
         <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
         <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">

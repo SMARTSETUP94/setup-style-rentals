@@ -21,6 +21,8 @@ const DICT: Dict = {
   "trust.quote": { fr: "Devis instantané", en: "Instant quote" },
   "trust.bespoke": { fr: "Sur-mesure disponible", en: "Bespoke available" },
 
+  "clients.label": { fr: "Ils nous font confiance", en: "Trusted by" },
+
   "cats.title": { fr: "Univers", en: "Categories" },
   "cats.sub": { fr: "Cinq univers pour composer votre événement", en: "Five worlds to compose your event" },
 

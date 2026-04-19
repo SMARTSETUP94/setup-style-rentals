@@ -113,6 +113,8 @@ function QuotePage() {
           options_per_unit_per_day: lt.optionsPerUnit,
           options_total: lt.optionsTotal,
           configurator_recap: i.configuratorRecap ?? null,
+          logo_url: i.logoUrl ?? null,
+          logo_filename: i.logoFilename ?? null,
         };
       }),
       subtotal_ht: totals.gross,
@@ -295,6 +297,14 @@ function QuotePage() {
                                 <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">
                                   {item.configuratorRecap}
                                 </pre>
+                              </div>
+                            )}
+                            {item.logoUrl && (
+                              <div className="mt-2 rounded-md border border-accent/30 bg-accent/5 p-2 text-[11px] flex items-center gap-2">
+                                <span className="font-semibold text-accent">📎 {t("logoUpload.attachedLabel")} :</span>
+                                <a href={item.logoUrl} target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline truncate text-foreground/80">
+                                  {item.logoFilename || t("logoUpload.preview")}
+                                </a>
                               </div>
                             )}
                           </div>

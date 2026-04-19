@@ -41,6 +41,10 @@ export interface CartItem {
   durationDiscounts?: DurationDiscountTier[];
   /** Multiline summary of the 3D configurator selection (sent by the iframe). */
   configuratorRecap?: string;
+  /** Public URL of an uploaded client logo (when "Avec logo personnalisé" option is selected). */
+  logoUrl?: string;
+  /** Original filename of the uploaded logo, for display purposes. */
+  logoFilename?: string;
 }
 
 interface CartContextValue {
@@ -79,12 +83,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   // Two cart lines are considered the same only if same product, same options, AND same dates
-  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap">) => {
+  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap" | "logoUrl">) => {
     const opts = (item.selectedOptions ?? [])
       .map((o) => o.optionId)
       .sort()
       .join("|");
-    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? ""].join("¦");
+    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? "", item.logoUrl ?? ""].join("¦");
   };
 
   const add = (item: CartItem) => {

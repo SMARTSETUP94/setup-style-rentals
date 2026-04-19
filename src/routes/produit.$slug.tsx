@@ -9,6 +9,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
+import { LogoUpload } from "@/components/site/LogoUpload";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -169,6 +170,8 @@ function ProductPage() {
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
   /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
+  /** Uploaded client logo (when an option containing "logo" with a price > 0 is selected). */
+  const [clientLogo, setClientLogo] = useState<{ url: string; filename: string } | null>(null);
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -390,6 +393,28 @@ function ProductPage() {
   const activeSelectedOptionsList = is3DMode ? [] : selectedOptionsList;
   const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
 
+  /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
+  const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {
+    if (!opt) return false;
+    const price = Number(opt.price) || 0;
+    if (price <= 0) return false;
+    const text = `${opt.name_fr} ${opt.name_en}`.toLowerCase();
+    return text.includes("logo");
+  };
+
+  /** Does any currently-selected option require a logo upload? */
+  const logoRequired = useMemo(() => {
+    if (is3DMode) return false;
+    return activeSelectedOptionsList.some((o) =>
+      optionRequiresLogo({ name_fr: o.name_fr, name_en: o.name_en, price: o.price }),
+    );
+  }, [is3DMode, activeSelectedOptionsList]);
+
+  // Clear uploaded logo when no logo-requiring option is selected anymore
+  useEffect(() => {
+    if (!logoRequired && clientLogo) setClientLogo(null);
+  }, [logoRequired, clientLogo]);
+
   const optionsUnitPrice = useMemo(
     () =>
       activeSelectedOptionsList.reduce((s, o) => s + o.price, 0) +
@@ -470,6 +495,10 @@ function ProductPage() {
       toast.error(`${t("product.selectRequired")} ${labels}`);
       return;
     }
+    if (logoRequired && !clientLogo) {
+      toast.error(t("logoUpload.required"));
+      return;
+    }
     if (availableStock !== null && qty > availableStock) {
       toast.error(t("product.insufficientStock"));
       return;
@@ -495,6 +524,8 @@ function ProductPage() {
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
       configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
+      logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
+      logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
       configuratorOptions.length > 0
@@ -739,6 +770,16 @@ function ProductPage() {
                         );
                       })}
                     </div>
+                    {(() => {
+                      const selectedOpt = opts.find((o) => o.id === selected) ?? null;
+                      if (!optionRequiresLogo(selectedOpt)) return null;
+                      return (
+                        <LogoUpload
+                          value={clientLogo}
+                          onChange={setClientLogo}
+                        />
+                      );
+                    })()}
                   </div>
                 );
               })}

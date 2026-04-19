@@ -236,9 +236,37 @@ function ProductPage() {
       .filter((x): x is SelectedOption => x !== null);
   }, [optionCategories, productOptions, selectedOptionIds]);
 
+  /** Synthetic SelectedOption[] derived from the 3D-configurator iframe payload. */
+  const configuratorOptionsList: SelectedOption[] = useMemo(() => {
+    if (!product || !configuratorData) return [];
+    const opts = product.configurator_options || {};
+    const synthetic: SelectedOption[] = [];
+    for (const [groupKey, choices] of Object.entries(opts)) {
+      const selectedValue =
+        configuratorData[`${groupKey}Finition`] ??
+        configuratorData[`${groupKey}Option`] ??
+        configuratorData[groupKey];
+      if (typeof selectedValue !== "string") continue;
+      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
+      if (!match) continue;
+      synthetic.push({
+        categoryId: `cfg-${groupKey}`,
+        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        optionId: `cfg-${groupKey}-${match.value}`,
+        name_fr: match.label,
+        name_en: match.label,
+        price: Number(match.price) || 0,
+      });
+    }
+    return synthetic;
+  }, [product, configuratorData]);
+
   const optionsUnitPrice = useMemo(
-    () => selectedOptionsList.reduce((s, o) => s + o.price, 0),
-    [selectedOptionsList],
+    () =>
+      selectedOptionsList.reduce((s, o) => s + o.price, 0) +
+      configuratorOptionsList.reduce((s, o) => s + o.price, 0),
+    [selectedOptionsList, configuratorOptionsList],
   );
 
   const calc = useMemo(() => {

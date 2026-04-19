@@ -37,7 +37,7 @@ export function Navbar() {
         <Link to="/" className="flex items-center gap-2.5 group">
           <span className={cn("inline-block size-2 rounded-full transition-colors", transparent ? "bg-white" : "bg-accent")} />
           <span className="flex flex-col leading-none">
-            <span className="font-display font-bold tracking-tight text-lg">
+            <span className="font-display font-bold tracking-tight text-base sm:text-lg whitespace-nowrap">
               SETUP <span className="opacity-60 font-normal">PARIS</span>
             </span>
             <a
@@ -46,7 +46,7 @@ export function Navbar() {
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className={cn(
-                "text-[10px] font-medium tracking-wider uppercase mt-0.5 transition-opacity hover:opacity-100",
+                "text-[9px] sm:text-[10px] font-medium tracking-wider uppercase mt-0.5 whitespace-nowrap transition-opacity hover:opacity-100",
                 transparent ? "text-white/70" : "text-muted-foreground",
               )}
             >

@@ -357,7 +357,8 @@ function ProductPage() {
       return;
     }
     // Merge manually-selected options with the 3D configurator selection (if any)
-    const configuratorOptions = buildConfiguratorOptions();
+    // Merge manually-selected options with the 3D configurator selection (if any)
+    const configuratorOptions = configuratorOptionsList;
     const mergedOptions: SelectedOption[] = [...selectedOptionsList, ...configuratorOptions];
     add({
       productId: product.id,

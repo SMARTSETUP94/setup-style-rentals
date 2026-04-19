@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+
 import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/")({
@@ -50,7 +50,22 @@ const finalTotal = (q: Quote) =>
   Number(q.setup_fee || 0) +
   Number(q.pickup_fee || 0);
 
-const STATUSES = ["pending", "contacted", "validated", "rejected"] as const;
+const STATUSES = ["pending", "contacted", "confirmed", "completed", "rejected"] as const;
+const BLOCKING_STATUSES = new Set(["confirmed", "completed"]);
+const STATUS_LABELS_FR: Record<string, string> = {
+  pending: "En attente",
+  contacted: "Contacté",
+  confirmed: "Confirmé",
+  completed: "Terminé",
+  rejected: "Refusé",
+};
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  contacted: "bg-blue-100 text-blue-800 border-blue-200",
+  confirmed: "bg-green-100 text-green-800 border-green-200",
+  completed: "bg-purple-100 text-purple-800 border-purple-200",
+  rejected: "bg-red-100 text-red-800 border-red-200",
+};
 
 function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -182,12 +197,25 @@ function AdminQuotesPage() {
                       value={q.status}
                       onChange={(e) => updateStatus(q.id, e.target.value)}
                       onClick={(e) => e.stopPropagation()}
-                      className="h-8 rounded-md border border-input bg-transparent px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring capitalize"
+                      className={`h-8 rounded-md border px-2 text-xs font-medium shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                        STATUS_COLORS[q.status] || "border-input bg-transparent"
+                      }`}
+                      title={
+                        BLOCKING_STATUSES.has(q.status)
+                          ? "Ce devis bloque le stock sur les dates demandées"
+                          : "Ce devis ne bloque pas le stock"
+                      }
                     >
                       {STATUSES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
+                        <option key={s} value={s}>{STATUS_LABELS_FR[s]}</option>
                       ))}
                     </select>
+                    {BLOCKING_STATUSES.has(q.status) && (
+                      <div className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
+                        <span className="inline-block size-1.5 rounded-full bg-green-500" />
+                        Stock réservé
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -313,16 +341,19 @@ function AdminQuotesPage() {
                       <button
                         key={s}
                         onClick={() => updateStatus(selected.id, s)}
-                        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                        className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
                           selected.status === s
-                            ? "bg-foreground text-background border-foreground"
+                            ? STATUS_COLORS[s] || "bg-foreground text-background border-foreground"
                             : "border-border hover:bg-muted"
                         }`}
                       >
-                        {s}
+                        {STATUS_LABELS_FR[s]}
                       </button>
                     ))}
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Les statuts <strong>Confirmé</strong> et <strong>Terminé</strong> bloquent le stock sur les dates de l'événement.
+                  </p>
                 </div>
               </div>
             </>
@@ -351,16 +382,3 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    contacted: "bg-blue-100 text-blue-800",
-    validated: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
-  };
-  return (
-    <Badge variant="outline" className={`${map[status] || "bg-muted"} border-transparent capitalize`}>
-      {status}
-    </Badge>
-  );
-}

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
@@ -307,6 +307,30 @@ function ProductPage() {
       });
     }
     return synthetic;
+  };
+
+  /** Reset the 3D configurator: clear local state and reload the iframe(s) to default. */
+  const handleResetConfigurator = () => {
+    setConfiguratorData(null);
+    setConfiguratorRecap("");
+    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+      if (!frame) return;
+      try {
+        frame.contentWindow?.postMessage({ type: "reset-config" }, "*");
+      } catch {
+        // ignore cross-origin
+      }
+      // Force reload to guarantee defaults
+      const src = frame.src;
+      frame.src = "about:blank";
+      setTimeout(() => {
+        if (frame) frame.src = src;
+      }, 50);
+    });
+    toast.success(
+      lang === "fr" ? "Configuration réinitialisée" : "Configuration reset",
+      { icon: <RotateCcw className="size-4" /> },
+    );
   };
 
   const handleAdd = () => {
@@ -746,11 +770,22 @@ function ProductPage() {
 
           {product.configurator_url && (configuratorData || configuratorRecap) && (
             <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10">
-              <div className="flex items-center gap-2 mb-3">
-                <Wand2 className="size-4 text-gold" />
-                <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold">
-                  {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Wand2 className="size-4 text-gold shrink-0" />
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold truncate">
+                    {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleResetConfigurator}
+                  title={lang === "fr" ? "Réinitialiser la configuration" : "Reset configuration"}
+                  className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:border-gold/50 transition-colors shrink-0"
+                >
+                  <RotateCcw className="size-3" />
+                  {lang === "fr" ? "Réinitialiser" : "Reset"}
+                </button>
               </div>
               <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
                 {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}

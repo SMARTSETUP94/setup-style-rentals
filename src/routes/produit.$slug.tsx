@@ -507,12 +507,39 @@ function ProductPage() {
   return (
     <div className="pt-20 md:pt-24">
       <div className="container-x py-5">
-        <button
-          onClick={() => router.history.back()}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/">{t("nav.home")}</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/catalogue">{t("nav.catalog")}</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            {category && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/catalogue" search={{ category: category.slug, q: "", sort: "featured" }}>
+                      {pickLang(category, "name", lang)}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </>
+            )}
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{pickLang(product, "name", lang)}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Link
+          to="/catalogue"
+          className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ArrowLeft className="size-4" /> {t("product.back")}
-        </button>
+        </Link>
       </div>
 
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
@@ -523,9 +550,9 @@ function ProductPage() {
               <iframe
                 ref={inlineIframeRef}
                 src={product.configurator_url}
-                title={`${lang === "fr" ? "Configurateur 3D" : "3D configurator"} — ${pickLang(product, "name", lang)}`}
+                title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
                 className="block w-full"
-                style={{ height: `${Math.min(iframeHeight, 650)}px`, minHeight: "600px", maxHeight: "650px", border: "none" }}
+                style={{ height: `${iframeHeight}px`, minHeight: "600px", maxHeight: "min(80vh, 1200px)", border: "none" }}
                 allow="clipboard-write; fullscreen"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
               />
@@ -533,10 +560,10 @@ function ProductPage() {
                 type="button"
                 onClick={() => setShow3D(false)}
                 className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={lang === "fr" ? "Voir l'image" : "Show image"}
+                aria-label={t("product.showImage")}
               >
                 <X className="size-3.5" />
-                {lang === "fr" ? "Voir l'image" : "Show image"}
+                {t("product.showImage")}
               </button>
               <button
                 type="button"

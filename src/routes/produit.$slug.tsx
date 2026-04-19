@@ -85,6 +85,8 @@ function ProductPage() {
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
   const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
+  /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
+  const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -305,28 +307,31 @@ function ProductPage() {
       s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     setSelectedOptionIds((prev) => {
       const next = { ...prev };
+      const autoIds = new Set<string>();
       let changed = false;
       for (const cfg of configuratorOptionsList) {
         const cfgNames = [norm(cfg.name_fr), norm(cfg.name_en)].filter(Boolean);
         const cfgCat = [norm(cfg.categoryName_fr), norm(cfg.categoryName_en)].filter(Boolean);
-        // Find a DB category whose name contains (or is contained in) the configurator group label
         const matchingCat = optionCategories.find((c) => {
           const cn = [norm(c.name_fr), norm(c.name_en)];
           return cn.some((n) => cfgCat.some((cc) => n.includes(cc) || cc.includes(n)));
         });
         if (!matchingCat) continue;
-        // Within that category, find an option whose name matches the configurator choice
         const matchingOpt = productOptions.find(
           (o) =>
             o.category_id === matchingCat.id &&
             o.is_active &&
             cfgNames.some((cn) => norm(o.name_fr) === cn || norm(o.name_en) === cn),
         );
-        if (matchingOpt && next[matchingCat.id] !== matchingOpt.id) {
-          next[matchingCat.id] = matchingOpt.id;
-          changed = true;
+        if (matchingOpt) {
+          autoIds.add(matchingCat.id);
+          if (next[matchingCat.id] !== matchingOpt.id) {
+            next[matchingCat.id] = matchingOpt.id;
+            changed = true;
+          }
         }
       }
+      setAutoSelectedCatIds(autoIds);
       return changed ? next : prev;
     });
   }, [configuratorOptionsList, productOptions, optionCategories]);
@@ -621,6 +626,12 @@ function ProductPage() {
                               delete next[cat.id];
                               return next;
                             });
+                            setAutoSelectedCatIds((prev) => {
+                              if (!prev.has(cat.id)) return prev;
+                              const next = new Set(prev);
+                              next.delete(cat.id);
+                              return next;
+                            });
                             syncSelectionToIframe(cat.id, null);
                           }}
                           className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-auto"
@@ -638,6 +649,12 @@ function ProductPage() {
                             type="button"
                             onClick={() => {
                               setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }));
+                              setAutoSelectedCatIds((prev) => {
+                                if (!prev.has(cat.id)) return prev;
+                                const next = new Set(prev);
+                                next.delete(cat.id);
+                                return next;
+                              });
                               syncSelectionToIframe(cat.id, o.id);
                             }}
                             className={cn(
@@ -648,8 +665,16 @@ function ProductPage() {
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-sm font-medium">
+                              <span className="text-sm font-medium inline-flex items-center gap-1.5">
                                 {pickLang(o, "name", lang)}
+                                {active && autoSelectedCatIds.has(cat.id) && (
+                                  <span
+                                    title={lang === "fr" ? "Sélectionné via le configurateur 3D" : "Auto-selected from 3D configurator"}
+                                    className="inline-flex items-center text-gold/80"
+                                  >
+                                    <Wand2 className="size-3.5" />
+                                  </span>
+                                )}
                               </span>
                               {active && <Check className="size-4 text-gold shrink-0" />}
                             </div>

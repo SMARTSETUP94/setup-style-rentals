@@ -445,7 +445,7 @@ function ProductPage() {
   const handleResetConfigurator = () => {
     setConfiguratorData(null);
     setConfiguratorRecap("");
-    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+    [inlineIframeRef.current].forEach((frame) => {
       if (!frame) return;
       try {
         frame.contentWindow?.postMessage({ type: "reset-config" }, "*");
@@ -464,7 +464,7 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
-    const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
+    const missing = is3DMode ? [] : optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
       const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
       toast.error(`${t("product.selectRequired")} ${labels}`);
@@ -474,10 +474,10 @@ function ProductPage() {
       toast.error(t("product.insufficientStock"));
       return;
     }
-    // Merge manually-selected options with the 3D configurator selection (if any)
-    // Merge manually-selected options with the 3D configurator selection (if any)
-    const configuratorOptions = configuratorOptionsList;
-    const mergedOptions: SelectedOption[] = [...selectedOptionsList, ...configuratorOptions];
+    const configuratorOptions = activeConfiguratorOptionsList;
+    const mergedOptions: SelectedOption[] = is3DMode
+      ? [...configuratorOptions]
+      : [...activeSelectedOptionsList];
     add({
       productId: product.id,
       slug: product.slug,
@@ -494,7 +494,7 @@ function ProductPage() {
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
-      configuratorRecap: configuratorRecap || undefined,
+      configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
     });
     toast.success(
       configuratorOptions.length > 0

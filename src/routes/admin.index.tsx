@@ -148,7 +148,7 @@ function AdminQuotesPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <ScrollableTable minWidth={840}>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
@@ -228,7 +228,7 @@ function AdminQuotesPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableTable>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">

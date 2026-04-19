@@ -164,7 +164,7 @@ function AdminCategoriesPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <ScrollableTable minWidth={720}>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
@@ -219,7 +219,7 @@ function AdminCategoriesPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableTable>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">

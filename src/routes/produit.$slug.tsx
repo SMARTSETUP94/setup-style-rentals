@@ -77,11 +77,11 @@ export const Route = createFileRoute("/produit/$slug")({
   loader: async ({ params }) => {
     const { data } = await supabase
       .from("products")
-      .select("slug,name_fr,name_en,description_fr,description_en,image_url")
+      .select("slug,name_fr,name_en,description_fr,description_en,image_url,price_day,stock_total,category_slug")
       .eq("slug", params.slug)
       .eq("is_active", true)
       .maybeSingle();
-    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null } | null };
+    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null; price_day: number; stock_total: number; category_slug: string } | null };
   },
   head: ({ loaderData }) => {
     const m = loaderData?.meta;
@@ -95,12 +95,15 @@ export const Route = createFileRoute("/produit/$slug")({
     }
     const title = `${m.name_fr} — Setup Paris`;
     const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D, livraison et reprise incluses.`;
+    const siteUrl = "https://setup-style-rentals.lovable.app";
+    const productUrl = `${siteUrl}/produit/${m.slug}`;
     const meta: Array<Record<string, string>> = [
       { title },
       { name: "description", content: description },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "product" },
+      { property: "og:url", content: productUrl },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
@@ -109,7 +112,42 @@ export const Route = createFileRoute("/produit/$slug")({
       meta.push({ property: "og:image", content: m.image_url });
       meta.push({ name: "twitter:image", content: m.image_url });
     }
-    return { meta };
+    const jsonLd: Record<string, unknown> = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      name: m.name_fr,
+      description,
+      sku: m.slug,
+      category: m.category_slug,
+      url: productUrl,
+      brand: { "@type": "Brand", name: "Setup Paris" },
+      offers: {
+        "@type": "Offer",
+        url: productUrl,
+        priceCurrency: "EUR",
+        price: m.price_day.toFixed(2),
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: m.price_day.toFixed(2),
+          priceCurrency: "EUR",
+          unitCode: "DAY",
+          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "DAY" },
+        },
+        availability: m.stock_total > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        businessFunction: "https://schema.org/LeaseOut",
+        seller: { "@type": "Organization", name: "Setup Paris" },
+      },
+    };
+    if (m.image_url) jsonLd.image = m.image_url;
+    return {
+      meta,
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLd),
+        },
+      ],
+    };
   },
   component: ProductPage,
 });

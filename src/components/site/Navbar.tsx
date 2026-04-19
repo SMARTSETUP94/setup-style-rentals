@@ -34,9 +34,25 @@ export function Navbar() {
       )}
     >
       <div className="container-x flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-2 font-display font-bold tracking-tight text-lg">
-          <span className={cn("inline-block size-2 rounded-full", transparent ? "bg-white" : "bg-accent")} />
-          SETUP <span className="opacity-60 font-normal">PARIS</span>
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <span className={cn("inline-block size-2 rounded-full transition-colors", transparent ? "bg-white" : "bg-accent")} />
+          <span className="flex flex-col leading-none">
+            <span className="font-display font-bold tracking-tight text-lg">
+              SETUP <span className="opacity-60 font-normal">PARIS</span>
+            </span>
+            <a
+              href="https://www.setup.paris"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "text-[10px] font-medium tracking-wider uppercase mt-0.5 transition-opacity hover:opacity-100",
+                transparent ? "text-white/70" : "text-muted-foreground",
+              )}
+            >
+              by setup.paris ↗
+            </a>
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">

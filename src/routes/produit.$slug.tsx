@@ -744,12 +744,12 @@ function ProductPage() {
             </div>
           )}
 
-          {product.configurator_url && (configuratorData || configuratorRecap) ? (
+          {product.configurator_url && (configuratorData || configuratorRecap) && (
             <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10">
               <div className="flex items-center gap-2 mb-3">
                 <Wand2 className="size-4 text-gold" />
                 <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold">
-                  {lang === "fr" ? "Votre configuration" : "Your configuration"}
+                  {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
                 </div>
               </div>
               <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
@@ -768,37 +768,33 @@ function ProductPage() {
                   </span>
                 </div>
               )}
-              <button
-                type="button"
-                onClick={handleAddConfiguredToQuote}
-                className="mt-4 w-full inline-flex items-center justify-center gap-2.5 rounded-md bg-gold text-gold-foreground px-6 py-4 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30"
-              >
-                <Wand2 className="size-5" />
-                {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
-              </button>
-              <button
-                type="button"
-                onClick={handleAdd}
-                disabled={
-                  !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-                }
-                className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-md border border-border bg-transparent px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {lang === "fr" ? "Ajouter sans configuration personnalisée" : "Add without custom configuration"}
-              </button>
+              <p className="mt-3 text-[11px] text-muted-foreground italic">
+                {lang === "fr"
+                  ? "Cette configuration sera incluse dans votre devis avec les dates et quantités ci-dessus."
+                  : "This configuration will be included in your quote along with the dates and quantities above."}
+              </p>
             </div>
-          ) : (
-            <button
-              onClick={handleAdd}
-              disabled={
-                !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-              }
-              className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
-            >
-              <ShoppingBag className="size-5" />
-              {t("product.addToQuote")}
-            </button>
           )}
+
+          <button
+            onClick={handleAdd}
+            disabled={
+              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+            }
+            className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
+          >
+            {product.configurator_url && (configuratorData || configuratorRecap) ? (
+              <>
+                <Wand2 className="size-5" />
+                {lang === "fr" ? "Ajouter au devis avec ma configuration" : "Add to quote with my configuration"}
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="size-5" />
+                {t("product.addToQuote")}
+              </>
+            )}
+          </button>
 
           {(() => {
             const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);

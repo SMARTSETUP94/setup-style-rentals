@@ -236,9 +236,37 @@ function ProductPage() {
       .filter((x): x is SelectedOption => x !== null);
   }, [optionCategories, productOptions, selectedOptionIds]);
 
+  /** Synthetic SelectedOption[] derived from the 3D-configurator iframe payload. */
+  const configuratorOptionsList: SelectedOption[] = useMemo(() => {
+    if (!product || !configuratorData) return [];
+    const opts = product.configurator_options || {};
+    const synthetic: SelectedOption[] = [];
+    for (const [groupKey, choices] of Object.entries(opts)) {
+      const selectedValue =
+        configuratorData[`${groupKey}Finition`] ??
+        configuratorData[`${groupKey}Option`] ??
+        configuratorData[groupKey];
+      if (typeof selectedValue !== "string") continue;
+      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
+      if (!match) continue;
+      synthetic.push({
+        categoryId: `cfg-${groupKey}`,
+        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        optionId: `cfg-${groupKey}-${match.value}`,
+        name_fr: match.label,
+        name_en: match.label,
+        price: Number(match.price) || 0,
+      });
+    }
+    return synthetic;
+  }, [product, configuratorData]);
+
   const optionsUnitPrice = useMemo(
-    () => selectedOptionsList.reduce((s, o) => s + o.price, 0),
-    [selectedOptionsList],
+    () =>
+      selectedOptionsList.reduce((s, o) => s + o.price, 0) +
+      configuratorOptionsList.reduce((s, o) => s + o.price, 0),
+    [selectedOptionsList, configuratorOptionsList],
   );
 
   const calc = useMemo(() => {
@@ -283,31 +311,7 @@ function ProductPage() {
     );
   }
 
-  /** Build synthetic SelectedOption[] from the 3D-configurator iframe payload. */
-  const buildConfiguratorOptions = (): SelectedOption[] => {
-    if (!product || !configuratorData) return [];
-    const opts = product.configurator_options || {};
-    const synthetic: SelectedOption[] = [];
-    for (const [groupKey, choices] of Object.entries(opts)) {
-      const selectedValue =
-        configuratorData[`${groupKey}Finition`] ??
-        configuratorData[`${groupKey}Option`] ??
-        configuratorData[groupKey];
-      if (typeof selectedValue !== "string") continue;
-      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
-      if (!match) continue;
-      synthetic.push({
-        categoryId: `cfg-${groupKey}`,
-        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        optionId: `cfg-${groupKey}-${match.value}`,
-        name_fr: match.label,
-        name_en: match.label,
-        price: Number(match.price) || 0,
-      });
-    }
-    return synthetic;
-  };
+  // configuratorOptionsList is computed above (memoized) and reused everywhere.
 
   /** Reset the 3D configurator: clear local state and reload the iframe(s) to default. */
   const handleResetConfigurator = () => {
@@ -353,7 +357,8 @@ function ProductPage() {
       return;
     }
     // Merge manually-selected options with the 3D configurator selection (if any)
-    const configuratorOptions = buildConfiguratorOptions();
+    // Merge manually-selected options with the 3D configurator selection (if any)
+    const configuratorOptions = configuratorOptionsList;
     const mergedOptions: SelectedOption[] = [...selectedOptionsList, ...configuratorOptions];
     add({
       productId: product.id,
@@ -711,6 +716,21 @@ function ProductPage() {
                   value={`+${formatPrice(o.price * qty, lang)}`}
                 />
               ))}
+              {configuratorOptionsList.length > 0 && (
+                <div className="pt-1 border-t border-dashed border-border/60 mt-1">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
+                    <Wand2 className="size-3" />
+                    {lang === "fr" ? "Configuration 3D" : "3D configuration"}
+                  </div>
+                  {configuratorOptionsList.map((o) => (
+                    <Row
+                      key={o.optionId}
+                      label={`+ ${o.categoryName_fr ? `${pickLang(o, "categoryName", lang)} : ` : ""}${pickLang(o, "name", lang)}`}
+                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : lang === "fr" ? "Inclus" : "Included"}
+                    />
+                  ))}
+                </div>
+              )}
               {calc.discountRate > 0 && (
                 <Row
                   label={`${t("product.discount")} (-${Math.round(calc.discountRate * 100)}%)`}

@@ -163,7 +163,7 @@ function ProductPage() {
   const [days, setDays] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [show3D, setShow3D] = useState(false);
+  const [is3DMode, setIs3DMode] = useState(false);
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
   const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
@@ -172,7 +172,6 @@ function ProductPage() {
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
-  const modalIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
@@ -284,7 +283,6 @@ function ProductPage() {
         // Iframe just signalled it's ready: push prices to whichever iframe sent it
         const src = e.source as Window | null;
         if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
-        if (modalIframeRef.current?.contentWindow === src) sendPricesToIframe(modalIframeRef.current);
       }
       // Accept any "<slug>-config" message from configurator iframes (e.g.
       // cornhole-config, lettres-geantes-config, photobooth-config, …).
@@ -372,7 +370,7 @@ function ProductPage() {
       value = match.value;
     }
     const msg = { type: "parent-set-config", group: groupKey, value };
-    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+    [inlineIframeRef.current].forEach((frame) => {
       try {
         frame?.contentWindow?.postMessage(msg, "*");
       } catch {
@@ -385,46 +383,18 @@ function ProductPage() {
   // DB-stored product option whose label matches the configurator choice
   // (e.g., picking "Rouge" in the iframe selects the matching "Rouge" button).
   useEffect(() => {
-    if (configuratorOptionsList.length === 0) return;
-    if (productOptions.length === 0 || optionCategories.length === 0) return;
-    const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    setSelectedOptionIds((prev) => {
-      const next = { ...prev };
-      const autoIds = new Set<string>();
-      let changed = false;
-      for (const cfg of configuratorOptionsList) {
-        const cfgNames = [norm(cfg.name_fr), norm(cfg.name_en)].filter(Boolean);
-        const cfgCat = [norm(cfg.categoryName_fr), norm(cfg.categoryName_en)].filter(Boolean);
-        const matchingCat = optionCategories.find((c) => {
-          const cn = [norm(c.name_fr), norm(c.name_en)];
-          return cn.some((n) => cfgCat.some((cc) => n.includes(cc) || cc.includes(n)));
-        });
-        if (!matchingCat) continue;
-        const matchingOpt = productOptions.find(
-          (o) =>
-            o.category_id === matchingCat.id &&
-            o.is_active &&
-            cfgNames.some((cn) => norm(o.name_fr) === cn || norm(o.name_en) === cn),
-        );
-        if (matchingOpt) {
-          autoIds.add(matchingCat.id);
-          if (next[matchingCat.id] !== matchingOpt.id) {
-            next[matchingCat.id] = matchingOpt.id;
-            changed = true;
-          }
-        }
-      }
-      setAutoSelectedCatIds(autoIds);
-      return changed ? next : prev;
-    });
-  }, [configuratorOptionsList, productOptions, optionCategories]);
+    if (is3DMode) return;
+    setAutoSelectedCatIds(new Set());
+  }, [is3DMode]);
+
+  const activeSelectedOptionsList = is3DMode ? [] : selectedOptionsList;
+  const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
 
   const optionsUnitPrice = useMemo(
     () =>
-      selectedOptionsList.reduce((s, o) => s + o.price, 0) +
-      configuratorOptionsList.reduce((s, o) => s + o.price, 0),
-    [selectedOptionsList, configuratorOptionsList],
+      activeSelectedOptionsList.reduce((s, o) => s + o.price, 0) +
+      activeConfiguratorOptionsList.reduce((s, o) => s + o.price, 0),
+    [activeSelectedOptionsList, activeConfiguratorOptionsList],
   );
 
   const calc = useMemo(() => {
@@ -475,7 +445,7 @@ function ProductPage() {
   const handleResetConfigurator = () => {
     setConfiguratorData(null);
     setConfiguratorRecap("");
-    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+    [inlineIframeRef.current].forEach((frame) => {
       if (!frame) return;
       try {
         frame.contentWindow?.postMessage({ type: "reset-config" }, "*");
@@ -494,7 +464,7 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
-    const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
+    const missing = is3DMode ? [] : optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
       const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
       toast.error(`${t("product.selectRequired")} ${labels}`);
@@ -504,10 +474,10 @@ function ProductPage() {
       toast.error(t("product.insufficientStock"));
       return;
     }
-    // Merge manually-selected options with the 3D configurator selection (if any)
-    // Merge manually-selected options with the 3D configurator selection (if any)
-    const configuratorOptions = configuratorOptionsList;
-    const mergedOptions: SelectedOption[] = [...selectedOptionsList, ...configuratorOptions];
+    const configuratorOptions = activeConfiguratorOptionsList;
+    const mergedOptions: SelectedOption[] = is3DMode
+      ? [...configuratorOptions]
+      : [...activeSelectedOptionsList];
     add({
       productId: product.id,
       slug: product.slug,
@@ -524,7 +494,7 @@ function ProductPage() {
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
-      configuratorRecap: configuratorRecap || undefined,
+      configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
     });
     toast.success(
       configuratorOptions.length > 0
@@ -575,7 +545,7 @@ function ProductPage() {
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
-          {product.configurator_url && show3D ? (
+          {product.configurator_url && is3DMode ? (
             <>
               <iframe
                 ref={inlineIframeRef}
@@ -586,15 +556,6 @@ function ProductPage() {
                 allow="clipboard-write; fullscreen"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
               />
-              <button
-                type="button"
-                onClick={() => setShow3D(false)}
-                className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={t("product.showImage")}
-              >
-                <X className="size-3.5" />
-                {t("product.showImage")}
-              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -643,23 +604,21 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Single 3D mode toggle — only visible when configurator is available and not yet active */}
-          {product.configurator_url && !show3D && (
+          {product.configurator_url && !is3DMode && (
             <button
               type="button"
-              onClick={() => setShow3D(true)}
+              onClick={() => setIs3DMode(true)}
               className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition-all duration-300 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30"
             >
               <Sparkles className="size-4" />
-              {t("product.customizeIn3D")}
+              {t("product.config3d")}
             </button>
           )}
 
-          {/* 3D mode: close button (returns to simple options) */}
-          {product.configurator_url && show3D && (
+          {product.configurator_url && is3DMode && (
             <button
               type="button"
-              onClick={() => setShow3D(false)}
+              onClick={() => setIs3DMode(false)}
               className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-all duration-300"
             >
               <X className="size-4" />
@@ -697,7 +656,7 @@ function ProductPage() {
           </div>
 
           {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
-          {optionCategories.length > 0 && !show3D && (
+          {optionCategories.length > 0 && !is3DMode && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {t("product.customize")}
@@ -1028,7 +987,7 @@ function ProductPage() {
 
           {/* Single quote button — exclusive between simple mode and 3D mode.
               In 3D mode, only show once the user has produced a configuration. */}
-          {(!show3D || configuratorData || configuratorRecap) && (
+          {(!is3DMode || configuratorData || configuratorRecap) && (
             <button
               onClick={handleAdd}
               disabled={
@@ -1036,7 +995,7 @@ function ProductPage() {
               }
               className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
             >
-              {show3D && (configuratorData || configuratorRecap) ? (
+              {is3DMode && (configuratorData || configuratorRecap) ? (
                 <>
                   <Wand2 className="size-5" />
                   {t("product.add3DToQuote")}
@@ -1097,34 +1056,6 @@ function ProductPage() {
         </section>
       )}
 
-      {/* 3D Modal */}
-      {show3D && product.configurator_url && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setShow3D(false)}
-        >
-          <div
-            className="relative bg-white rounded-2xl w-full max-w-6xl h-[85vh] overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShow3D(false)}
-              className="absolute top-4 right-4 z-10 size-10 rounded-full bg-white shadow-elev flex items-center justify-center hover:bg-secondary transition-colors"
-              aria-label={t("product.close")}
-            >
-              <X className="size-5" />
-            </button>
-            <iframe
-              ref={modalIframeRef}
-              src={product.configurator_url}
-              title={`Configurateur 3D — ${pickLang(product, "name", lang)}`}
-              style={{ width: "100%", height: "100%", border: "none" }}
-              allow="clipboard-write"
-              onLoad={() => sendPricesToIframe(modalIframeRef.current)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

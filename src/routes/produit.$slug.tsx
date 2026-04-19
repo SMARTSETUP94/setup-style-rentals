@@ -888,13 +888,13 @@ function ProductPage() {
                 <div className="pt-1 border-t border-dashed border-border/60 mt-1">
                   <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
                     <Wand2 className="size-3" />
-                    {lang === "fr" ? "Configuration 3D" : "3D configuration"}
+                    {t("product.threeDConfiguration")}
                   </div>
                   {configuratorOptionsList.map((o) => (
                     <Row
                       key={o.optionId}
                       label={`+ ${o.categoryName_fr ? `${pickLang(o, "categoryName", lang)} : ` : ""}${pickLang(o, "name", lang)}`}
-                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : lang === "fr" ? "Inclus" : "Included"}
+                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : t("product.included")}
                     />
                   ))}
                 </div>
@@ -938,20 +938,22 @@ function ProductPage() {
               <span className="mt-0.5 size-2 rounded-full shrink-0 bg-current" />
               <span>
                 {checkingStock
-                  ? lang === "fr" ? "Vérification de la disponibilité…" : "Checking availability…"
+                  ? t("product.checkingAvail")
                   : availableStock === null
-                    ? lang === "fr" ? "Disponibilité non vérifiée" : "Availability not checked"
+                    ? t("product.notChecked")
                     : availableStock === 0
-                      ? lang === "fr"
-                        ? "Indisponible sur cette période"
-                        : "Unavailable for these dates"
+                      ? t("product.unavailable")
                       : qty > availableStock
                         ? lang === "fr"
                           ? `Stock insuffisant : ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} (vous demandez ${qty})`
                           : `Insufficient stock: ${availableStock} available (you requested ${qty})`
-                        : lang === "fr"
-                          ? `${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} du ${startDate} au ${endDate}`
-                          : `${availableStock} unit${availableStock > 1 ? "s" : ""} available from ${startDate} to ${endDate}`}
+                        : (() => {
+                            const sd = format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn });
+                            const ed = format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn });
+                            return lang === "fr"
+                              ? `${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} du ${sd} au ${ed}`
+                              : `${availableStock} unit${availableStock > 1 ? "s" : ""} available from ${sd} to ${ed}`;
+                          })()}
               </span>
             </div>
           )}
@@ -962,17 +964,17 @@ function ProductPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   <Wand2 className="size-4 text-gold shrink-0" />
                   <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold truncate">
-                    {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
+                    {t("product.yourCustomConfig")}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleResetConfigurator}
-                  title={lang === "fr" ? "Réinitialiser la configuration" : "Reset configuration"}
+                  title={t("product.resetConfigTitle")}
                   className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:border-gold/50 transition-colors shrink-0"
                 >
                   <RotateCcw className="size-3" />
-                  {lang === "fr" ? "Réinitialiser" : "Reset"}
+                  {t("product.resetConfig")}
                 </button>
               </div>
               <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
@@ -981,7 +983,7 @@ function ProductPage() {
               {configuratorData && typeof configuratorData.price === "number" && (
                 <div className="mt-3 flex items-center justify-between text-sm border-t border-gold/20 pt-3">
                   <span className="text-muted-foreground">
-                    {lang === "fr" ? "Prix configuré" : "Configured price"}
+                    {t("product.configuredPrice")}
                   </span>
                   <span className="font-display text-xl font-semibold text-gold">
                     {formatPrice(Number(configuratorData.price), lang)}
@@ -992,9 +994,7 @@ function ProductPage() {
                 </div>
               )}
               <p className="mt-3 text-[11px] text-muted-foreground italic">
-                {lang === "fr"
-                  ? "Cette configuration sera incluse dans votre devis avec les dates et quantités ci-dessus."
-                  : "This configuration will be included in your quote along with the dates and quantities above."}
+                {t("product.configIncludedNote")}
               </p>
             </div>
           )}
@@ -1009,7 +1009,7 @@ function ProductPage() {
             {product.configurator_url && (configuratorData || configuratorRecap) ? (
               <>
                 <Wand2 className="size-5" />
-                {lang === "fr" ? "Ajouter au devis avec ma configuration" : "Add to quote with my configuration"}
+                {t("product.addWithConfig")}
               </>
             ) : (
               <>
@@ -1024,23 +1024,21 @@ function ProductPage() {
             const dTiers = [...(product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
             if (qTiers.length === 0 && dTiers.length === 0) return null;
             const fmtQ = qTiers
-              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_qty}`)
+              .map((tier) => `-${Math.round(tier.rate * 100)}% ${t("product.from")} ${tier.min_qty}`)
               .join(", ");
             const fmtD = dTiers
-              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_days} ${lang === "fr" ? "j" : "d"}`)
+              .map((tier) => `-${Math.round(tier.rate * 100)}% ${t("product.from")} ${tier.min_days} ${t("product.daysShort")}`)
               .join(", ");
             return (
               <div className="mt-4 text-xs text-muted-foreground space-y-0.5">
                 {qTiers.length > 0 && (
                   <div>
-                    {lang === "fr" ? "Remises quantité : " : "Volume discounts: "}
-                    {fmtQ}.
+                    {t("product.volumeDiscounts")} : {fmtQ}.
                   </div>
                 )}
                 {dTiers.length > 0 && (
                   <div>
-                    {lang === "fr" ? "Remises durée : " : "Duration discounts: "}
-                    {fmtD}.
+                    {t("product.durationDiscounts")} : {fmtD}.
                   </div>
                 )}
               </div>

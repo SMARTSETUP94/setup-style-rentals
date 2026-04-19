@@ -248,7 +248,9 @@ function AdminQuotesPage() {
                   <Field label={t("quotes.detail.phone")} value={selected.phone || "—"} />
                   <Field label={t("quotes.detail.company")} value={selected.company || "—"} />
                   <Field label={t("quotes.detail.eventDate")} value={selected.event_date ? new Date(selected.event_date).toLocaleDateString(dateLocale) : "—"} />
-                  <Field label={t("quotes.detail.location")} value={selected.event_location || "—"} className="col-span-2" />
+                  <Field label={t("quotes.detail.location")} value={selected.event_location || "—"} />
+                  <Field label={t("quotes.slot.delivery")} value={selected.delivery_time ? selected.delivery_time.slice(0, 5) : "—"} />
+                  <Field label={t("quotes.slot.pickup")} value={selected.pickup_time ? selected.pickup_time.slice(0, 5) : "—"} />
                 </div>
                 {selected.message && (
                   <div className="text-sm">

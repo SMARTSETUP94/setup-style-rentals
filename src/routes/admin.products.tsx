@@ -150,6 +150,24 @@ function AdminProductsPage() {
       toast.error(t("prods.requiredFields"));
       return;
     }
+
+    // Optional HEAD check on external configurator URL — non-blocking warning.
+    const cfgUrl = (editing.configurator_url || "").trim();
+    if (cfgUrl && /^https?:\/\//i.test(cfgUrl)) {
+      try {
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(cfgUrl, { method: "HEAD", mode: "no-cors", signal: ctrl.signal });
+        clearTimeout(timeout);
+        // With no-cors we get an opaque response (status 0). Treat anything non-thrown as reachable.
+        if (res.type !== "opaque" && !res.ok) {
+          toast.warning(`${t("prods.cfg.urlUnreachable")} (HTTP ${res.status})`);
+        }
+      } catch {
+        toast.warning(t("prods.cfg.urlUnreachable"));
+      }
+    }
+
     setSaving(true);
     const payload = {
       slug: editing.slug!,

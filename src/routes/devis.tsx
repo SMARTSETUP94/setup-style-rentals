@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Trash2, FileDown, ShoppingBag, Plus, Minus } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal } from "@/lib/cart";
@@ -110,6 +112,7 @@ function QuotePage() {
           })),
           options_per_unit_per_day: lt.optionsPerUnit,
           options_total: lt.optionsTotal,
+          configurator_recap: i.configuratorRecap ?? null,
         };
       }),
       subtotal_ht: totals.gross,
@@ -153,7 +156,7 @@ function QuotePage() {
     doc.text("SETUP PARIS", 14, 20);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(lang === "fr" ? "Simulation de devis" : "Quote simulation", 14, 27);
+    doc.text(t("cart.quoteSimulation"), 14, 27);
     doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB"), 196, 20, { align: "right" });
 
     const body: (string | number)[][] = [];
@@ -177,16 +180,21 @@ function QuotePage() {
           "",
         ]);
       });
+      if (i.configuratorRecap) {
+        i.configuratorRecap.split("\n").forEach((line) => {
+          if (line.trim()) body.push([`   ✦ ${line.trim()}`, "", "", "", "", ""]);
+        });
+      }
     });
 
     autoTable(doc, {
       startY: 35,
       head: [[
-        lang === "fr" ? "Produit" : "Product",
-        lang === "fr" ? "Qté" : "Qty",
-        lang === "fr" ? "Jours" : "Days",
-        lang === "fr" ? "PU/jour" : "Unit/day",
-        lang === "fr" ? "Remise" : "Discount",
+        t("cart.col.product"),
+        t("cart.col.qty"),
+        t("cart.col.days"),
+        t("cart.col.unitDay"),
+        t("cart.col.discount"),
         "Total HT",
       ]],
       body,
@@ -199,8 +207,8 @@ function QuotePage() {
     let y = finalY;
     doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, y, { align: "right" }); y += 6;
     if (delivery > 0) { doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, y, { align: "right" }); y += 6; }
-    if (setupFee > 0) { doc.text(`${lang === "fr" ? "Installation" : "Setup"}: ${formatPrice(setupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
-    if (pickupFee > 0) { doc.text(`${lang === "fr" ? "Reprise" : "Pickup"}: ${formatPrice(pickupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
+    if (setupFee > 0) { doc.text(`${t("cart.setup")}: ${formatPrice(setupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
+    if (pickupFee > 0) { doc.text(`${t("cart.pickup")}: ${formatPrice(pickupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
     doc.text(`${t("cart.totalHT")}: ${formatPrice(netWithDelivery, lang)}`, 196, y, { align: "right" }); y += 6;
     doc.text(`${t("cart.vat")}: ${formatPrice(vat, lang)}`, 196, y, { align: "right" }); y += 8;
     doc.setFont("helvetica", "bold");
@@ -250,7 +258,11 @@ function QuotePage() {
                               {t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}
                             </div>
                             {item.startDate && item.endDate && (
-                              <div className="text-xs text-muted-foreground">{item.startDate} → {item.endDate}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {format(parseISO(item.startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })}
+                                {" → "}
+                                {format(parseISO(item.endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })}
+                              </div>
                             )}
                             {item.selectedOptions && item.selectedOptions.length > 0 && (
                               <ul className="mt-2 space-y-0.5">
@@ -273,6 +285,17 @@ function QuotePage() {
                                   </li>
                                 ))}
                               </ul>
+                            )}
+                            {item.configuratorRecap && (
+                              <div className="mt-2 rounded-md border border-gold/30 bg-gold/5 p-2">
+                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold font-semibold mb-1">
+                                  <Wand2 className="size-3" />
+                                  {t("cart.configRecap")}
+                                </div>
+                                <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">
+                                  {item.configuratorRecap}
+                                </pre>
+                              </div>
                             )}
                           </div>
                           <button onClick={() => remove(item.productId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
@@ -311,8 +334,9 @@ function QuotePage() {
                   <Input label={t("cart.eventLocation")} value={form.event_location} onChange={(v) => setForm({ ...form, event_location: v })} maxLength={500} />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">{t("cart.message")}</label>
+                  <label htmlFor="quote-message" className="text-xs text-muted-foreground">{t("cart.message")}</label>
                   <textarea
+                    id="quote-message"
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     maxLength={5000}
@@ -342,8 +366,8 @@ function QuotePage() {
                     <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
                   </div>
                 )}
-                {setupFee > 0 && <Row label={lang === "fr" ? "Installation" : "Setup"} value={formatPrice(setupFee, lang)} />}
-                {pickupFee > 0 && <Row label={lang === "fr" ? "Reprise" : "Pickup"} value={formatPrice(pickupFee, lang)} />}
+                {setupFee > 0 && <Row label={t("cart.setup")} value={formatPrice(setupFee, lang)} />}
+                {pickupFee > 0 && <Row label={t("cart.pickup")} value={formatPrice(pickupFee, lang)} />}
                 <Row label={t("cart.totalHT")} value={formatPrice(netWithDelivery, lang)} />
                 <Row label={t("cart.vat")} value={formatPrice(vat, lang)} />
                 <div className="border-t border-border pt-3 flex items-baseline justify-between">
@@ -383,10 +407,12 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 function Input({
   label, value, onChange, type = "text", required, maxLength,
 }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; maxLength?: number }) {
+  const id = useId();
   return (
     <div>
-      <label className="text-xs text-muted-foreground">{label}{required && " *"}</label>
+      <label htmlFor={id} className="text-xs text-muted-foreground">{label}{required && " *"}</label>
       <input
+        id={id}
         type={type}
         value={value}
         required={required}

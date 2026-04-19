@@ -449,29 +449,19 @@ function ProductPage() {
         if (frame) frame.src = src;
       }, 50);
     });
-    toast.success(
-      lang === "fr" ? "Configuration réinitialisée" : "Configuration reset",
-      { icon: <RotateCcw className="size-4" /> },
-    );
+    toast.success(t("product.configResetToast"), { icon: <RotateCcw className="size-4" /> });
   };
 
   const handleAdd = () => {
     if (!calc) return;
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
-      toast.error(
-        lang === "fr"
-          ? `Veuillez sélectionner : ${missing.map((c) => c.name_fr).join(", ")}`
-          : `Please select: ${missing.map((c) => c.name_en).join(", ")}`,
-      );
+      const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
+      toast.error(`${t("product.selectRequired")} ${labels}`);
       return;
     }
     if (availableStock !== null && qty > availableStock) {
-      toast.error(
-        lang === "fr"
-          ? `Stock insuffisant : seulement ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} sur cette période.`
-          : `Insufficient stock: only ${availableStock} unit${availableStock > 1 ? "s" : ""} available for these dates.`,
-      );
+      toast.error(t("product.insufficientStock"));
       return;
     }
     // Merge manually-selected options with the 3D configurator selection (if any)
@@ -769,11 +759,12 @@ function ProductPage() {
           <div className="mt-8 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">{t("product.startDate")}</label>
+                <label htmlFor="product-start-date" className="text-xs text-muted-foreground">{t("product.startDate")}</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
+                      id="product-start-date"
                       data-testid="start-date-trigger"
                       className={cn(
                         "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
@@ -805,11 +796,12 @@ function ProductPage() {
                 </Popover>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{t("product.endDate")}</label>
+                <label htmlFor="product-end-date" className="text-xs text-muted-foreground">{t("product.endDate")}</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
+                      id="product-end-date"
                       data-testid="end-date-trigger"
                       className={cn(
                         "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
@@ -944,15 +936,13 @@ function ProductPage() {
                     : availableStock === 0
                       ? t("product.unavailable")
                       : qty > availableStock
-                        ? lang === "fr"
-                          ? `Stock insuffisant : ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} (vous demandez ${qty})`
-                          : `Insufficient stock: ${availableStock} available (you requested ${qty})`
+                        ? `${t("product.insufficientStock")} (${availableStock} / ${qty})`
                         : (() => {
                             const sd = format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn });
                             const ed = format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn });
                             return lang === "fr"
-                              ? `${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} du ${sd} au ${ed}`
-                              : `${availableStock} unit${availableStock > 1 ? "s" : ""} available from ${sd} to ${ed}`;
+                              ? `${availableStock} ${t("product.unitsAvailable")} : ${sd} → ${ed}`
+                              : `${availableStock} ${t("product.unitsAvailable")}: ${sd} → ${ed}`;
                           })()}
               </span>
             </div>
@@ -1052,17 +1042,15 @@ function ProductPage() {
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              {lang === "fr" ? "Votre configuration" : "Your configuration"}
+              {t("product.yourConfiguration")}
             </div>
             <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">
-              {lang === "fr" ? "Récapitulatif" : "Summary"}
+              {t("product.summary")}
             </h2>
           </div>
           <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
             <div className="text-xs text-muted-foreground text-center py-8 px-4">
-              {lang === "fr"
-                ? "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif apparaître dans le panneau de droite."
-                : "Customize the product in the configurator above to see the summary in the right panel."}
+              {t("product.configHint")}
             </div>
           </aside>
         </section>
@@ -1081,7 +1069,7 @@ function ProductPage() {
             <button
               onClick={() => setShow3D(false)}
               className="absolute top-4 right-4 z-10 size-10 rounded-full bg-white shadow-elev flex items-center justify-center hover:bg-secondary transition-colors"
-              aria-label="Fermer"
+              aria-label={t("product.close")}
             >
               <X className="size-5" />
             </button>

@@ -1,49 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Trash2, Eye, Save } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { FileText, TrendingUp, TrendingDown, Package, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-
 import { formatPrice } from "@/lib/format";
 import { useAdminI18n } from "@/lib/admin-i18n";
-import { ScrollableTable } from "@/components/admin/ScrollableTable";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
-  component: AdminQuotesPage,
+  component: AdminDashboardPage,
 });
 
 type Quote = {
   id: string;
   customer_name: string;
-  company: string | null;
-  email: string;
-  phone: string | null;
-  message: string | null;
-  event_date: string | null;
-  event_location: string | null;
-  items: any;
-  subtotal_ht: number;
-  total_ht: number;
-  vat: number;
-  total_ttc: number;
-  total_deposit: number;
   status: string;
-  created_at: string;
+  total_ttc: number;
   delivery_fee: number;
   setup_fee: number;
   pickup_fee: number;
-  logistics_notes: string | null;
+  created_at: string;
+  items: any;
 };
 
 const finalTotal = (q: Quote) =>
@@ -52,338 +28,240 @@ const finalTotal = (q: Quote) =>
   Number(q.setup_fee || 0) +
   Number(q.pickup_fee || 0);
 
-const STATUSES = ["pending", "contacted", "confirmed", "completed", "rejected"] as const;
-const BLOCKING_STATUSES = new Set(["confirmed", "completed"]);
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  contacted: "bg-blue-100 text-blue-800 border-blue-200",
-  confirmed: "bg-green-100 text-green-800 border-green-200",
-  completed: "bg-purple-100 text-purple-800 border-purple-200",
-  rejected: "bg-red-100 text-red-800 border-red-200",
-};
+const PIPELINE_STATUSES = new Set(["pending", "contacted", "confirmed", "completed"]);
+const ENGAGED_STATUSES = new Set(["confirmed", "completed"]);
 
-function AdminQuotesPage() {
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+}
+function endOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / previous) * 100;
+}
+
+function AdminDashboardPage() {
   const { t, lang } = useAdminI18n();
   const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
-  const statusLabel = (s: string) => t(`quotes.status.${s}`);
-
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Quote | null>(null);
-  const [logistics, setLogistics] = useState({
-    delivery_fee: 0,
-    setup_fee: 0,
-    pickup_fee: 0,
-    logistics_notes: "",
-  });
-  const [savingLogistics, setSavingLogistics] = useState(false);
-
-  const openDetail = (q: Quote) => {
-    setSelected(q);
-    setLogistics({
-      delivery_fee: Number(q.delivery_fee || 0),
-      setup_fee: Number(q.setup_fee || 0),
-      pickup_fee: Number(q.pickup_fee || 0),
-      logistics_notes: q.logistics_notes || "",
-    });
-  };
-
-  const load = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("quote_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) toast.error(error.message);
-    else setQuotes((data as Quote[]) ?? []);
-    setLoading(false);
-  };
 
   useEffect(() => {
-    load();
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("quote_requests")
+        .select("id, customer_name, status, total_ttc, delivery_fee, setup_fee, pickup_fee, created_at, items")
+        .order("created_at", { ascending: false });
+      if (!error) setQuotes((data as Quote[]) ?? []);
+      setLoading(false);
+    })();
   }, []);
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("quote_requests").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success(t("quotes.statusUpdated"));
-    setQuotes((q) => q.map((x) => (x.id === id ? { ...x, status } : x)));
-    if (selected?.id === id) setSelected({ ...selected, status });
-  };
+  const stats = useMemo(() => {
+    const now = new Date();
+    const curStart = startOfMonth(now);
+    const curEnd = endOfMonth(now);
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+    const prevStart = startOfMonth(prev);
+    const prevEnd = endOfMonth(prev);
 
-  const saveLogistics = async () => {
-    if (!selected) return;
-    setSavingLogistics(true);
-    const payload = {
-      delivery_fee: Number(logistics.delivery_fee) || 0,
-      setup_fee: Number(logistics.setup_fee) || 0,
-      pickup_fee: Number(logistics.pickup_fee) || 0,
-      logistics_notes: logistics.logistics_notes || null,
+    const inRange = (d: Date, s: Date, e: Date) => d >= s && d <= e;
+
+    let curCount = 0, prevCount = 0;
+    let curPipeline = 0, prevPipeline = 0;
+    let curEngaged = 0, prevEngaged = 0;
+    const productCounts = new Map<string, { name: string; qty: number }>();
+
+    for (const q of quotes) {
+      const created = new Date(q.created_at);
+      const total = finalTotal(q);
+      const inCur = inRange(created, curStart, curEnd);
+      const inPrev = inRange(created, prevStart, prevEnd);
+      if (inCur) {
+        curCount++;
+        if (PIPELINE_STATUSES.has(q.status)) curPipeline += total;
+        if (ENGAGED_STATUSES.has(q.status)) curEngaged += total;
+        const items = Array.isArray(q.items) ? q.items : [];
+        for (const it of items) {
+          const slug = String(it.slug || "");
+          if (!slug) continue;
+          const name = (lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.name_en || slug;
+          const qty = Number(it.quantity) || 0;
+          const prevEntry = productCounts.get(slug);
+          if (prevEntry) prevEntry.qty += qty;
+          else productCounts.set(slug, { name, qty });
+        }
+      }
+      if (inPrev) {
+        prevCount++;
+        if (PIPELINE_STATUSES.has(q.status)) prevPipeline += total;
+        if (ENGAGED_STATUSES.has(q.status)) prevEngaged += total;
+      }
+    }
+
+    const topProducts = Array.from(productCounts.entries())
+      .map(([slug, v]) => ({ slug, ...v }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    return {
+      curCount, prevCount,
+      curPipeline, prevPipeline,
+      curEngaged, prevEngaged,
+      topProducts,
     };
-    const { error } = await supabase.from("quote_requests").update(payload).eq("id", selected.id);
-    setSavingLogistics(false);
-    if (error) return toast.error(error.message);
-    toast.success(t("quotes.logistics.saved"));
-    setQuotes((qs) => qs.map((x) => (x.id === selected.id ? { ...x, ...payload } : x)));
-    setSelected({ ...selected, ...payload });
-  };
+  }, [quotes, lang]);
 
-  const remove = async (id: string) => {
-    if (!confirm(t("quotes.confirmDelete"))) return;
-    const { error } = await supabase.from("quote_requests").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success(t("quotes.deleted"));
-    setQuotes((q) => q.filter((x) => x.id !== id));
-    if (selected?.id === id) setSelected(null);
-  };
+  const monthLabel = new Date().toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
+
+  if (loading) {
+    return (
+      <div className="p-8 text-sm text-muted-foreground">{t("layout.loading")}</div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("quotes.title")}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {quotes.length} {t("quotes.count")}
-          </p>
-        </div>
+    <div className="p-8 space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("dash.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1 capitalize">{monthLabel}</p>
       </div>
 
-      <ScrollableTable minWidth={840}>
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.date")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.client")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.email")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.event")}</th>
-              <th className="text-right px-4 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.status")}</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("layout.loading")}</td></tr>
-            ) : quotes.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("quotes.empty")}</td></tr>
-            ) : (
-              quotes.map((q) => (
-                <tr key={q.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(q.created_at).toLocaleDateString(dateLocale)}
-                  </td>
-                  <td className="px-4 py-3 font-medium">
-                    {q.customer_name}
-                    {q.company && <span className="block text-xs text-muted-foreground">{q.company}</span>}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{q.email}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {q.event_date ? new Date(q.event_date).toLocaleDateString(dateLocale) : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
-                    {(q.delivery_fee || q.setup_fee || q.pickup_fee) ? (
-                      <div className="text-xs text-muted-foreground">
-                        {t("quotes.products")} {formatPrice(q.total_ttc)}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={q.status}
-                      onChange={(e) => updateStatus(q.id, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`h-8 rounded-md border px-2 text-xs font-medium shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
-                        STATUS_COLORS[q.status] || "border-input bg-transparent"
-                      }`}
-                      title={
-                        BLOCKING_STATUSES.has(q.status)
-                          ? t("quotes.blocking")
-                          : t("quotes.notBlocking")
-                      }
-                    >
-                      {STATUSES.map((s) => (
-                        <option key={s} value={s}>{statusLabel(s)}</option>
-                      ))}
-                    </select>
-                    {BLOCKING_STATUSES.has(q.status) && (
-                      <div className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
-                        <span className="inline-block size-1.5 rounded-full bg-green-500" />
-                        {t("quotes.stockReserved")}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openDetail(q)}>
-                        <Eye className="size-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(q.id)}>
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          icon={<FileText className="size-5" />}
+          label={t("dash.quotesMonth")}
+          value={String(stats.curCount)}
+          previousLabel={t("dash.vsLastMonth")}
+          change={pctChange(stats.curCount, stats.prevCount)}
+          previousValue={String(stats.prevCount)}
+        />
+        <StatCard
+          icon={<TrendingUp className="size-5" />}
+          label={t("dash.pipeline")}
+          value={formatPrice(stats.curPipeline)}
+          subLabel={t("dash.pipelineHint")}
+          previousLabel={t("dash.vsLastMonth")}
+          change={pctChange(stats.curPipeline, stats.prevPipeline)}
+          previousValue={formatPrice(stats.prevPipeline)}
+        />
+        <StatCard
+          icon={<CheckCircle2 className="size-5" />}
+          label={t("dash.engaged")}
+          value={formatPrice(stats.curEngaged)}
+          subLabel={t("dash.engagedHint")}
+          previousLabel={t("dash.vsLastMonth")}
+          change={pctChange(stats.curEngaged, stats.prevEngaged)}
+          previousValue={formatPrice(stats.prevEngaged)}
+        />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Package className="size-4 text-muted-foreground" />
+          <h2 className="font-semibold">{t("dash.topProducts")}</h2>
+          <span className="text-xs text-muted-foreground">— {monthLabel}</span>
+        </div>
+        {stats.topProducts.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">{t("dash.noProducts")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {stats.topProducts.map((p, i) => {
+              const max = stats.topProducts[0].qty || 1;
+              const pct = (p.qty / max) * 100;
+              return (
+                <li key={p.slug} className="flex items-center gap-3">
+                  <span className="text-xs font-mono text-muted-foreground w-5">#{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <span className="text-sm font-medium truncate">{p.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {p.qty} {t("dash.units")}
+                      </span>
                     </div>
-                  </td>
-                </tr>
-              ))
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full bg-foreground rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="size-4 text-muted-foreground" />
+          <h2 className="font-semibold">{t("dash.recent")}</h2>
+        </div>
+        {quotes.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">{t("quotes.empty")}</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {quotes.slice(0, 5).map((q) => (
+              <li key={q.id} className="py-2.5 flex items-center justify-between gap-2 text-sm">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{q.customer_name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(q.created_at).toLocaleDateString(dateLocale)} • {t(`quotes.status.${q.status}`)}
+                  </div>
+                </div>
+                <div className="font-semibold shrink-0">{formatPrice(finalTotal(q))}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon, label, value, subLabel, change, previousLabel, previousValue,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subLabel?: string;
+  change: number | null;
+  previousLabel: string;
+  previousValue: string;
+}) {
+  const positive = change !== null && change >= 0;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className="mt-2 text-3xl font-semibold tracking-tight">{value}</div>
+      {subLabel && <div className="text-[11px] text-muted-foreground mt-1">{subLabel}</div>}
+      <div className="mt-3 flex items-center gap-1.5 text-xs">
+        {change === null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <span
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-medium",
+              positive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700",
             )}
-          </tbody>
-        </table>
-      </ScrollableTable>
-
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
-          {selected && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{t("layout.quotes")} — {selected.customer_name}</DialogTitle>
-                <DialogDescription>
-                  {t("quotes.detail.received")} {new Date(selected.created_at).toLocaleString(dateLocale)}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <Field label={t("auth.email")} value={selected.email} />
-                  <Field label={t("quotes.detail.phone")} value={selected.phone || "—"} />
-                  <Field label={t("quotes.detail.company")} value={selected.company || "—"} />
-                  <Field label={t("quotes.detail.eventDate")} value={selected.event_date ? new Date(selected.event_date).toLocaleDateString(dateLocale) : "—"} />
-                  <Field label={t("quotes.detail.location")} value={selected.event_location || "—"} className="col-span-2" />
-                </div>
-                {selected.message && (
-                  <div className="text-sm">
-                    <p className="text-xs uppercase text-muted-foreground mb-1">{t("quotes.detail.message")}</p>
-                    <p className="rounded-lg bg-muted/50 p-3 whitespace-pre-wrap">{selected.message}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.detail.items")}</p>
-                  <div className="rounded-lg border border-border divide-y divide-border">
-                    {(selected.items as any[]).map((it, i) => (
-                      <div key={i} className="px-3 py-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>
-                            {(lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}{lang === "fr" ? "j" : "d"})
-                          </span>
-                          <span className="font-medium">{formatPrice(it.line_total ?? it.line_net ?? 0)}</span>
-                        </div>
-                        {it.logo_url && (
-                          <a
-                            href={it.logo_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-                          >
-                            📎 {it.logo_filename || "Logo client"}
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">{t("quotes.logistics.title")}</p>
-                    <Button size="sm" onClick={saveLogistics} disabled={savingLogistics}>
-                      <Save className="size-3.5" /> {savingLogistics ? "…" : t("common.save")}
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs">{t("quotes.logistics.delivery")}</Label>
-                      <Input
-                        type="number"
-                        className="mt-1"
-                        value={String(logistics.delivery_fee)}
-                        onChange={(e) => setLogistics({ ...logistics, delivery_fee: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("quotes.logistics.setup")}</Label>
-                      <Input
-                        type="number"
-                        className="mt-1"
-                        value={String(logistics.setup_fee)}
-                        onChange={(e) => setLogistics({ ...logistics, setup_fee: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{t("quotes.logistics.pickup")}</Label>
-                      <Input
-                        type="number"
-                        className="mt-1"
-                        value={String(logistics.pickup_fee)}
-                        onChange={(e) => setLogistics({ ...logistics, pickup_fee: Number(e.target.value) })}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs">{t("quotes.logistics.notes")}</Label>
-                    <Textarea
-                      rows={2}
-                      className="mt-1"
-                      value={logistics.logistics_notes}
-                      onChange={(e) => setLogistics({ ...logistics, logistics_notes: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="rounded-lg bg-muted/30 p-4 space-y-1 text-sm">
-                  <Row label={t("quotes.totals.subHt")} value={formatPrice(selected.subtotal_ht)} />
-                  <Row label={t("quotes.totals.ht")} value={formatPrice(selected.total_ht)} />
-                  <Row label={t("quotes.totals.vat")} value={formatPrice(selected.vat)} />
-                  <Row label={t("quotes.totals.productsTtc")} value={formatPrice(selected.total_ttc)} />
-                  {Number(selected.delivery_fee) > 0 && (
-                    <Row label={t("quotes.totals.delivery")} value={formatPrice(selected.delivery_fee)} />
-                  )}
-                  {Number(selected.setup_fee) > 0 && (
-                    <Row label={t("quotes.totals.setup")} value={formatPrice(selected.setup_fee)} />
-                  )}
-                  {Number(selected.pickup_fee) > 0 && (
-                    <Row label={t("quotes.totals.pickup")} value={formatPrice(selected.pickup_fee)} />
-                  )}
-                  <Row label={t("quotes.totals.finalTtc")} value={formatPrice(finalTotal(selected))} bold />
-                  <Row label={t("quotes.totals.deposit")} value={formatPrice(selected.total_deposit)} />
-                </div>
-                <div>
-                  <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.col.status")}</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {STATUSES.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => updateStatus(selected.id, s)}
-                        className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
-                          selected.status === s
-                            ? STATUS_COLORS[s] || "bg-foreground text-background border-foreground"
-                            : "border-border hover:bg-muted"
-                        }`}
-                      >
-                        {statusLabel(s)}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-2">{t("quotes.statusNote")}</p>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function Field({ label, value, className }: { label: string; value: string; className?: string }) {
-  return (
-    <div className={className}>
-      <p className="text-xs uppercase text-muted-foreground">{label}</p>
-      <p className="font-medium mt-0.5">{value}</p>
-    </div>
-  );
-}
-
-function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
-  return (
-    <div className={`flex justify-between ${bold ? "font-semibold text-base" : ""}`}>
-      <span>{label}</span>
-      <span>{value}</span>
+          >
+            {positive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+            {Math.abs(change).toFixed(0)}%
+          </span>
+        )}
+        <span className="text-muted-foreground">
+          {previousLabel} ({previousValue})
+        </span>
+      </div>
     </div>
   );
 }

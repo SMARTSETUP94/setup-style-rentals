@@ -88,12 +88,29 @@ const DICT: Dict = {
   "quotes.totals.pickup": { fr: "Reprise", en: "Pickup" },
   "quotes.totals.finalTtc": { fr: "TOTAL FINAL TTC", en: "FINAL TOTAL INCL. VAT" },
   "quotes.totals.deposit": { fr: "Caution", en: "Deposit" },
-  "quotes.statusNote": { fr: "Les statuts Confirmé et Terminé bloquent le stock sur les dates de l'événement.", en: "Confirmed and Completed statuses block stock on the event dates." },
-  "quotes.status.pending": { fr: "En attente", en: "Pending" },
-  "quotes.status.contacted": { fr: "Contacté", en: "Contacted" },
+  "quotes.statusNote": { fr: "Les statuts Confirmé et Livré bloquent le stock sur les dates de l'événement.", en: "Confirmed and Delivered statuses block stock on the event dates." },
+  "quotes.status.pending": { fr: "Nouveau", en: "New" },
+  "quotes.status.contacted": { fr: "En cours", en: "In progress" },
   "quotes.status.confirmed": { fr: "Confirmé", en: "Confirmed" },
-  "quotes.status.completed": { fr: "Terminé", en: "Completed" },
-  "quotes.status.rejected": { fr: "Refusé", en: "Rejected" },
+  "quotes.status.completed": { fr: "Livré", en: "Delivered" },
+  "quotes.status.rejected": { fr: "Retourné", en: "Returned" },
+
+  // Dashboard
+  "dash.title": { fr: "Tableau de bord", en: "Dashboard" },
+  "dash.quotesMonth": { fr: "Devis ce mois", en: "Quotes this month" },
+  "dash.pipeline": { fr: "CA Pipeline", en: "Pipeline revenue" },
+  "dash.pipelineHint": { fr: "Tous devis hors retournés", en: "All quotes excl. returned" },
+  "dash.engaged": { fr: "CA Engagé", en: "Engaged revenue" },
+  "dash.engagedHint": { fr: "Confirmés + Livrés", en: "Confirmed + Delivered" },
+  "dash.vsLastMonth": { fr: "vs mois dernier", en: "vs last month" },
+  "dash.topProducts": { fr: "Produits les plus demandés", en: "Top requested products" },
+  "dash.noProducts": { fr: "Aucun produit demandé ce mois", en: "No products requested this month" },
+  "dash.units": { fr: "unités", en: "units" },
+  "dash.recent": { fr: "Devis récents", en: "Recent quotes" },
+
+  // Cart slot times (used in admin detail)
+  "quotes.slot.delivery": { fr: "Créneau livraison", en: "Delivery slot" },
+  "quotes.slot.pickup": { fr: "Créneau reprise", en: "Pickup slot" },
 
   // Categories
   "cats.title": { fr: "Catégories", en: "Categories" },

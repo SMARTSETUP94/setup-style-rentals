@@ -233,6 +233,7 @@ export type Database = {
           created_at: string
           customer_name: string
           delivery_fee: number
+          delivery_time: string | null
           email: string
           event_date: string | null
           event_location: string | null
@@ -242,6 +243,7 @@ export type Database = {
           message: string | null
           phone: string | null
           pickup_fee: number
+          pickup_time: string | null
           setup_fee: number
           status: string
           subtotal_ht: number
@@ -256,6 +258,7 @@ export type Database = {
           created_at?: string
           customer_name: string
           delivery_fee?: number
+          delivery_time?: string | null
           email: string
           event_date?: string | null
           event_location?: string | null
@@ -265,6 +268,7 @@ export type Database = {
           message?: string | null
           phone?: string | null
           pickup_fee?: number
+          pickup_time?: string | null
           setup_fee?: number
           status?: string
           subtotal_ht?: number
@@ -279,6 +283,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           delivery_fee?: number
+          delivery_time?: string | null
           email?: string
           event_date?: string | null
           event_location?: string | null
@@ -288,6 +293,7 @@ export type Database = {
           message?: string | null
           phone?: string | null
           pickup_fee?: number
+          pickup_time?: string | null
           setup_fee?: number
           status?: string
           subtotal_ht?: number

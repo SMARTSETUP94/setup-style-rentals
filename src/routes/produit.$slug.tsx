@@ -54,6 +54,7 @@ interface Product {
   deposit: number; image_url: string | null;
   configurator_url: string | null;
   configurator_options: ConfiguratorOptionsMap | null;
+  stock_total: number;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
@@ -85,6 +86,10 @@ function ProductPage() {
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
+
+  // Availability
+  const [availableStock, setAvailableStock] = useState<number | null>(null);
+  const [checkingStock, setCheckingStock] = useState(false);
 
   useEffect(() => {
     setLoading(true);

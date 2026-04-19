@@ -649,6 +649,12 @@ function ProductPage() {
                             type="button"
                             onClick={() => {
                               setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }));
+                              setAutoSelectedCatIds((prev) => {
+                                if (!prev.has(cat.id)) return prev;
+                                const next = new Set(prev);
+                                next.delete(cat.id);
+                                return next;
+                              });
                               syncSelectionToIframe(cat.id, o.id);
                             }}
                             className={cn(
@@ -659,8 +665,16 @@ function ProductPage() {
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-sm font-medium">
+                              <span className="text-sm font-medium inline-flex items-center gap-1.5">
                                 {pickLang(o, "name", lang)}
+                                {active && autoSelectedCatIds.has(cat.id) && (
+                                  <span
+                                    title={lang === "fr" ? "Sélectionné via le configurateur 3D" : "Auto-selected from 3D configurator"}
+                                    className="inline-flex items-center text-gold/80"
+                                  >
+                                    <Wand2 className="size-3.5" />
+                                  </span>
+                                )}
                               </span>
                               {active && <Check className="size-4 text-gold shrink-0" />}
                             </div>

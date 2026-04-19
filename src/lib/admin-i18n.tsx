@@ -177,6 +177,7 @@ const DICT: Dict = {
   "prods.cfg.tooLarge": { fr: "Fichier trop lourd (max 10 Mo)", en: "File too large (max 10 MB)" },
   "prods.cfg.uploaded": { fr: "Configurateur téléversé", en: "Configurator uploaded" },
   "prods.cfg.urlPlaceholder": { fr: "ou collez une URL (ex: /configurators/cornhole.html ou https://…)", en: "or paste a URL (e.g. /configurators/cornhole.html or https://…)" },
+  "prods.cfg.urlUnreachable": { fr: "⚠ L'URL du configurateur semble injoignable", en: "⚠ Configurator URL appears unreachable" },
   "prods.cfgOpts.invalid": { fr: "JSON invalide", en: "Invalid JSON" },
   "prods.cfgOpts.valid": { fr: "JSON valide ✓", en: "Valid JSON ✓" },
   "prods.cfgOpts.preset": { fr: "Charger preset Cornhole", en: "Load Cornhole preset" },

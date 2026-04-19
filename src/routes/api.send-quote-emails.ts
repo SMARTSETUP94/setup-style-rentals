@@ -34,6 +34,8 @@ const PayloadSchema = z.object({
   message: z.string().max(5000).optional().nullable(),
   event_date: z.string().nullable().optional(),
   event_location: z.string().max(500).optional().nullable(),
+  delivery_time: z.string().max(20).optional().nullable(),
+  pickup_time: z.string().max(20).optional().nullable(),
   items: z.array(ItemSchema).min(1).max(100),
   total_ht: z.number().min(0),
   delivery_fee: z.number().min(0).optional().default(0),
@@ -146,6 +148,8 @@ function adminEmail(p: z.infer<typeof PayloadSchema>) {
         ${p.phone ? `Téléphone : ${escapeHtml(p.phone)}<br/>` : ""}
         ${p.event_date ? `Date événement : ${escapeHtml(p.event_date)}<br/>` : ""}
         ${p.event_location ? `Lieu : ${escapeHtml(p.event_location)}<br/>` : ""}
+        ${p.delivery_time ? `Créneau livraison : <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
+        ${p.pickup_time ? `Créneau reprise : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
       </div>
       ${p.message ? `<div style="margin-top:16px;padding:12px;background:#fffbe6;border-left:3px solid #f0c000;font-size:14px;white-space:pre-wrap;">${escapeHtml(p.message)}</div>` : ""}
       <h2 style="font-size:16px;margin:24px 0 8px;">Produits</h2>
@@ -163,6 +167,14 @@ function clientEmail(p: z.infer<typeof PayloadSchema>) {
         Nous avons bien reçu votre demande de devis. Notre équipe revient vers vous sous 24h ouvrées
         avec une proposition personnalisée.
       </p>
+      ${(p.delivery_time || p.pickup_time || p.event_date || p.event_location) ? `
+      <div style="margin-top:16px;padding:14px 16px;background:#f9f9f9;border-radius:8px;font-size:14px;line-height:1.7;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#666;font-weight:600;margin-bottom:6px;">Logistique</div>
+        ${p.event_date ? `Date événement : <strong>${escapeHtml(p.event_date)}</strong><br/>` : ""}
+        ${p.event_location ? `Lieu : <strong>${escapeHtml(p.event_location)}</strong><br/>` : ""}
+        ${p.delivery_time ? `Créneau livraison souhaité : <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
+        ${p.pickup_time ? `Créneau reprise souhaité : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
+      </div>` : ""}
       <h2 style="font-size:16px;margin:24px 0 8px;">Récapitulatif de votre demande</h2>
       ${itemsTable(p.items)}
       ${totalsBlock(p)}

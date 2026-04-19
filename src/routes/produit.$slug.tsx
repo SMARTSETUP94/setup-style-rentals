@@ -748,11 +748,33 @@ function ProductPage() {
             {t("product.addToQuote")}
           </button>
 
-          <div className="mt-4 text-xs text-muted-foreground">
-            {lang === "fr"
-              ? "Remises : -10% dès 2, -15% dès 6, -20% dès 10."
-              : "Volume discounts: -10% from 2, -15% from 6, -20% from 10."}
-          </div>
+          {(() => {
+            const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);
+            const dTiers = [...(product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
+            if (qTiers.length === 0 && dTiers.length === 0) return null;
+            const fmtQ = qTiers
+              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_qty}`)
+              .join(", ");
+            const fmtD = dTiers
+              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_days} ${lang === "fr" ? "j" : "d"}`)
+              .join(", ");
+            return (
+              <div className="mt-4 text-xs text-muted-foreground space-y-0.5">
+                {qTiers.length > 0 && (
+                  <div>
+                    {lang === "fr" ? "Remises quantité : " : "Volume discounts: "}
+                    {fmtQ}.
+                  </div>
+                )}
+                {dTiers.length > 0 && (
+                  <div>
+                    {lang === "fr" ? "Remises durée : " : "Duration discounts: "}
+                    {fmtD}.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

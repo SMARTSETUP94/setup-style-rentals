@@ -143,6 +143,18 @@ const DICT: Dict = {
   "product.durationDiscounts": { fr: "Remises durée", en: "Duration discounts" },
   "product.from": { fr: "dès", en: "from" },
   "product.daysShort": { fr: "j", en: "d" },
+  "logoUpload.cta": { fr: "Téléverser votre logo", en: "Upload your logo" },
+  "logoUpload.hint": { fr: "PNG, JPG, SVG ou PDF — 10 Mo max", en: "PNG, JPG, SVG or PDF — 10 MB max" },
+  "logoUpload.uploading": { fr: "Envoi en cours…", en: "Uploading…" },
+  "logoUpload.success": { fr: "Logo téléversé", en: "Logo uploaded" },
+  "logoUpload.removed": { fr: "Logo retiré", en: "Logo removed" },
+  "logoUpload.preview": { fr: "Voir le fichier", en: "View file" },
+  "logoUpload.remove": { fr: "Retirer le logo", en: "Remove logo" },
+  "logoUpload.errInvalidType": { fr: "Format non supporté. PNG, JPG, SVG ou PDF uniquement.", en: "Unsupported format. PNG, JPG, SVG or PDF only." },
+  "logoUpload.errTooLarge": { fr: "Fichier trop volumineux (10 Mo max).", en: "File too large (10 MB max)." },
+  "logoUpload.errUpload": { fr: "Échec du téléversement. Réessayez.", en: "Upload failed. Try again." },
+  "logoUpload.required": { fr: "Logo requis pour cette option", en: "Logo required for this option" },
+  "logoUpload.attachedLabel": { fr: "Logo client", en: "Client logo" },
 
   // Cart/quote extras
   "cart.setup": { fr: "Installation", en: "Setup" },

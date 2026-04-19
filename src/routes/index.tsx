@@ -259,6 +259,9 @@ function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* CLIENTS BAND */}
+      <ClientsBand label={t("clients.label")} />
     </>
   );
 }

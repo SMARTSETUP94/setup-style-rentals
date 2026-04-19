@@ -151,6 +151,7 @@ export type Database = {
           description_en: string | null
           description_fr: string | null
           dimensions: string | null
+          duration_discounts: Json
           id: string
           image_url: string | null
           is_active: boolean
@@ -160,6 +161,7 @@ export type Database = {
           price_day: number
           price_month: number | null
           price_week: number | null
+          quantity_discounts: Json
           slug: string
           sort_order: number
           stock_total: number
@@ -174,6 +176,7 @@ export type Database = {
           description_en?: string | null
           description_fr?: string | null
           dimensions?: string | null
+          duration_discounts?: Json
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -183,6 +186,7 @@ export type Database = {
           price_day?: number
           price_month?: number | null
           price_week?: number | null
+          quantity_discounts?: Json
           slug: string
           sort_order?: number
           stock_total?: number
@@ -197,6 +201,7 @@ export type Database = {
           description_en?: string | null
           description_fr?: string | null
           dimensions?: string | null
+          duration_discounts?: Json
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -206,6 +211,7 @@ export type Database = {
           price_day?: number
           price_month?: number | null
           price_week?: number | null
+          quantity_discounts?: Json
           slug?: string
           sort_order?: number
           stock_total?: number

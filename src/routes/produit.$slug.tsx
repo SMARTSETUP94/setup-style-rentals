@@ -545,7 +545,7 @@ function ProductPage() {
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
-          {product.configurator_url && show3D ? (
+          {product.configurator_url && is3DMode ? (
             <>
               <iframe
                 ref={inlineIframeRef}
@@ -556,15 +556,6 @@ function ProductPage() {
                 allow="clipboard-write; fullscreen"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
               />
-              <button
-                type="button"
-                onClick={() => setShow3D(false)}
-                className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={t("product.showImage")}
-              >
-                <X className="size-3.5" />
-                {t("product.showImage")}
-              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -613,23 +604,21 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Single 3D mode toggle — only visible when configurator is available and not yet active */}
-          {product.configurator_url && !show3D && (
+          {product.configurator_url && !is3DMode && (
             <button
               type="button"
-              onClick={() => setShow3D(true)}
+              onClick={() => setIs3DMode(true)}
               className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition-all duration-300 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30"
             >
               <Sparkles className="size-4" />
-              {t("product.customizeIn3D")}
+              {t("product.config3d")}
             </button>
           )}
 
-          {/* 3D mode: close button (returns to simple options) */}
-          {product.configurator_url && show3D && (
+          {product.configurator_url && is3DMode && (
             <button
               type="button"
-              onClick={() => setShow3D(false)}
+              onClick={() => setIs3DMode(false)}
               className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-all duration-300"
             >
               <X className="size-4" />
@@ -667,7 +656,7 @@ function ProductPage() {
           </div>
 
           {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
-          {optionCategories.length > 0 && !show3D && (
+          {optionCategories.length > 0 && !is3DMode && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {t("product.customize")}

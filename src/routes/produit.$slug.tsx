@@ -494,7 +494,7 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
-    const missing = is3DMode ? [] : optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
+    const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
       const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
       toast.error(`${t("product.selectRequired")} ${labels}`);
@@ -508,10 +508,12 @@ function ProductPage() {
       toast.error(t("product.insufficientStock"));
       return;
     }
-    const configuratorOptions = activeConfiguratorOptionsList;
-    const mergedOptions: SelectedOption[] = is3DMode
-      ? [...configuratorOptions]
-      : [...activeSelectedOptionsList];
+    // Always include the DB-stored paid options. In 3D mode, append the
+    // configurator's synthetic 0€ options so they appear in the quote recap too.
+    const mergedOptions: SelectedOption[] = [
+      ...activeSelectedOptionsList,
+      ...activeConfiguratorOptionsList,
+    ];
     add({
       productId: product.id,
       slug: product.slug,
@@ -533,7 +535,7 @@ function ProductPage() {
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
-      configuratorOptions.length > 0
+      is3DMode && configuratorRecap
         ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },

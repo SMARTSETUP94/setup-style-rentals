@@ -653,20 +653,15 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Configurator CTA — toggles 3D view in the visual area */}
-          {product.configurator_url && !show3D && (
+          {/* 3D mode: close button (returns to simple options) */}
+          {product.configurator_url && show3D && (
             <button
               type="button"
-              onClick={() => {
-                setShow3D(true);
-                if (typeof window !== "undefined") {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-              className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
+              onClick={() => setShow3D(false)}
+              className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-all duration-300"
             >
-              <Sparkles className="size-4" />
-              {t("product.config3d")}
+              <X className="size-4" />
+              {t("product.close3D")}
             </button>
           )}
 
@@ -699,8 +694,14 @@ function ProductPage() {
             </div>
           </div>
 
-          {/* Customization options */}
-          {optionCategories.length > 0 && (
+          {/* Customization options — hidden in 3D mode (handled by configurator) */}
+          {optionCategories.length > 0 && show3D && (
+            <div className="mt-8 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-4 text-sm text-muted-foreground flex items-start gap-2">
+              <Wand2 className="size-4 text-gold shrink-0 mt-0.5" />
+              <span>{t("product.optionsManagedIn3D")}</span>
+            </div>
+          )}
+          {optionCategories.length > 0 && !show3D && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {t("product.customize")}
@@ -1029,25 +1030,29 @@ function ProductPage() {
             </div>
           )}
 
-          <button
-            onClick={handleAdd}
-            disabled={
-              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-            }
-            className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
-          >
-            {product.configurator_url && (configuratorData || configuratorRecap) ? (
-              <>
-                <Wand2 className="size-5" />
-                {t("product.addWithConfig")}
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="size-5" />
-                {t("product.addToQuote")}
-              </>
-            )}
-          </button>
+          {/* Single quote button — exclusive between simple mode and 3D mode.
+              In 3D mode, only show once the user has produced a configuration. */}
+          {(!show3D || configuratorData || configuratorRecap) && (
+            <button
+              onClick={handleAdd}
+              disabled={
+                !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+              }
+              className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
+            >
+              {show3D && (configuratorData || configuratorRecap) ? (
+                <>
+                  <Wand2 className="size-5" />
+                  {t("product.add3DToQuote")}
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="size-5" />
+                  {t("product.addToQuote")}
+                </>
+              )}
+            </button>
+          )}
 
           {(() => {
             const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);

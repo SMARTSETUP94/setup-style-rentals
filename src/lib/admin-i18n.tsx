@@ -8,7 +8,18 @@ const DICT: Dict = {
   // Layout / sidebar
   "layout.loading": { fr: "Chargement…", en: "Loading…" },
   "layout.quotes": { fr: "Devis", en: "Quotes" },
+  "layout.calendar": { fr: "Calendrier", en: "Calendar" },
   "layout.categories": { fr: "Catégories", en: "Categories" },
+
+  // Calendar
+  "cal.title": { fr: "Calendrier des événements", en: "Events calendar" },
+  "cal.sub": { fr: "Devis confirmés et livrés positionnés sur leurs dates d'événement.", en: "Confirmed and delivered quotes placed on their event dates." },
+  "cal.prev": { fr: "Mois précédent", en: "Previous month" },
+  "cal.next": { fr: "Mois suivant", en: "Next month" },
+  "cal.today": { fr: "Aujourd'hui", en: "Today" },
+  "cal.empty": { fr: "Aucun événement ce mois-ci.", en: "No events this month." },
+  "cal.more": { fr: "de plus", en: "more" },
+  "cal.openQuote": { fr: "Voir le devis", en: "View quote" },
   "layout.products": { fr: "Produits", en: "Products" },
   "layout.settings": { fr: "Paramètres", en: "Settings" },
   "layout.signOut": { fr: "Déconnexion", en: "Sign out" },

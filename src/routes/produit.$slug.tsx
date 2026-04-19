@@ -163,7 +163,7 @@ function ProductPage() {
   const [days, setDays] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [show3D, setShow3D] = useState(false);
+  const [is3DMode, setIs3DMode] = useState(false);
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
   const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
@@ -172,7 +172,6 @@ function ProductPage() {
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
-  const modalIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
@@ -284,7 +283,6 @@ function ProductPage() {
         // Iframe just signalled it's ready: push prices to whichever iframe sent it
         const src = e.source as Window | null;
         if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
-        if (modalIframeRef.current?.contentWindow === src) sendPricesToIframe(modalIframeRef.current);
       }
       // Accept any "<slug>-config" message from configurator iframes (e.g.
       // cornhole-config, lettres-geantes-config, photobooth-config, …).
@@ -372,7 +370,7 @@ function ProductPage() {
       value = match.value;
     }
     const msg = { type: "parent-set-config", group: groupKey, value };
-    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+    [inlineIframeRef.current].forEach((frame) => {
       try {
         frame?.contentWindow?.postMessage(msg, "*");
       } catch {
@@ -385,46 +383,18 @@ function ProductPage() {
   // DB-stored product option whose label matches the configurator choice
   // (e.g., picking "Rouge" in the iframe selects the matching "Rouge" button).
   useEffect(() => {
-    if (configuratorOptionsList.length === 0) return;
-    if (productOptions.length === 0 || optionCategories.length === 0) return;
-    const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    setSelectedOptionIds((prev) => {
-      const next = { ...prev };
-      const autoIds = new Set<string>();
-      let changed = false;
-      for (const cfg of configuratorOptionsList) {
-        const cfgNames = [norm(cfg.name_fr), norm(cfg.name_en)].filter(Boolean);
-        const cfgCat = [norm(cfg.categoryName_fr), norm(cfg.categoryName_en)].filter(Boolean);
-        const matchingCat = optionCategories.find((c) => {
-          const cn = [norm(c.name_fr), norm(c.name_en)];
-          return cn.some((n) => cfgCat.some((cc) => n.includes(cc) || cc.includes(n)));
-        });
-        if (!matchingCat) continue;
-        const matchingOpt = productOptions.find(
-          (o) =>
-            o.category_id === matchingCat.id &&
-            o.is_active &&
-            cfgNames.some((cn) => norm(o.name_fr) === cn || norm(o.name_en) === cn),
-        );
-        if (matchingOpt) {
-          autoIds.add(matchingCat.id);
-          if (next[matchingCat.id] !== matchingOpt.id) {
-            next[matchingCat.id] = matchingOpt.id;
-            changed = true;
-          }
-        }
-      }
-      setAutoSelectedCatIds(autoIds);
-      return changed ? next : prev;
-    });
-  }, [configuratorOptionsList, productOptions, optionCategories]);
+    if (is3DMode) return;
+    setAutoSelectedCatIds(new Set());
+  }, [is3DMode]);
+
+  const activeSelectedOptionsList = is3DMode ? [] : selectedOptionsList;
+  const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
 
   const optionsUnitPrice = useMemo(
     () =>
-      selectedOptionsList.reduce((s, o) => s + o.price, 0) +
-      configuratorOptionsList.reduce((s, o) => s + o.price, 0),
-    [selectedOptionsList, configuratorOptionsList],
+      activeSelectedOptionsList.reduce((s, o) => s + o.price, 0) +
+      activeConfiguratorOptionsList.reduce((s, o) => s + o.price, 0),
+    [activeSelectedOptionsList, activeConfiguratorOptionsList],
   );
 
   const calc = useMemo(() => {

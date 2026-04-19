@@ -19,7 +19,7 @@ import { formatPrice } from "@/lib/format";
 import { useAdminI18n } from "@/lib/admin-i18n";
 import { ScrollableTable } from "@/components/admin/ScrollableTable";
 
-export const Route = createFileRoute("/admin/")({
+export const Route = createFileRoute("/admin/devis")({
   component: AdminQuotesPage,
 });
 

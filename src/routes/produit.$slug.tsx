@@ -162,7 +162,7 @@ function ProductPage() {
         if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
         if (modalIframeRef.current?.contentWindow === src) sendPricesToIframe(modalIframeRef.current);
       }
-      if (d.type === "cornhole-config" || d.type === "basketball-config") {
+      if (d.type === "cornhole-config" || d.type === "basketball-config" || d.type === "golf-config") {
         if (d.data) setConfiguratorData(d.data);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
       }

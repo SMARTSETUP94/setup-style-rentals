@@ -17,11 +17,11 @@ import { Route as CglRouteImport } from './routes/cgl'
 import { Route as CatalogueRouteImport } from './routes/catalogue'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminDevisRouteImport } from './routes/admin.devis'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 
@@ -65,11 +65,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
-} as any)
 const ProduitSlugRoute = ProduitSlugRouteImport.update({
   id: '/produit/$slug',
   path: '/produit/$slug',
@@ -88,6 +83,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
 const AdminProductsRoute = AdminProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDevisRoute = AdminDevisRouteImport.update({
+  id: '/devis',
+  path: '/devis',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
@@ -112,14 +112,15 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
-  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
@@ -128,11 +129,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
-  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -146,11 +147,11 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/produit/$slug': typeof ProduitSlugRoute
-  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -165,14 +166,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/auth'
     | '/admin/categories'
+    | '/admin/devis'
     | '/admin/products'
     | '/admin/settings'
     | '/api/send-quote-emails'
     | '/produit/$slug'
-    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/catalogue'
     | '/cgl'
     | '/devis'
@@ -181,11 +183,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/auth'
     | '/admin/categories'
+    | '/admin/devis'
     | '/admin/products'
     | '/admin/settings'
     | '/api/send-quote-emails'
     | '/produit/$slug'
-    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -198,11 +200,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/auth'
     | '/admin/categories'
+    | '/admin/devis'
     | '/admin/products'
     | '/admin/settings'
     | '/api/send-quote-emails'
     | '/produit/$slug'
-    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -276,13 +278,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/produit/$slug': {
       id: '/produit/$slug'
       path: '/produit/$slug'
@@ -311,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/devis': {
+      id: '/admin/devis'
+      path: '/devis'
+      fullPath: '/admin/devis'
+      preLoaderRoute: typeof AdminDevisRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -331,17 +333,17 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAuthRoute: typeof AdminAuthRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminDevisRoute: typeof AdminDevisRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
-  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthRoute: AdminAuthRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminDevisRoute: AdminDevisRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
-  AdminIndexRoute: AdminIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

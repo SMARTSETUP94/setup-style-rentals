@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +12,14 @@ import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface OptionCategory {
   id: string;
@@ -66,6 +74,43 @@ interface Product {
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
 
 export const Route = createFileRoute("/produit/$slug")({
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("products")
+      .select("slug,name_fr,name_en,description_fr,description_en,image_url")
+      .eq("slug", params.slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null } | null };
+  },
+  head: ({ loaderData }) => {
+    const m = loaderData?.meta;
+    if (!m) {
+      return {
+        meta: [
+          { title: "Produit — Setup Paris" },
+          { name: "description", content: "Location d'objets événementiels à Paris." },
+        ],
+      };
+    }
+    const title = `${m.name_fr} — Setup Paris`;
+    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D, livraison et reprise incluses.`;
+    const meta: Array<Record<string, string>> = [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "product" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+    ];
+    if (m.image_url) {
+      meta.push({ property: "og:image", content: m.image_url });
+      meta.push({ name: "twitter:image", content: m.image_url });
+    }
+    return { meta };
+  },
   component: ProductPage,
 });
 
@@ -73,7 +118,6 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const { add } = useCart();
-  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
@@ -450,10 +494,11 @@ function ProductPage() {
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
+      configuratorRecap: configuratorRecap || undefined,
     });
     toast.success(
       configuratorOptions.length > 0
-        ? lang === "fr" ? "Produit configuré ajouté au devis" : "Configured product added to quote"
+        ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },
     );
@@ -462,12 +507,39 @@ function ProductPage() {
   return (
     <div className="pt-20 md:pt-24">
       <div className="container-x py-5">
-        <button
-          onClick={() => router.history.back()}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/">{t("nav.home")}</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/catalogue">{t("nav.catalog")}</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            {category && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/catalogue" search={{ category: category.slug, q: "", sort: "featured" }}>
+                      {pickLang(category, "name", lang)}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </>
+            )}
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{pickLang(product, "name", lang)}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Link
+          to="/catalogue"
+          className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ArrowLeft className="size-4" /> {t("product.back")}
-        </button>
+        </Link>
       </div>
 
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
@@ -478,9 +550,9 @@ function ProductPage() {
               <iframe
                 ref={inlineIframeRef}
                 src={product.configurator_url}
-                title={`${lang === "fr" ? "Configurateur 3D" : "3D configurator"} — ${pickLang(product, "name", lang)}`}
+                title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
                 className="block w-full"
-                style={{ height: `${Math.min(iframeHeight, 650)}px`, minHeight: "600px", maxHeight: "650px", border: "none" }}
+                style={{ height: `${iframeHeight}px`, minHeight: "600px", maxHeight: "min(80vh, 1200px)", border: "none" }}
                 allow="clipboard-write; fullscreen"
                 onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
               />
@@ -488,10 +560,10 @@ function ProductPage() {
                 type="button"
                 onClick={() => setShow3D(false)}
                 className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={lang === "fr" ? "Voir l'image" : "Show image"}
+                aria-label={t("product.showImage")}
               >
                 <X className="size-3.5" />
-                {lang === "fr" ? "Voir l'image" : "Show image"}
+                {t("product.showImage")}
               </button>
               <button
                 type="button"
@@ -502,10 +574,10 @@ function ProductPage() {
                   req?.().catch(() => {});
                 }}
                 className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={lang === "fr" ? "Plein écran" : "Fullscreen"}
+                aria-label={t("product.fullscreen")}
               >
                 <Sparkles className="size-3.5" />
-                {lang === "fr" ? "Plein écran" : "Fullscreen"}
+                {t("product.fullscreen")}
               </button>
             </>
           ) : (
@@ -523,7 +595,7 @@ function ProductPage() {
                   className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium bg-gold text-gold-foreground hover:bg-gold/90 transition-colors shadow-md"
                 >
                   <Sparkles className="size-3.5" />
-                  {lang === "fr" ? "Personnaliser en 3D" : "Customize in 3D"}
+                  {t("product.customizeIn3D")}
                 </button>
               )}
             </div>
@@ -571,7 +643,7 @@ function ProductPage() {
           {/* Price grid */}
           <div className="mt-8 rounded-xl bg-secondary/60 border border-border p-5">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
-              {lang === "fr" ? "Tarifs de location" : "Rental rates"}
+              {t("product.rentalRates")}
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -601,7 +673,7 @@ function ProductPage() {
           {optionCategories.length > 0 && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {lang === "fr" ? "Personnalisation" : "Customization"}
+                {t("product.customize")}
               </div>
               {optionCategories.map((cat) => {
                 const opts = productOptions
@@ -615,7 +687,7 @@ function ProductPage() {
                       <label className="text-sm font-medium">{pickLang(cat, "name", lang)}</label>
                       {cat.is_required ? (
                         <span className="text-[10px] uppercase tracking-wider text-destructive">
-                          {lang === "fr" ? "Requis" : "Required"}
+                          {t("product.required")}
                         </span>
                       ) : (
                         <button
@@ -636,7 +708,7 @@ function ProductPage() {
                           }}
                           className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-auto"
                         >
-                          {lang === "fr" ? "Désélectionner" : "Clear"}
+                          {t("product.clear")}
                         </button>
                       )}
                     </div>
@@ -669,7 +741,7 @@ function ProductPage() {
                                 {pickLang(o, "name", lang)}
                                 {active && autoSelectedCatIds.has(cat.id) && (
                                   <span
-                                    title={lang === "fr" ? "Sélectionné via le configurateur 3D" : "Auto-selected from 3D configurator"}
+                                    title={t("product.autoSelectedHint")}
                                     className="inline-flex items-center text-gold/80"
                                   >
                                     <Wand2 className="size-3.5" />
@@ -681,9 +753,7 @@ function ProductPage() {
                             <div className="text-xs text-muted-foreground mt-1">
                               {o.price > 0
                                 ? `+${formatPrice(o.price, lang)}`
-                                : lang === "fr"
-                                  ? "Inclus"
-                                  : "Included"}
+                                : t("product.included")}
                             </div>
                           </button>
                         );
@@ -713,7 +783,7 @@ function ProductPage() {
                       <CalendarIcon className="size-4 shrink-0 opacity-60" />
                       {startDate
                         ? format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })
-                        : lang === "fr" ? "Choisir une date" : "Pick a date"}
+                        : t("product.pickDate")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
@@ -749,7 +819,7 @@ function ProductPage() {
                       <CalendarIcon className="size-4 shrink-0 opacity-60" />
                       {endDate
                         ? format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })
-                        : lang === "fr" ? "Choisir une date" : "Pick a date"}
+                        : t("product.pickDate")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
@@ -774,25 +844,27 @@ function ProductPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">{t("product.qty")}</label>
+                <label htmlFor="product-qty" className="text-xs text-muted-foreground">{t("product.qty")}</label>
                 <div className="mt-1 flex items-center border border-border rounded-lg">
-                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.qtyDecrease")} onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
                   <input
+                    id="product-qty"
                     type="number"
                     min={1}
                     value={qty}
                     onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
                     className="flex-1 text-center bg-transparent text-sm focus:outline-none"
+                    aria-label={t("product.qty")}
                   />
-                  <button onClick={() => setQty((q) => q + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.qtyIncrease")} onClick={() => setQty((q) => q + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{t("product.duration")}</label>
-                <div className="mt-1 flex items-center border border-border rounded-lg">
-                  <button onClick={() => setDays((d) => Math.max(1, d - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
+                <span className="text-xs text-muted-foreground">{t("product.duration")}</span>
+                <div className="mt-1 flex items-center border border-border rounded-lg" role="group" aria-label={t("product.duration")}>
+                  <button type="button" aria-label={t("product.daysDecrease")} onClick={() => setDays((d) => Math.max(1, d - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
                   <div className="flex-1 text-center text-sm">{days} {t("product.days")}</div>
-                  <button onClick={() => setDays((d) => d + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.daysIncrease")} onClick={() => setDays((d) => d + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
                 </div>
               </div>
             </div>
@@ -816,13 +888,13 @@ function ProductPage() {
                 <div className="pt-1 border-t border-dashed border-border/60 mt-1">
                   <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
                     <Wand2 className="size-3" />
-                    {lang === "fr" ? "Configuration 3D" : "3D configuration"}
+                    {t("product.threeDConfiguration")}
                   </div>
                   {configuratorOptionsList.map((o) => (
                     <Row
                       key={o.optionId}
                       label={`+ ${o.categoryName_fr ? `${pickLang(o, "categoryName", lang)} : ` : ""}${pickLang(o, "name", lang)}`}
-                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : lang === "fr" ? "Inclus" : "Included"}
+                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : t("product.included")}
                     />
                   ))}
                 </div>
@@ -866,20 +938,22 @@ function ProductPage() {
               <span className="mt-0.5 size-2 rounded-full shrink-0 bg-current" />
               <span>
                 {checkingStock
-                  ? lang === "fr" ? "Vérification de la disponibilité…" : "Checking availability…"
+                  ? t("product.checkingAvail")
                   : availableStock === null
-                    ? lang === "fr" ? "Disponibilité non vérifiée" : "Availability not checked"
+                    ? t("product.notChecked")
                     : availableStock === 0
-                      ? lang === "fr"
-                        ? "Indisponible sur cette période"
-                        : "Unavailable for these dates"
+                      ? t("product.unavailable")
                       : qty > availableStock
                         ? lang === "fr"
                           ? `Stock insuffisant : ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} (vous demandez ${qty})`
                           : `Insufficient stock: ${availableStock} available (you requested ${qty})`
-                        : lang === "fr"
-                          ? `${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} du ${startDate} au ${endDate}`
-                          : `${availableStock} unit${availableStock > 1 ? "s" : ""} available from ${startDate} to ${endDate}`}
+                        : (() => {
+                            const sd = format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn });
+                            const ed = format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn });
+                            return lang === "fr"
+                              ? `${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} du ${sd} au ${ed}`
+                              : `${availableStock} unit${availableStock > 1 ? "s" : ""} available from ${sd} to ${ed}`;
+                          })()}
               </span>
             </div>
           )}
@@ -890,17 +964,17 @@ function ProductPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   <Wand2 className="size-4 text-gold shrink-0" />
                   <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold truncate">
-                    {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
+                    {t("product.yourCustomConfig")}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleResetConfigurator}
-                  title={lang === "fr" ? "Réinitialiser la configuration" : "Reset configuration"}
+                  title={t("product.resetConfigTitle")}
                   className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:border-gold/50 transition-colors shrink-0"
                 >
                   <RotateCcw className="size-3" />
-                  {lang === "fr" ? "Réinitialiser" : "Reset"}
+                  {t("product.resetConfig")}
                 </button>
               </div>
               <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
@@ -909,7 +983,7 @@ function ProductPage() {
               {configuratorData && typeof configuratorData.price === "number" && (
                 <div className="mt-3 flex items-center justify-between text-sm border-t border-gold/20 pt-3">
                   <span className="text-muted-foreground">
-                    {lang === "fr" ? "Prix configuré" : "Configured price"}
+                    {t("product.configuredPrice")}
                   </span>
                   <span className="font-display text-xl font-semibold text-gold">
                     {formatPrice(Number(configuratorData.price), lang)}
@@ -920,9 +994,7 @@ function ProductPage() {
                 </div>
               )}
               <p className="mt-3 text-[11px] text-muted-foreground italic">
-                {lang === "fr"
-                  ? "Cette configuration sera incluse dans votre devis avec les dates et quantités ci-dessus."
-                  : "This configuration will be included in your quote along with the dates and quantities above."}
+                {t("product.configIncludedNote")}
               </p>
             </div>
           )}
@@ -937,7 +1009,7 @@ function ProductPage() {
             {product.configurator_url && (configuratorData || configuratorRecap) ? (
               <>
                 <Wand2 className="size-5" />
-                {lang === "fr" ? "Ajouter au devis avec ma configuration" : "Add to quote with my configuration"}
+                {t("product.addWithConfig")}
               </>
             ) : (
               <>
@@ -952,23 +1024,21 @@ function ProductPage() {
             const dTiers = [...(product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
             if (qTiers.length === 0 && dTiers.length === 0) return null;
             const fmtQ = qTiers
-              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_qty}`)
+              .map((tier) => `-${Math.round(tier.rate * 100)}% ${t("product.from")} ${tier.min_qty}`)
               .join(", ");
             const fmtD = dTiers
-              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_days} ${lang === "fr" ? "j" : "d"}`)
+              .map((tier) => `-${Math.round(tier.rate * 100)}% ${t("product.from")} ${tier.min_days} ${t("product.daysShort")}`)
               .join(", ");
             return (
               <div className="mt-4 text-xs text-muted-foreground space-y-0.5">
                 {qTiers.length > 0 && (
                   <div>
-                    {lang === "fr" ? "Remises quantité : " : "Volume discounts: "}
-                    {fmtQ}.
+                    {t("product.volumeDiscounts")} : {fmtQ}.
                   </div>
                 )}
                 {dTiers.length > 0 && (
                   <div>
-                    {lang === "fr" ? "Remises durée : " : "Duration discounts: "}
-                    {fmtD}.
+                    {t("product.durationDiscounts")} : {fmtD}.
                   </div>
                 )}
               </div>

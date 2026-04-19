@@ -18,15 +18,19 @@ export function Footer() {
           </p>
           <div className="mt-6 flex items-center gap-3">
             <a
-              href="#"
-              aria-label="Instagram"
+              href="https://www.instagram.com/setup.paris/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram Setup Paris"
               className="inline-flex items-center justify-center size-10 rounded-full border border-background/20 text-background/80 hover:bg-gold hover:text-gold-foreground hover:border-gold transition-all duration-300"
             >
               <Instagram className="size-4" />
             </a>
             <a
-              href="#"
-              aria-label="LinkedIn"
+              href="https://www.linkedin.com/company/setup-paris/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn Setup Paris"
               className="inline-flex items-center justify-center size-10 rounded-full border border-background/20 text-background/80 hover:bg-gold hover:text-gold-foreground hover:border-gold transition-all duration-300"
             >
               <Linkedin className="size-4" />

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
@@ -7,6 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { cn } from "@/lib/utils";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string; sort_order: number }
 interface Product {
@@ -81,6 +89,17 @@ function CataloguePage() {
     <div className="pt-24 md:pt-28">
       {/* Header */}
       <div className="container-x">
+        <Breadcrumb className="mb-3">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/">{t("nav.home")}</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{t("catalog.title")}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <div className="section-num">— 02 — Catalogue</div>
         <h1 className="mt-3 font-display font-semibold text-[clamp(2.5rem,5vw,4rem)] leading-tight tracking-tight">
           {t("catalog.title")}
@@ -137,7 +156,7 @@ function CataloguePage() {
         </div>
 
         <div className="mt-4 text-xs text-muted-foreground">
-          {filtered.length} {filtered.length > 1 ? "résultats" : "résultat"}
+          {filtered.length} {filtered.length > 1 ? t("catalog.results") : t("catalog.result")}
         </div>
       </div>
 

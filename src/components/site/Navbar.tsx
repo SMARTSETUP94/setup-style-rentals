@@ -94,6 +94,9 @@ export function Navbar() {
               <ShoppingBag className="size-4" />
               {t("nav.quote")} {count > 0 && <span className="text-accent">({count})</span>}
             </Link>
+            <div className="pt-2">
+              <LangSwitch lang={lang} setLang={setLang} transparent={false} />
+            </div>
           </nav>
         </div>
       )}

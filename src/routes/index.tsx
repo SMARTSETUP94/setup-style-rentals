@@ -6,6 +6,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
+import { ClientsBand } from "@/components/site/ClientsBand";
 
 interface Category {
   id: string;

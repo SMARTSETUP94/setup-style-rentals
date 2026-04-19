@@ -741,7 +741,7 @@ function ProductPage() {
                                 {pickLang(o, "name", lang)}
                                 {active && autoSelectedCatIds.has(cat.id) && (
                                   <span
-                                    title={lang === "fr" ? "Sélectionné via le configurateur 3D" : "Auto-selected from 3D configurator"}
+                                    title={t("product.autoSelectedHint")}
                                     className="inline-flex items-center text-gold/80"
                                   >
                                     <Wand2 className="size-3.5" />
@@ -753,9 +753,7 @@ function ProductPage() {
                             <div className="text-xs text-muted-foreground mt-1">
                               {o.price > 0
                                 ? `+${formatPrice(o.price, lang)}`
-                                : lang === "fr"
-                                  ? "Inclus"
-                                  : "Included"}
+                                : t("product.included")}
                             </div>
                           </button>
                         );
@@ -785,7 +783,7 @@ function ProductPage() {
                       <CalendarIcon className="size-4 shrink-0 opacity-60" />
                       {startDate
                         ? format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })
-                        : lang === "fr" ? "Choisir une date" : "Pick a date"}
+                        : t("product.pickDate")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
@@ -821,7 +819,7 @@ function ProductPage() {
                       <CalendarIcon className="size-4 shrink-0 opacity-60" />
                       {endDate
                         ? format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })
-                        : lang === "fr" ? "Choisir une date" : "Pick a date"}
+                        : t("product.pickDate")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
@@ -846,25 +844,27 @@ function ProductPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">{t("product.qty")}</label>
+                <label htmlFor="product-qty" className="text-xs text-muted-foreground">{t("product.qty")}</label>
                 <div className="mt-1 flex items-center border border-border rounded-lg">
-                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.qtyDecrease")} onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
                   <input
+                    id="product-qty"
                     type="number"
                     min={1}
                     value={qty}
                     onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
                     className="flex-1 text-center bg-transparent text-sm focus:outline-none"
+                    aria-label={t("product.qty")}
                   />
-                  <button onClick={() => setQty((q) => q + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.qtyIncrease")} onClick={() => setQty((q) => q + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{t("product.duration")}</label>
-                <div className="mt-1 flex items-center border border-border rounded-lg">
-                  <button onClick={() => setDays((d) => Math.max(1, d - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
+                <span className="text-xs text-muted-foreground">{t("product.duration")}</span>
+                <div className="mt-1 flex items-center border border-border rounded-lg" role="group" aria-label={t("product.duration")}>
+                  <button type="button" aria-label={t("product.daysDecrease")} onClick={() => setDays((d) => Math.max(1, d - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
                   <div className="flex-1 text-center text-sm">{days} {t("product.days")}</div>
-                  <button onClick={() => setDays((d) => d + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.daysIncrease")} onClick={() => setDays((d) => d + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
                 </div>
               </div>
             </div>

@@ -284,6 +284,14 @@ function ProductPage() {
       );
       return;
     }
+    if (availableStock !== null && qty > availableStock) {
+      toast.error(
+        lang === "fr"
+          ? `Stock insuffisant : seulement ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} sur cette période.`
+          : `Insufficient stock: only ${availableStock} unit${availableStock > 1 ? "s" : ""} available for these dates.`,
+      );
+      return;
+    }
     add({
       productId: product.id,
       slug: product.slug,

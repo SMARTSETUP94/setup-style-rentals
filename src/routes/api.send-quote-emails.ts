@@ -69,6 +69,17 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
         </tr>`,
         )
         .join("");
+      const recapRow = i.configurator_recap
+        ? `
+        <tr>
+          <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#fffbe6;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#a07c00;font-weight:600;margin-bottom:4px;">
+              ✦ Configuration 3D
+            </div>
+            <pre style="margin:0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;">${escapeHtml(i.configurator_recap)}</pre>
+          </td>
+        </tr>`
+        : "";
       return `
         <tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(i.name_fr)}</td>
@@ -77,7 +88,8 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmt(i.price_day)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(i.line_net)}</td>
         </tr>
-        ${optionsRows}`;
+        ${optionsRows}
+        ${recapRow}`;
     })
     .join("");
   return `

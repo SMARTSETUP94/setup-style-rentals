@@ -22,6 +22,8 @@ const ItemSchema = z.object({
   options: z.array(OptionSchema).max(50).optional().default([]),
   options_total: z.number().min(0).optional().default(0),
   configurator_recap: z.string().max(5000).nullable().optional(),
+  logo_url: z.string().url().max(2000).nullable().optional(),
+  logo_filename: z.string().max(300).nullable().optional(),
 });
 
 const PayloadSchema = z.object({
@@ -80,6 +82,19 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
           </td>
         </tr>`
         : "";
+      const logoRow = i.logo_url
+        ? `
+        <tr>
+          <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#eef6ff;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#1d4ed8;font-weight:600;margin-bottom:4px;">
+              📎 Logo client
+            </div>
+            <a href="${escapeHtml(i.logo_url)}" target="_blank" rel="noreferrer" style="font-size:13px;color:#1d4ed8;word-break:break-all;">
+              ${escapeHtml(i.logo_filename || "Télécharger le logo")}
+            </a>
+          </td>
+        </tr>`
+        : "";
       return `
         <tr>
           <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(i.name_fr)}</td>
@@ -89,7 +104,8 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(i.line_net)}</td>
         </tr>
         ${optionsRows}
-        ${recapRow}`;
+        ${recapRow}
+        ${logoRow}`;
     })
     .join("");
   return `

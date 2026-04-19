@@ -844,8 +844,8 @@ function ProductPage() {
         </div>
       </div>
 
-      {/* Configuration recap (full width) */}
-      {product.configurator_url && (
+      {/* Configuration recap (full width) — only shown as hint when nothing has been configured yet */}
+      {product.configurator_url && !configuratorData && !configuratorRecap && (
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -856,40 +856,11 @@ function ProductPage() {
             </h2>
           </div>
           <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
-            {configuratorData || configuratorRecap ? (
-              <>
-                <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
-                  {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
-                </pre>
-                {configuratorData && typeof configuratorData.price === "number" && (
-                  <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
-                    <span className="text-muted-foreground">
-                      {lang === "fr" ? "Prix configuré" : "Configured price"}
-                    </span>
-                    <span className="font-display text-xl font-semibold text-gold">
-                      {formatPrice(Number(configuratorData.price), lang)}
-                      <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
-                        /{t("product.day")}
-                      </span>
-                    </span>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={handleAddConfiguredToQuote}
-                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md bg-gold text-gold-foreground px-4 py-3 text-sm font-semibold hover:bg-gold/90 transition-all shadow-md shadow-gold/20"
-                >
-                  <Wand2 className="size-4" />
-                  {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
-                </button>
-              </>
-            ) : (
-              <div className="text-xs text-muted-foreground text-center py-8 px-4">
-                {lang === "fr"
-                  ? "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif ici."
-                  : "Customize the product in the configurator above to see the summary here."}
-              </div>
-            )}
+            <div className="text-xs text-muted-foreground text-center py-8 px-4">
+              {lang === "fr"
+                ? "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif apparaître dans le panneau de droite."
+                : "Customize the product in the configurator above to see the summary in the right panel."}
+            </div>
           </aside>
         </section>
       )}

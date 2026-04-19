@@ -405,6 +405,25 @@ function AdminProductsPage() {
                 <Label>Produit actif</Label>
               </div>
 
+              <div className="col-span-2 mt-6 rounded-lg border-2 border-accent/40 bg-accent/5 p-4">
+                <h3 className="font-semibold text-base flex items-center gap-2">
+                  💸 Remises personnalisées
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-4">
+                  Définissez les paliers de remise pour ce produit. Pour un produit unique, videz les paliers quantité pour désactiver toute remise.
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <QuantityDiscountEditor
+                    value={editing.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS}
+                    onChange={(v) => setEditing({ ...editing, quantity_discounts: v })}
+                  />
+                  <DurationDiscountEditor
+                    value={editing.duration_discounts ?? []}
+                    onChange={(v) => setEditing({ ...editing, duration_discounts: v })}
+                  />
+                </div>
+              </div>
+
               {editing.id ? (
                 <div className="col-span-2 mt-6 rounded-lg border-2 border-gold/40 bg-gold/5 p-4">
                   <div className="mb-3 flex items-start justify-between gap-2">

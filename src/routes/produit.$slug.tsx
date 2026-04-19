@@ -643,6 +643,18 @@ function ProductPage() {
             </div>
           )}
 
+          {/* Single 3D mode toggle — only visible when configurator is available and not yet active */}
+          {product.configurator_url && !show3D && (
+            <button
+              type="button"
+              onClick={() => setShow3D(true)}
+              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition-all duration-300 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30"
+            >
+              <Sparkles className="size-4" />
+              {t("product.customizeIn3D")}
+            </button>
+          )}
+
           {/* 3D mode: close button (returns to simple options) */}
           {product.configurator_url && show3D && (
             <button

@@ -50,7 +50,22 @@ const finalTotal = (q: Quote) =>
   Number(q.setup_fee || 0) +
   Number(q.pickup_fee || 0);
 
-const STATUSES = ["pending", "contacted", "validated", "rejected"] as const;
+const STATUSES = ["pending", "contacted", "confirmed", "completed", "rejected"] as const;
+const BLOCKING_STATUSES = new Set(["confirmed", "completed"]);
+const STATUS_LABELS_FR: Record<string, string> = {
+  pending: "En attente",
+  contacted: "Contacté",
+  confirmed: "Confirmé",
+  completed: "Terminé",
+  rejected: "Refusé",
+};
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  contacted: "bg-blue-100 text-blue-800 border-blue-200",
+  confirmed: "bg-green-100 text-green-800 border-green-200",
+  completed: "bg-purple-100 text-purple-800 border-purple-200",
+  rejected: "bg-red-100 text-red-800 border-red-200",
+};
 
 function AdminQuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);

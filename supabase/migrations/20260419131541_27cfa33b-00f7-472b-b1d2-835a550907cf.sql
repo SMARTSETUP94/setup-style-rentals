@@ -1,0 +1,1 @@
+UPDATE public.products SET price_week = 1800, price_month = 5400 WHERE slug = 'bar-led';

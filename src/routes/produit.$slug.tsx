@@ -248,7 +248,9 @@ function ProductPage() {
         if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
         if (modalIframeRef.current?.contentWindow === src) sendPricesToIframe(modalIframeRef.current);
       }
-      if (d.type === "cornhole-config" || d.type === "basketball-config" || d.type === "golf-config" || d.type === "bar-led-config" || d.type === "auvent-config" || d.type === "plinko-config" || d.type === "photobooth-config") {
+      // Accept any "<slug>-config" message from configurator iframes (e.g.
+      // cornhole-config, lettres-geantes-config, photobooth-config, …).
+      if (typeof d.type === "string" && d.type.endsWith("-config") && d.type !== "configurator-resize") {
         if (d.data) setConfiguratorData(d.data);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
       }

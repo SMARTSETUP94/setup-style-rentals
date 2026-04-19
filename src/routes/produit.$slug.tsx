@@ -574,10 +574,10 @@ function ProductPage() {
                   req?.().catch(() => {});
                 }}
                 className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={lang === "fr" ? "Plein écran" : "Fullscreen"}
+                aria-label={t("product.fullscreen")}
               >
                 <Sparkles className="size-3.5" />
-                {lang === "fr" ? "Plein écran" : "Fullscreen"}
+                {t("product.fullscreen")}
               </button>
             </>
           ) : (
@@ -595,7 +595,7 @@ function ProductPage() {
                   className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium bg-gold text-gold-foreground hover:bg-gold/90 transition-colors shadow-md"
                 >
                   <Sparkles className="size-3.5" />
-                  {lang === "fr" ? "Personnaliser en 3D" : "Customize in 3D"}
+                  {t("product.customizeIn3D")}
                 </button>
               )}
             </div>
@@ -643,7 +643,7 @@ function ProductPage() {
           {/* Price grid */}
           <div className="mt-8 rounded-xl bg-secondary/60 border border-border p-5">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
-              {lang === "fr" ? "Tarifs de location" : "Rental rates"}
+              {t("product.rentalRates")}
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -673,7 +673,7 @@ function ProductPage() {
           {optionCategories.length > 0 && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {lang === "fr" ? "Personnalisation" : "Customization"}
+                {t("product.customize")}
               </div>
               {optionCategories.map((cat) => {
                 const opts = productOptions
@@ -687,7 +687,7 @@ function ProductPage() {
                       <label className="text-sm font-medium">{pickLang(cat, "name", lang)}</label>
                       {cat.is_required ? (
                         <span className="text-[10px] uppercase tracking-wider text-destructive">
-                          {lang === "fr" ? "Requis" : "Required"}
+                          {t("product.required")}
                         </span>
                       ) : (
                         <button
@@ -708,7 +708,7 @@ function ProductPage() {
                           }}
                           className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-auto"
                         >
-                          {lang === "fr" ? "Désélectionner" : "Clear"}
+                          {t("product.clear")}
                         </button>
                       )}
                     </div>

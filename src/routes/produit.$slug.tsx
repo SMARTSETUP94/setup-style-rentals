@@ -361,6 +361,8 @@ function ProductPage() {
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       selectedOptions: synthetic.length > 0 ? synthetic : undefined,
+      quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
+      durationDiscounts: product.duration_discounts ?? [],
     });
     toast.success(
       lang === "fr" ? "Configuration ajoutée au devis" : "Configuration added to quote",

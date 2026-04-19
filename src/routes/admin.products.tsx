@@ -107,7 +107,7 @@ function AdminProductsPage() {
     if (e1) toast.error(e1.message);
     if (e2) toast.error(e2.message);
     if (e3) toast.error(e3.message);
-    setProducts((p as Product[]) ?? []);
+    setProducts((p as unknown as Product[]) ?? []);
     setCategories((c as Category[]) ?? []);
     const counts: Record<string, number> = {};
     ((oc as { product_id: string }[]) ?? []).forEach((row) => {

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { formatPrice } from "@/lib/format";
+import { useAdminI18n } from "@/lib/admin-i18n";
 
 type OptionCategory = {
   id: string;
@@ -28,6 +29,10 @@ type ProductOption = {
 };
 
 export function ProductOptionsManager({ productId }: { productId: string }) {
+  const { t, lang } = useAdminI18n();
+  const displayName = (o: { name_fr: string; name_en: string }) => (lang === "en" ? o.name_en : o.name_fr);
+  const altName = (o: { name_fr: string; name_en: string }) => (lang === "en" ? o.name_fr : o.name_en);
+
   const [categories, setCategories] = useState<OptionCategory[]>([]);
   const [options, setOptions] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +90,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
 
   const saveNewCategory = async () => {
     if (!catDraft.name_fr || !catDraft.name_en) {
-      toast.error("Noms FR et EN requis");
+      toast.error(t("pom.namesRequired"));
       return;
     }
     const nextOrder = categories.length > 0 ? Math.max(...categories.map((c) => c.sort_order)) + 1 : 0;
@@ -97,7 +102,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
       sort_order: nextOrder,
     });
     if (error) return toast.error(error.message);
-    toast.success("Catégorie ajoutée");
+    toast.success(t("pom.cat.added"));
     setAddingCategory(false);
     setCatDraft({});
     load();
@@ -111,7 +116,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
   const saveEditCategory = async () => {
     if (!editingCatId) return;
     if (!catDraft.name_fr || !catDraft.name_en) {
-      toast.error("Noms FR et EN requis");
+      toast.error(t("pom.namesRequired"));
       return;
     }
     const { error } = await supabase
@@ -123,17 +128,17 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
       })
       .eq("id", editingCatId);
     if (error) return toast.error(error.message);
-    toast.success("Catégorie modifiée");
+    toast.success(t("pom.cat.updated"));
     setEditingCatId(null);
     setCatDraft({});
     load();
   };
 
   const removeCategory = async (id: string) => {
-    if (!confirm("Supprimer cette catégorie et toutes ses options ?")) return;
+    if (!confirm(t("pom.cat.confirmDelete"))) return;
     const { error } = await supabase.from("product_option_categories").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Catégorie supprimée");
+    toast.success(t("pom.cat.deleted"));
     load();
   };
 
@@ -169,7 +174,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
   const saveNewOption = async () => {
     if (!addingOptionFor) return;
     if (!optDraft.name_fr || !optDraft.name_en) {
-      toast.error("Noms FR et EN requis");
+      toast.error(t("pom.namesRequired"));
       return;
     }
     const catOpts = options.filter((o) => o.category_id === addingOptionFor);
@@ -183,7 +188,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
       is_active: optDraft.is_active ?? true,
     });
     if (error) return toast.error(error.message);
-    toast.success("Option ajoutée");
+    toast.success(t("pom.opt.added"));
     setAddingOptionFor(null);
     setOptDraft({});
     load();
@@ -197,7 +202,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
   const saveEditOption = async () => {
     if (!editingOptId) return;
     if (!optDraft.name_fr || !optDraft.name_en) {
-      toast.error("Noms FR et EN requis");
+      toast.error(t("pom.namesRequired"));
       return;
     }
     const { error } = await supabase
@@ -210,17 +215,17 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
       })
       .eq("id", editingOptId);
     if (error) return toast.error(error.message);
-    toast.success("Option modifiée");
+    toast.success(t("pom.opt.updated"));
     setEditingOptId(null);
     setOptDraft({});
     load();
   };
 
   const removeOption = async (id: string) => {
-    if (!confirm("Supprimer cette option ?")) return;
+    if (!confirm(t("pom.opt.confirmDelete"))) return;
     const { error } = await supabase.from("product_options").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Option supprimée");
+    toast.success(t("pom.opt.deleted"));
     load();
   };
 
@@ -241,15 +246,13 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
   };
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Chargement des options…</p>;
+    return <p className="text-sm text-muted-foreground">{t("pom.loading")}</p>;
   }
 
   return (
     <div className="space-y-3">
       {categories.length === 0 && !addingCategory && (
-        <p className="text-sm text-muted-foreground italic">
-          Aucune catégorie d'options. Ajoutez-en une pour permettre aux clients de personnaliser ce produit.
-        </p>
+        <p className="text-sm text-muted-foreground italic">{t("pom.empty")}</p>
       )}
 
       {categories.map((cat) => {
@@ -267,7 +270,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                   type="button"
                   onClick={() => moveCategory(cat, -1)}
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label="Monter"
+                  aria-label={t("pom.up")}
                 >
                   <ArrowUp className="size-3" />
                 </button>
@@ -275,7 +278,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                   type="button"
                   onClick={() => moveCategory(cat, 1)}
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label="Descendre"
+                  aria-label={t("pom.down")}
                 >
                   <ArrowDown className="size-3" />
                 </button>
@@ -284,12 +287,12 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
               {isEditing ? (
                 <div className="flex-1 grid grid-cols-2 gap-2">
                   <Input
-                    placeholder="Nom FR"
+                    placeholder={t("pom.nameFr")}
                     value={catDraft.name_fr || ""}
                     onChange={(e) => setCatDraft({ ...catDraft, name_fr: e.target.value })}
                   />
                   <Input
-                    placeholder="Nom EN"
+                    placeholder={t("pom.nameEn")}
                     value={catDraft.name_en || ""}
                     onChange={(e) => setCatDraft({ ...catDraft, name_en: e.target.value })}
                   />
@@ -301,10 +304,10 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                   className="flex-1 flex items-center gap-2 text-left"
                 >
                   {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                  <span className="font-medium">{cat.name_fr}</span>
-                  <span className="text-xs text-muted-foreground">/ {cat.name_en}</span>
+                  <span className="font-medium">{displayName(cat)}</span>
+                  <span className="text-xs text-muted-foreground">/ {altName(cat)}</span>
                   <span className="text-xs text-muted-foreground ml-2">
-                    ({catOptions.length} option{catOptions.length > 1 ? "s" : ""})
+                    ({catOptions.length} {t("pom.optionsCount")})
                   </span>
                 </button>
               )}
@@ -318,7 +321,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                       else toggleRequired(cat);
                     }}
                   />
-                  <Label className="text-xs">Requis</Label>
+                  <Label className="text-xs">{t("common.required")}</Label>
                 </div>
 
                 {isEditing ? (
@@ -346,7 +349,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
             {isOpen && (
               <div className="border-t border-border p-3 space-y-2 bg-muted/20">
                 {catOptions.length === 0 && addingOptionFor !== cat.id && (
-                  <p className="text-xs text-muted-foreground italic">Aucune option pour le moment.</p>
+                  <p className="text-xs text-muted-foreground italic">{t("pom.opt.empty")}</p>
                 )}
 
                 {catOptions.map((opt) => {
@@ -361,6 +364,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                           type="button"
                           onClick={() => moveOption(opt, -1)}
                           className="text-muted-foreground hover:text-foreground"
+                          aria-label={t("pom.up")}
                         >
                           <ArrowUp className="size-3" />
                         </button>
@@ -368,6 +372,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                           type="button"
                           onClick={() => moveOption(opt, 1)}
                           className="text-muted-foreground hover:text-foreground"
+                          aria-label={t("pom.down")}
                         >
                           <ArrowDown className="size-3" />
                         </button>
@@ -376,20 +381,20 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                       {isOptEditing ? (
                         <>
                           <Input
-                            placeholder="Nom FR"
+                            placeholder={t("pom.nameFr")}
                             value={optDraft.name_fr || ""}
                             onChange={(e) => setOptDraft({ ...optDraft, name_fr: e.target.value })}
                             className="flex-1"
                           />
                           <Input
-                            placeholder="Nom EN"
+                            placeholder={t("pom.nameEn")}
                             value={optDraft.name_en || ""}
                             onChange={(e) => setOptDraft({ ...optDraft, name_en: e.target.value })}
                             className="flex-1"
                           />
                           <Input
                             type="number"
-                            placeholder="Prix €"
+                            placeholder={t("pom.price")}
                             value={String(optDraft.price ?? 0)}
                             onChange={(e) => setOptDraft({ ...optDraft, price: Number(e.target.value) })}
                             className="w-24"
@@ -409,12 +414,12 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                         <>
                           <div className="flex-1">
                             <div className={`text-sm font-medium ${!opt.is_active ? "opacity-50 line-through" : ""}`}>
-                              {opt.name_fr}
+                              {displayName(opt)}
                             </div>
-                            <div className="text-xs text-muted-foreground">{opt.name_en}</div>
+                            <div className="text-xs text-muted-foreground">{altName(opt)}</div>
                           </div>
                           <div className="text-sm font-medium tabular-nums">
-                            {opt.price > 0 ? `+${formatPrice(opt.price)}` : "Inclus"}
+                            {opt.price > 0 ? `+${formatPrice(opt.price)}` : t("pom.included")}
                           </div>
                           <Button size="icon" variant="ghost" onClick={() => startEditOption(opt)}>
                             <Pencil className="size-4" />
@@ -431,21 +436,21 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                 {addingOptionFor === cat.id ? (
                   <div className="flex items-center gap-2 rounded-md bg-background p-2 border border-dashed border-primary">
                     <Input
-                      placeholder="Nom FR"
+                      placeholder={t("pom.nameFr")}
                       value={optDraft.name_fr || ""}
                       onChange={(e) => setOptDraft({ ...optDraft, name_fr: e.target.value })}
                       className="flex-1"
                       autoFocus
                     />
                     <Input
-                      placeholder="Nom EN"
+                      placeholder={t("pom.nameEn")}
                       value={optDraft.name_en || ""}
                       onChange={(e) => setOptDraft({ ...optDraft, name_en: e.target.value })}
                       className="flex-1"
                     />
                     <Input
                       type="number"
-                      placeholder="Prix €"
+                      placeholder={t("pom.price")}
                       value={String(optDraft.price ?? 0)}
                       onChange={(e) => setOptDraft({ ...optDraft, price: Number(e.target.value) })}
                       className="w-24"
@@ -459,7 +464,7 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                   </div>
                 ) : (
                   <Button size="sm" variant="outline" onClick={() => startAddOption(cat.id)}>
-                    <Plus className="size-3" /> Ajouter une option
+                    <Plus className="size-3" /> {t("pom.addOption")}
                   </Button>
                 )}
               </div>
@@ -472,13 +477,13 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
         <div className="rounded-lg border-2 border-dashed border-primary p-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Input
-              placeholder="Nom FR (ex: Finition)"
+              placeholder={t("pom.catFrPlaceholder")}
               value={catDraft.name_fr || ""}
               onChange={(e) => setCatDraft({ ...catDraft, name_fr: e.target.value })}
               autoFocus
             />
             <Input
-              placeholder="Nom EN (ex: Finish)"
+              placeholder={t("pom.catEnPlaceholder")}
               value={catDraft.name_en || ""}
               onChange={(e) => setCatDraft({ ...catDraft, name_en: e.target.value })}
             />
@@ -489,21 +494,21 @@ export function ProductOptionsManager({ productId }: { productId: string }) {
                 checked={catDraft.is_required ?? false}
                 onCheckedChange={(v) => setCatDraft({ ...catDraft, is_required: v })}
               />
-              <Label className="text-sm">Sélection obligatoire</Label>
+              <Label className="text-sm">{t("pom.requiredSelection")}</Label>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => { setAddingCategory(false); setCatDraft({}); }}>
-                Annuler
+                {t("common.cancel")}
               </Button>
               <Button size="sm" onClick={saveNewCategory}>
-                Créer
+                {t("common.create")}
               </Button>
             </div>
           </div>
         </div>
       ) : (
         <Button variant="outline" size="sm" onClick={startAddCategory}>
-          <Plus className="size-4" /> Ajouter une catégorie d'options
+          <Plus className="size-4" /> {t("pom.addCategory")}
         </Button>
       )}
     </div>

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { formatPrice } from "@/lib/format";
+import { useAdminI18n } from "@/lib/admin-i18n";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminQuotesPage,
@@ -52,13 +53,6 @@ const finalTotal = (q: Quote) =>
 
 const STATUSES = ["pending", "contacted", "confirmed", "completed", "rejected"] as const;
 const BLOCKING_STATUSES = new Set(["confirmed", "completed"]);
-const STATUS_LABELS_FR: Record<string, string> = {
-  pending: "En attente",
-  contacted: "Contacté",
-  confirmed: "Confirmé",
-  completed: "Terminé",
-  rejected: "Refusé",
-};
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
   contacted: "bg-blue-100 text-blue-800 border-blue-200",
@@ -68,6 +62,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function AdminQuotesPage() {
+  const { t, lang } = useAdminI18n();
+  const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
+  const statusLabel = (s: string) => t(`quotes.status.${s}`);
+
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Quote | null>(null);
@@ -107,7 +105,7 @@ function AdminQuotesPage() {
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("quote_requests").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Statut mis à jour");
+    toast.success(t("quotes.statusUpdated"));
     setQuotes((q) => q.map((x) => (x.id === id ? { ...x, status } : x)));
     if (selected?.id === id) setSelected({ ...selected, status });
   };
@@ -124,21 +122,16 @@ function AdminQuotesPage() {
     const { error } = await supabase.from("quote_requests").update(payload).eq("id", selected.id);
     setSavingLogistics(false);
     if (error) return toast.error(error.message);
-    toast.success("Frais logistiques enregistrés");
+    toast.success(t("quotes.logistics.saved"));
     setQuotes((qs) => qs.map((x) => (x.id === selected.id ? { ...x, ...payload } : x)));
     setSelected({ ...selected, ...payload });
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-
   const remove = async (id: string) => {
-    if (!confirm("Supprimer ce devis ?")) return;
+    if (!confirm(t("quotes.confirmDelete"))) return;
     const { error } = await supabase.from("quote_requests").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Devis supprimé");
+    toast.success(t("quotes.deleted"));
     setQuotes((q) => q.filter((x) => x.id !== id));
     if (selected?.id === id) setSelected(null);
   };
@@ -147,8 +140,10 @@ function AdminQuotesPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Demandes de devis</h1>
-          <p className="text-sm text-muted-foreground mt-1">{quotes.length} demande(s)</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("quotes.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {quotes.length} {t("quotes.count")}
+          </p>
         </div>
       </div>
 
@@ -156,25 +151,25 @@ function AdminQuotesPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Date</th>
-              <th className="text-left px-4 py-3 font-medium">Client</th>
-              <th className="text-left px-4 py-3 font-medium">Email</th>
-              <th className="text-left px-4 py-3 font-medium">Événement</th>
-              <th className="text-right px-4 py-3 font-medium">Total TTC</th>
-              <th className="text-left px-4 py-3 font-medium">Statut</th>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.date")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.client")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.email")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.event")}</th>
+              <th className="text-right px-4 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.status")}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Chargement…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("layout.loading")}</td></tr>
             ) : quotes.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Aucun devis</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("quotes.empty")}</td></tr>
             ) : (
               quotes.map((q) => (
                 <tr key={q.id} className="border-t border-border hover:bg-muted/30">
                   <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(q.created_at).toLocaleDateString("fr-FR")}
+                    {new Date(q.created_at).toLocaleDateString(dateLocale)}
                   </td>
                   <td className="px-4 py-3 font-medium">
                     {q.customer_name}
@@ -182,13 +177,13 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{q.email}</td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {q.event_date ? new Date(q.event_date).toLocaleDateString("fr-FR") : "—"}
+                    {q.event_date ? new Date(q.event_date).toLocaleDateString(dateLocale) : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
                     {(q.delivery_fee || q.setup_fee || q.pickup_fee) ? (
                       <div className="text-xs text-muted-foreground">
-                        produits {formatPrice(q.total_ttc)}
+                        {t("quotes.products")} {formatPrice(q.total_ttc)}
                       </div>
                     ) : null}
                   </td>
@@ -202,18 +197,18 @@ function AdminQuotesPage() {
                       }`}
                       title={
                         BLOCKING_STATUSES.has(q.status)
-                          ? "Ce devis bloque le stock sur les dates demandées"
-                          : "Ce devis ne bloque pas le stock"
+                          ? t("quotes.blocking")
+                          : t("quotes.notBlocking")
                       }
                     >
                       {STATUSES.map((s) => (
-                        <option key={s} value={s}>{STATUS_LABELS_FR[s]}</option>
+                        <option key={s} value={s}>{statusLabel(s)}</option>
                       ))}
                     </select>
                     {BLOCKING_STATUSES.has(q.status) && (
                       <div className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
                         <span className="inline-block size-1.5 rounded-full bg-green-500" />
-                        Stock réservé
+                        {t("quotes.stockReserved")}
                       </div>
                     )}
                   </td>
@@ -239,32 +234,32 @@ function AdminQuotesPage() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>Devis — {selected.customer_name}</DialogTitle>
+                <DialogTitle>{t("layout.quotes")} — {selected.customer_name}</DialogTitle>
                 <DialogDescription>
-                  Reçu le {new Date(selected.created_at).toLocaleString("fr-FR")}
+                  {t("quotes.detail.received")} {new Date(selected.created_at).toLocaleString(dateLocale)}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <Field label="Email" value={selected.email} />
-                  <Field label="Téléphone" value={selected.phone || "—"} />
-                  <Field label="Société" value={selected.company || "—"} />
-                  <Field label="Date événement" value={selected.event_date ? new Date(selected.event_date).toLocaleDateString("fr-FR") : "—"} />
-                  <Field label="Lieu" value={selected.event_location || "—"} className="col-span-2" />
+                  <Field label={t("auth.email")} value={selected.email} />
+                  <Field label={t("quotes.detail.phone")} value={selected.phone || "—"} />
+                  <Field label={t("quotes.detail.company")} value={selected.company || "—"} />
+                  <Field label={t("quotes.detail.eventDate")} value={selected.event_date ? new Date(selected.event_date).toLocaleDateString(dateLocale) : "—"} />
+                  <Field label={t("quotes.detail.location")} value={selected.event_location || "—"} className="col-span-2" />
                 </div>
                 {selected.message && (
                   <div className="text-sm">
-                    <p className="text-xs uppercase text-muted-foreground mb-1">Message</p>
+                    <p className="text-xs uppercase text-muted-foreground mb-1">{t("quotes.detail.message")}</p>
                     <p className="rounded-lg bg-muted/50 p-3 whitespace-pre-wrap">{selected.message}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs uppercase text-muted-foreground mb-2">Articles</p>
+                  <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.detail.items")}</p>
                   <div className="rounded-lg border border-border divide-y divide-border">
                     {(selected.items as any[]).map((it, i) => (
                       <div key={i} className="px-3 py-2 flex justify-between text-sm">
                         <span>
-                          {it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}j)
+                          {(lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}{lang === "fr" ? "j" : "d"})
                         </span>
                         <span className="font-medium">{formatPrice(it.line_total ?? 0)}</span>
                       </div>
@@ -273,14 +268,14 @@ function AdminQuotesPage() {
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">Frais logistiques</p>
+                    <p className="text-sm font-semibold">{t("quotes.logistics.title")}</p>
                     <Button size="sm" onClick={saveLogistics} disabled={savingLogistics}>
-                      <Save className="size-3.5" /> {savingLogistics ? "…" : "Enregistrer"}
+                      <Save className="size-3.5" /> {savingLogistics ? "…" : t("common.save")}
                     </Button>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <Label className="text-xs">Livraison (€)</Label>
+                      <Label className="text-xs">{t("quotes.logistics.delivery")}</Label>
                       <Input
                         type="number"
                         className="mt-1"
@@ -289,7 +284,7 @@ function AdminQuotesPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Installation (€)</Label>
+                      <Label className="text-xs">{t("quotes.logistics.setup")}</Label>
                       <Input
                         type="number"
                         className="mt-1"
@@ -298,7 +293,7 @@ function AdminQuotesPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Reprise (€)</Label>
+                      <Label className="text-xs">{t("quotes.logistics.pickup")}</Label>
                       <Input
                         type="number"
                         className="mt-1"
@@ -308,7 +303,7 @@ function AdminQuotesPage() {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Notes logistiques</Label>
+                    <Label className="text-xs">{t("quotes.logistics.notes")}</Label>
                     <Textarea
                       rows={2}
                       className="mt-1"
@@ -318,24 +313,24 @@ function AdminQuotesPage() {
                   </div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-4 space-y-1 text-sm">
-                  <Row label="Sous-total HT" value={formatPrice(selected.subtotal_ht)} />
-                  <Row label="Total HT" value={formatPrice(selected.total_ht)} />
-                  <Row label="TVA 20%" value={formatPrice(selected.vat)} />
-                  <Row label="Total produits TTC" value={formatPrice(selected.total_ttc)} />
+                  <Row label={t("quotes.totals.subHt")} value={formatPrice(selected.subtotal_ht)} />
+                  <Row label={t("quotes.totals.ht")} value={formatPrice(selected.total_ht)} />
+                  <Row label={t("quotes.totals.vat")} value={formatPrice(selected.vat)} />
+                  <Row label={t("quotes.totals.productsTtc")} value={formatPrice(selected.total_ttc)} />
                   {Number(selected.delivery_fee) > 0 && (
-                    <Row label="Livraison" value={formatPrice(selected.delivery_fee)} />
+                    <Row label={t("quotes.totals.delivery")} value={formatPrice(selected.delivery_fee)} />
                   )}
                   {Number(selected.setup_fee) > 0 && (
-                    <Row label="Installation" value={formatPrice(selected.setup_fee)} />
+                    <Row label={t("quotes.totals.setup")} value={formatPrice(selected.setup_fee)} />
                   )}
                   {Number(selected.pickup_fee) > 0 && (
-                    <Row label="Reprise" value={formatPrice(selected.pickup_fee)} />
+                    <Row label={t("quotes.totals.pickup")} value={formatPrice(selected.pickup_fee)} />
                   )}
-                  <Row label="TOTAL FINAL TTC" value={formatPrice(finalTotal(selected))} bold />
-                  <Row label="Caution" value={formatPrice(selected.total_deposit)} />
+                  <Row label={t("quotes.totals.finalTtc")} value={formatPrice(finalTotal(selected))} bold />
+                  <Row label={t("quotes.totals.deposit")} value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>
-                  <p className="text-xs uppercase text-muted-foreground mb-2">Statut</p>
+                  <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.col.status")}</p>
                   <div className="flex gap-2 flex-wrap">
                     {STATUSES.map((s) => (
                       <button
@@ -347,13 +342,11 @@ function AdminQuotesPage() {
                             : "border-border hover:bg-muted"
                         }`}
                       >
-                        {STATUS_LABELS_FR[s]}
+                        {statusLabel(s)}
                       </button>
                     ))}
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Les statuts <strong>Confirmé</strong> et <strong>Terminé</strong> bloquent le stock sur les dates de l'événement.
-                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-2">{t("quotes.statusNote")}</p>
                 </div>
               </div>
             </>
@@ -381,4 +374,3 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
     </div>
   );
 }
-

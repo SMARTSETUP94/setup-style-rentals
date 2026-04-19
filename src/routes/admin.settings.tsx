@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAdminI18n } from "@/lib/admin-i18n";
 
 export const Route = createFileRoute("/admin/settings")({
   component: AdminSettingsPage,
@@ -29,6 +30,7 @@ const KEYS = {
 };
 
 function AdminSettingsPage() {
+  const { t } = useAdminI18n();
   const [settings, setSettings] = useState<Record<string, Setting>>({});
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -69,39 +71,35 @@ function AdminSettingsPage() {
     const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
     setSavingKey(null);
     if (error) return toast.error(error.message);
-    toast.success(`${label} enregistré`);
+    toast.success(t("set.saved", { name: label }));
   };
 
   if (loading) {
-    return <div className="p-8 text-sm text-muted-foreground">Chargement…</div>;
+    return <div className="p-8 text-sm text-muted-foreground">{t("layout.loading")}</div>;
   }
 
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Paramètres</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Contenus éditables affichés sur le site public
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("set.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("set.sub")}</p>
       </div>
 
       <div className="space-y-8">
         <Section
-          title="Frais logistiques (appliqués automatiquement aux devis clients)"
+          title={t("set.logistics.title")}
           onSave={() =>
             saveSection(
               [KEYS.LOG_BASE, KEYS.LOG_PER_ITEM, KEYS.LOG_SETUP, KEYS.LOG_PICKUP],
-              "Frais logistiques",
+              t("set.logistics.label"),
             )
           }
-          saving={savingKey === "Frais logistiques"}
+          saving={savingKey === t("set.logistics.label")}
         >
-          <p className="text-xs text-muted-foreground mb-4">
-            Ces montants HT seront automatiquement ajoutés au devis affiché au client. Le total livraison = forfait de base + (frais par produit × nombre de lignes).
-          </p>
+          <p className="text-xs text-muted-foreground mb-4">{t("set.logistics.hint")}</p>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <Label>Forfait livraison de base (€ HT)</Label>
+              <Label>{t("set.logistics.base")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -112,7 +110,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Frais par produit dans le devis (€ HT)</Label>
+              <Label>{t("set.logistics.perItem")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -123,7 +121,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Forfait installation / montage (€ HT)</Label>
+              <Label>{t("set.logistics.setup")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -134,7 +132,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Forfait reprise / démontage (€ HT)</Label>
+              <Label>{t("set.logistics.pickup")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -148,13 +146,13 @@ function AdminSettingsPage() {
         </Section>
 
         <Section
-          title="Conditions générales de location"
-          onSave={() => saveSection([KEYS.TERMS], "CGV")}
-          saving={savingKey === "CGV"}
+          title={t("set.terms.title")}
+          onSave={() => saveSection([KEYS.TERMS], t("set.terms.label"))}
+          saving={savingKey === t("set.terms.label")}
         >
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <Label>Texte FR</Label>
+              <Label>{t("set.field.textFr")}</Label>
               <Textarea
                 rows={10}
                 className="mt-1.5"
@@ -163,7 +161,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Texte EN</Label>
+              <Label>{t("set.field.textEn")}</Label>
               <Textarea
                 rows={10}
                 className="mt-1.5"
@@ -175,13 +173,13 @@ function AdminSettingsPage() {
         </Section>
 
         <Section
-          title="Mentions légales"
-          onSave={() => saveSection([KEYS.LEGAL], "Mentions légales")}
-          saving={savingKey === "Mentions légales"}
+          title={t("set.legal.title")}
+          onSave={() => saveSection([KEYS.LEGAL], t("set.legal.title"))}
+          saving={savingKey === t("set.legal.title")}
         >
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <Label>Texte FR</Label>
+              <Label>{t("set.field.textFr")}</Label>
               <Textarea
                 rows={10}
                 className="mt-1.5"
@@ -190,7 +188,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Texte EN</Label>
+              <Label>{t("set.field.textEn")}</Label>
               <Textarea
                 rows={10}
                 className="mt-1.5"
@@ -202,18 +200,18 @@ function AdminSettingsPage() {
         </Section>
 
         <Section
-          title="Informations de contact"
+          title={t("set.contact.title")}
           onSave={() =>
             saveSection(
               [KEYS.CONTACT_EMAIL, KEYS.CONTACT_PHONE, KEYS.CONTACT_ADDRESS, KEYS.CONTACT_CITY, KEYS.CONTACT_POSTAL],
-              "Contact",
+              t("set.contact.label"),
             )
           }
-          saving={savingKey === "Contact"}
+          saving={savingKey === t("set.contact.label")}
         >
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <Label>Email</Label>
+              <Label>{t("set.field.email")}</Label>
               <Input
                 className="mt-1.5"
                 value={get(KEYS.CONTACT_EMAIL, "fr")}
@@ -221,7 +219,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Téléphone</Label>
+              <Label>{t("set.field.phone")}</Label>
               <Input
                 className="mt-1.5"
                 value={get(KEYS.CONTACT_PHONE, "fr")}
@@ -229,7 +227,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <Label>Adresse</Label>
+              <Label>{t("set.field.address")}</Label>
               <Input
                 className="mt-1.5"
                 value={get(KEYS.CONTACT_ADDRESS, "fr")}
@@ -237,7 +235,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Code postal</Label>
+              <Label>{t("set.field.postal")}</Label>
               <Input
                 className="mt-1.5"
                 value={get(KEYS.CONTACT_POSTAL, "fr")}
@@ -245,7 +243,7 @@ function AdminSettingsPage() {
               />
             </div>
             <div>
-              <Label>Ville</Label>
+              <Label>{t("set.field.city")}</Label>
               <Input
                 className="mt-1.5"
                 value={get(KEYS.CONTACT_CITY, "fr")}
@@ -270,12 +268,13 @@ function Section({
   onSave: () => void;
   saving: boolean;
 }) {
+  const { t } = useAdminI18n();
   return (
     <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">{title}</h2>
         <Button onClick={onSave} disabled={saving} size="sm">
-          <Save className="size-4" /> {saving ? "Enregistrement…" : "Enregistrer"}
+          <Save className="size-4" /> {saving ? t("common.saving") : t("common.save")}
         </Button>
       </div>
       {children}

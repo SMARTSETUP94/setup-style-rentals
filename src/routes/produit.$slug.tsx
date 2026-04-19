@@ -618,16 +618,6 @@ function ProductPage() {
                 image_url={product.image_url}
                 className="w-full h-full object-cover"
               />
-              {product.configurator_url && (
-                <button
-                  type="button"
-                  onClick={() => setShow3D(true)}
-                  className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium bg-gold text-gold-foreground hover:bg-gold/90 transition-colors shadow-md"
-                >
-                  <Sparkles className="size-3.5" />
-                  {t("product.customizeIn3D")}
-                </button>
-              )}
             </div>
           )}
         </div>

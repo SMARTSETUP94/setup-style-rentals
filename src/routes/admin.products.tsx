@@ -796,3 +796,151 @@ function ConfiguratorOptionsEditor({
   );
 }
 
+function QuantityDiscountEditor({
+  value,
+  onChange,
+}: {
+  value: QuantityDiscountTier[];
+  onChange: (v: QuantityDiscountTier[]) => void;
+}) {
+  const sorted = [...(value ?? [])].sort((a, b) => a.min_qty - b.min_qty);
+  const update = (i: number, patch: Partial<QuantityDiscountTier>) => {
+    const next = sorted.map((t, idx) => (idx === i ? { ...t, ...patch } : t));
+    onChange(next);
+  };
+  const add = () => {
+    const lastQty = sorted.length ? sorted[sorted.length - 1].min_qty + 1 : 2;
+    onChange([...sorted, { min_qty: lastQty, rate: 0.1 }]);
+  };
+  const remove = (i: number) => onChange(sorted.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">Remises sur quantité</Label>
+        <Button type="button" size="sm" variant="ghost" onClick={add} className="h-7 px-2">
+          <Plus className="size-3.5" /> Palier
+        </Button>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground italic py-2">
+          Aucune remise quantité (idéal pour produit unique).
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {sorted.map((tier, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">À partir de</span>
+              <Input
+                type="number"
+                min={1}
+                value={tier.min_qty}
+                onChange={(e) => update(i, { min_qty: Math.max(1, Number(e.target.value) || 1) })}
+                className="h-8 w-16 text-sm"
+              />
+              <span className="text-xs text-muted-foreground shrink-0">unité(s) :</span>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={Math.round((tier.rate || 0) * 100)}
+                onChange={(e) =>
+                  update(i, {
+                    rate: Math.max(0, Math.min(100, Number(e.target.value) || 0)) / 100,
+                  })
+                }
+                className="h-8 w-16 text-sm"
+              />
+              <span className="text-xs text-muted-foreground shrink-0">%</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => remove(i)}
+                className="h-7 w-7 ml-auto"
+              >
+                <Trash2 className="size-3.5 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DurationDiscountEditor({
+  value,
+  onChange,
+}: {
+  value: DurationDiscountTier[];
+  onChange: (v: DurationDiscountTier[]) => void;
+}) {
+  const sorted = [...(value ?? [])].sort((a, b) => a.min_days - b.min_days);
+  const update = (i: number, patch: Partial<DurationDiscountTier>) => {
+    const next = sorted.map((t, idx) => (idx === i ? { ...t, ...patch } : t));
+    onChange(next);
+  };
+  const add = () => {
+    const lastDays = sorted.length ? sorted[sorted.length - 1].min_days + 1 : 3;
+    onChange([...sorted, { min_days: lastDays, rate: 0.05 }]);
+  };
+  const remove = (i: number) => onChange(sorted.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">Remises sur durée</Label>
+        <Button type="button" size="sm" variant="ghost" onClick={add} className="h-7 px-2">
+          <Plus className="size-3.5" /> Palier
+        </Button>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground italic py-2">
+          Aucune remise selon la durée de location.
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {sorted.map((tier, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">À partir de</span>
+              <Input
+                type="number"
+                min={1}
+                value={tier.min_days}
+                onChange={(e) => update(i, { min_days: Math.max(1, Number(e.target.value) || 1) })}
+                className="h-8 w-16 text-sm"
+              />
+              <span className="text-xs text-muted-foreground shrink-0">jour(s) :</span>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={Math.round((tier.rate || 0) * 100)}
+                onChange={(e) =>
+                  update(i, {
+                    rate: Math.max(0, Math.min(100, Number(e.target.value) || 0)) / 100,
+                  })
+                }
+                className="h-8 w-16 text-sm"
+              />
+              <span className="text-xs text-muted-foreground shrink-0">%</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => remove(i)}
+                className="h-7 w-7 ml-auto"
+              >
+                <Trash2 className="size-3.5 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+

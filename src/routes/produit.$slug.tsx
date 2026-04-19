@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, type SelectedOption } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface OptionCategory {
   id: string;

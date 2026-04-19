@@ -546,7 +546,7 @@ function ProductPage() {
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
           {product.configurator_url && is3DMode ? (
-            <>
+            <div key="visual-3d" className="animate-fade-in">
               <iframe
                 ref={inlineIframeRef}
                 src={product.configurator_url}
@@ -570,9 +570,9 @@ function ProductPage() {
                 <Sparkles className="size-3.5" />
                 {t("product.fullscreen")}
               </button>
-            </>
+            </div>
           ) : (
-            <div className="aspect-[4/3] relative">
+            <div key="visual-image" className="aspect-[4/3] relative animate-fade-in">
               <ProductImage
                 name={pickLang(product, "name", lang)}
                 category_slug={product.category_slug}
@@ -651,7 +651,7 @@ function ProductPage() {
 
           {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
           {optionCategories.length > 0 && !is3DMode && (
-            <div className="mt-8 space-y-5">
+            <div className="mt-8 space-y-5 animate-fade-in">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {t("product.customize")}
               </div>
@@ -939,7 +939,7 @@ function ProductPage() {
           )}
 
           {product.configurator_url && is3DMode && (configuratorData || configuratorRecap) && (
-            <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10">
+            <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10 animate-fade-in">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <Wand2 className="size-4 text-gold shrink-0" />
@@ -997,7 +997,7 @@ function ProductPage() {
               disabled={
                 !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
               }
-              className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
+              className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold animate-fade-in"
             >
               <ShoppingBag className="size-5" />
               {t("product.addToQuote")}

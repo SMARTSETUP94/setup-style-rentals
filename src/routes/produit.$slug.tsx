@@ -651,7 +651,7 @@ function ProductPage() {
 
           {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
           {optionCategories.length > 0 && !is3DMode && (
-            <div className="mt-8 space-y-5">
+            <div className="mt-8 space-y-5 animate-fade-in">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {t("product.customize")}
               </div>

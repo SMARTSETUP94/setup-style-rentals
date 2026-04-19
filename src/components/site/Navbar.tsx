@@ -38,7 +38,7 @@ export function Navbar() {
           <Link to="/" className="flex items-center gap-2.5 group">
             <span className={cn("inline-block size-2 rounded-full transition-colors", transparent ? "bg-white" : "bg-accent")} />
             <span className="font-display font-bold tracking-tight text-base sm:text-lg whitespace-nowrap leading-none">
-              SETUP <span className="opacity-60 font-normal">PARIS</span>
+              CatLoc
             </span>
           </Link>
           <a

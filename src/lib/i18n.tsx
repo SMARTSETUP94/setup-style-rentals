@@ -148,6 +148,37 @@ const DICT: Dict = {
   "cart.setup": { fr: "Installation", en: "Setup" },
   "cart.pickup": { fr: "Reprise", en: "Pickup" },
   "cart.configRecap": { fr: "Configuration 3D", en: "3D configuration" },
+  "cart.quoteSimulation": { fr: "Simulation de devis", en: "Quote simulation" },
+  "cart.col.product": { fr: "Produit", en: "Product" },
+  "cart.col.qty": { fr: "Qté", en: "Qty" },
+  "cart.col.days": { fr: "Jours", en: "Days" },
+  "cart.col.unitDay": { fr: "PU/jour", en: "Unit/day" },
+  "cart.col.discount": { fr: "Remise", en: "Discount" },
+
+  // Product page extras (configurator + reset + insufficient stock)
+  "product.insufficientStock": {
+    fr: "Stock insuffisant pour cette période.",
+    en: "Insufficient stock for these dates.",
+  },
+  "product.selectRequired": {
+    fr: "Veuillez sélectionner les options requises.",
+    en: "Please select the required options.",
+  },
+  "product.configResetToast": {
+    fr: "Configuration réinitialisée",
+    en: "Configuration reset",
+  },
+  "product.yourConfiguration": { fr: "Votre configuration", en: "Your configuration" },
+  "product.summary": { fr: "Récapitulatif", en: "Summary" },
+  "product.configHint": {
+    fr: "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif apparaître dans le panneau de droite.",
+    en: "Customize the product in the configurator above to see the summary in the right panel.",
+  },
+  "product.close": { fr: "Fermer", en: "Close" },
+  "product.unitsAvailable": {
+    fr: "unité(s) disponible(s) sur cette période",
+    en: "unit(s) available for these dates",
+  },
 
   // Common
   "common.back": { fr: "Retour", en: "Back" },

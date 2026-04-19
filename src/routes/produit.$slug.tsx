@@ -7,7 +7,7 @@ import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
-import { useCart, volumeDiscount, type SelectedOption } from "@/lib/cart";
+import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -59,6 +59,8 @@ interface Product {
   configurator_url: string | null;
   configurator_options: ConfiguratorOptionsMap | null;
   stock_total: number;
+  quantity_discounts: QuantityDiscountTier[] | null;
+  duration_discounts: DurationDiscountTier[] | null;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }

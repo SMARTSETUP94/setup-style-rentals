@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAdminI18n } from "@/lib/admin-i18n";
+import { ScrollableTable } from "@/components/admin/ScrollableTable";
 
 export const Route = createFileRoute("/admin/categories")({
   component: AdminCategoriesPage,

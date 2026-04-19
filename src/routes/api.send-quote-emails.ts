@@ -21,6 +21,7 @@ const ItemSchema = z.object({
   endDate: z.string().nullable().optional(),
   options: z.array(OptionSchema).max(50).optional().default([]),
   options_total: z.number().min(0).optional().default(0),
+  configurator_recap: z.string().max(5000).nullable().optional(),
 });
 
 const PayloadSchema = z.object({

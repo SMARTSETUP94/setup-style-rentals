@@ -758,16 +758,61 @@ function ProductPage() {
             </div>
           )}
 
-          <button
-            onClick={handleAdd}
-            disabled={
-              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-            }
-            className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
-          >
-            <ShoppingBag className="size-5" />
-            {t("product.addToQuote")}
-          </button>
+          {product.configurator_url && (configuratorData || configuratorRecap) ? (
+            <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10">
+              <div className="flex items-center gap-2 mb-3">
+                <Wand2 className="size-4 text-gold" />
+                <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold">
+                  {lang === "fr" ? "Votre configuration" : "Your configuration"}
+                </div>
+              </div>
+              <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
+                {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
+              </pre>
+              {configuratorData && typeof configuratorData.price === "number" && (
+                <div className="mt-3 flex items-center justify-between text-sm border-t border-gold/20 pt-3">
+                  <span className="text-muted-foreground">
+                    {lang === "fr" ? "Prix configuré" : "Configured price"}
+                  </span>
+                  <span className="font-display text-xl font-semibold text-gold">
+                    {formatPrice(Number(configuratorData.price), lang)}
+                    <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
+                      /{t("product.day")}
+                    </span>
+                  </span>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={handleAddConfiguredToQuote}
+                className="mt-4 w-full inline-flex items-center justify-center gap-2.5 rounded-md bg-gold text-gold-foreground px-6 py-4 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30"
+              >
+                <Wand2 className="size-5" />
+                {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
+              </button>
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={
+                  !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+                }
+                className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-md border border-border bg-transparent px-4 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {lang === "fr" ? "Ajouter sans configuration personnalisée" : "Add without custom configuration"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleAdd}
+              disabled={
+                !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+              }
+              className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
+            >
+              <ShoppingBag className="size-5" />
+              {t("product.addToQuote")}
+            </button>
+          )}
 
           {(() => {
             const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);
@@ -799,8 +844,8 @@ function ProductPage() {
         </div>
       </div>
 
-      {/* Configuration recap (full width) */}
-      {product.configurator_url && (
+      {/* Configuration recap (full width) — only shown as hint when nothing has been configured yet */}
+      {product.configurator_url && !configuratorData && !configuratorRecap && (
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -811,40 +856,11 @@ function ProductPage() {
             </h2>
           </div>
           <aside className="rounded-2xl border border-border bg-secondary/40 p-5 flex flex-col">
-            {configuratorData || configuratorRecap ? (
-              <>
-                <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-mono bg-background/60 border border-border rounded-lg p-3 overflow-auto max-h-72">
-                  {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
-                </pre>
-                {configuratorData && typeof configuratorData.price === "number" && (
-                  <div className="mt-3 flex items-center justify-between text-sm border-t border-border pt-3">
-                    <span className="text-muted-foreground">
-                      {lang === "fr" ? "Prix configuré" : "Configured price"}
-                    </span>
-                    <span className="font-display text-xl font-semibold text-gold">
-                      {formatPrice(Number(configuratorData.price), lang)}
-                      <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
-                        /{t("product.day")}
-                      </span>
-                    </span>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={handleAddConfiguredToQuote}
-                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md bg-gold text-gold-foreground px-4 py-3 text-sm font-semibold hover:bg-gold/90 transition-all shadow-md shadow-gold/20"
-                >
-                  <Wand2 className="size-4" />
-                  {lang === "fr" ? "Ajouter cette configuration au devis" : "Add this configuration to quote"}
-                </button>
-              </>
-            ) : (
-              <div className="text-xs text-muted-foreground text-center py-8 px-4">
-                {lang === "fr"
-                  ? "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif ici."
-                  : "Customize the product in the configurator above to see the summary here."}
-              </div>
-            )}
+            <div className="text-xs text-muted-foreground text-center py-8 px-4">
+              {lang === "fr"
+                ? "Personnalisez le produit dans le configurateur ci-dessus pour voir le récapitulatif apparaître dans le panneau de droite."
+                : "Customize the product in the configurator above to see the summary in the right panel."}
+            </div>
           </aside>
         </section>
       )}

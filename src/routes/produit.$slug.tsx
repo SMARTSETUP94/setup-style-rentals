@@ -716,6 +716,21 @@ function ProductPage() {
                   value={`+${formatPrice(o.price * qty, lang)}`}
                 />
               ))}
+              {configuratorOptionsList.length > 0 && (
+                <div className="pt-1 border-t border-dashed border-border/60 mt-1">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
+                    <Wand2 className="size-3" />
+                    {lang === "fr" ? "Configuration 3D" : "3D configuration"}
+                  </div>
+                  {configuratorOptionsList.map((o) => (
+                    <Row
+                      key={o.optionId}
+                      label={`+ ${o.categoryName_fr ? `${pickLang(o, "categoryName", lang)} : ` : ""}${pickLang(o, "name", lang)}`}
+                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : lang === "fr" ? "Inclus" : "Included"}
+                    />
+                  ))}
+                </div>
+              )}
               {calc.discountRate > 0 && (
                 <Row
                   label={`${t("product.discount")} (-${Math.round(calc.discountRate * 100)}%)`}

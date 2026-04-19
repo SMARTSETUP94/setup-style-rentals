@@ -123,10 +123,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* CLIENTS BAND */}
-      <ClientsBand label={t("clients.label")} />
-
-
       <RevealSection className="container-x py-20 md:py-28">
         <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
         <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -263,6 +259,9 @@ function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* CLIENTS BAND */}
+      <ClientsBand label={t("clients.label")} />
     </>
   );
 }

@@ -175,6 +175,15 @@ const DICT: Dict = {
     en: "Customize the product in the configurator above to see the summary in the right panel.",
   },
   "product.close": { fr: "Fermer", en: "Close" },
+  "product.close3D": { fr: "Fermer le configurateur 3D", en: "Close 3D configurator" },
+  "product.optionsManagedIn3D": {
+    fr: "Options gérées dans le configurateur 3D ci-dessus.",
+    en: "Options are managed in the 3D configurator above.",
+  },
+  "product.add3DToQuote": {
+    fr: "Ajouter cette configuration au devis",
+    en: "Add this configuration to quote",
+  },
   "product.unitsAvailable": {
     fr: "unité(s) disponible(s) sur cette période",
     en: "unit(s) available for these dates",

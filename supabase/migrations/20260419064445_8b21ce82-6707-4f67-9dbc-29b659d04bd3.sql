@@ -1,0 +1,1 @@
+UPDATE public.products SET image_url = '/products/panier-basketball.png' WHERE slug = 'panier-basketball';

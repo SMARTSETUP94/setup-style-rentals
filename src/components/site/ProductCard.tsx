@@ -70,14 +70,16 @@ export function ProductCard({
         <h3 className="font-medium text-base leading-snug text-foreground line-clamp-2">
           {pickLang(product, "name", lang)}
         </h3>
-        <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div className="mt-3">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
             {fromLabel}
-          </span>
-          <span className="font-display font-semibold text-lg text-gold">
-            {formatPrice(product.price_day, lang)}
-          </span>
-          <span className="text-xs text-muted-foreground">{perDayLabel}</span>
+          </div>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span className="font-display font-semibold text-lg text-gold">
+              {formatPrice(product.price_day, lang)}
+            </span>
+            <span className="text-xs text-muted-foreground">{perDayLabel}</span>
+          </div>
         </div>
       </div>
     </Link>

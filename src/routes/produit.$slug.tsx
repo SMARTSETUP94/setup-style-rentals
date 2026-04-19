@@ -316,6 +316,8 @@ function ProductPage() {
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       selectedOptions: selectedOptionsList.length > 0 ? selectedOptionsList : undefined,
+      quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
+      durationDiscounts: product.duration_discounts ?? [],
     });
     toast.success(t("product.added"), { icon: <Check className="size-4" /> });
   };

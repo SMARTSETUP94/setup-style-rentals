@@ -1002,71 +1002,19 @@ function ProductPage() {
             </div>
           )}
 
-          {product.configurator_url && is3DMode && (configuratorData || configuratorRecap) && (
-            <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10 animate-fade-in">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Wand2 className="size-4 text-gold shrink-0" />
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold truncate">
-                    {t("product.yourCustomConfig")}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleResetConfigurator}
-                  title={t("product.resetConfigTitle")}
-                  className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:border-gold/50 transition-colors shrink-0"
-                >
-                  <RotateCcw className="size-3" />
-                  {t("product.resetConfig")}
-                </button>
-              </div>
-              <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
-                {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}
-              </pre>
-              {configuratorData && typeof configuratorData.price === "number" && (
-                <div className="mt-3 flex items-center justify-between text-sm border-t border-gold/20 pt-3">
-                  <span className="text-muted-foreground">
-                    {t("product.configuredPrice")}
-                  </span>
-                  <span className="font-display text-xl font-semibold text-gold">
-                    {formatPrice(Number(configuratorData.price), lang)}
-                    <span className="text-xs text-muted-foreground font-sans font-normal ml-1">
-                      /{t("product.day")}
-                    </span>
-                  </span>
-                </div>
-              )}
-              <p className="mt-3 text-[11px] text-muted-foreground italic">
-                {t("product.configIncludedNote")}
-              </p>
+          {/* Unified add-to-quote button (always visible — the 3D recap card above
+              already shows the configuration summary as a comment). */}
+          <button
+            onClick={handleAdd}
+            disabled={
+              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+            }
+            className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold animate-fade-in"
+          >
+            <ShoppingBag className="size-5" />
+            {t("product.addToQuote")}
+          </button>
 
-              <button
-                onClick={handleAdd}
-                disabled={
-                  !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-                }
-                className="mt-4 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
-              >
-                <Wand2 className="size-5" />
-                {t("product.add3DToQuote")}
-              </button>
-            </div>
-          )}
-
-          {/* Simple mode quote button only */}
-          {!is3DMode && (
-            <button
-              onClick={handleAdd}
-              disabled={
-                !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-              }
-              className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold animate-fade-in"
-            >
-              <ShoppingBag className="size-5" />
-              {t("product.addToQuote")}
-            </button>
-          )}
 
           {(() => {
             const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);

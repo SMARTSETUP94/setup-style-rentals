@@ -40,6 +40,7 @@ type Product = {
   image_url: string | null;
   sort_order: number;
   is_active: boolean;
+  stock_total: number;
 };
 
 type Category = { slug: string; name_fr: string };
@@ -61,6 +62,7 @@ const empty: Partial<Product> = {
   image_url: "",
   sort_order: 0,
   is_active: true,
+  stock_total: 1,
 };
 
 function slugify(input: string): string {
@@ -154,6 +156,7 @@ function AdminProductsPage() {
       image_url: editing.image_url || null,
       sort_order: Number(editing.sort_order) || 0,
       is_active: editing.is_active ?? true,
+      stock_total: Math.max(0, Number(editing.stock_total ?? 1) || 0),
     };
     const res = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)
@@ -340,6 +343,12 @@ function AdminProductsPage() {
                 type="number"
                 value={String(editing.deposit ?? 0)}
                 onChange={(v) => setEditing({ ...editing, deposit: Number(v) })}
+              />
+              <FieldInput
+                label="Stock total (unités disponibles)"
+                type="number"
+                value={String(editing.stock_total ?? 1)}
+                onChange={(v) => setEditing({ ...editing, stock_total: Math.max(0, Number(v) || 0) })}
               />
               <FieldInput
                 label="Prix/semaine (€)"

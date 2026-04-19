@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useId, useState } from "react";
-import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2 } from "lucide-react";
+import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { ProductImage } from "@/components/site/ProductImage";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/devis")({
@@ -259,13 +261,46 @@ function QuotePage() {
                             <div className="text-xs text-muted-foreground mt-0.5">
                               {t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}
                             </div>
-                            {item.startDate && item.endDate && (
-                              <div className="text-xs text-muted-foreground">
-                                {format(parseISO(item.startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })}
-                                {" → "}
-                                {format(parseISO(item.endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })}
-                              </div>
-                            )}
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded px-1.5 py-0.5 -mx-1.5 transition-colors"
+                                >
+                                  <CalendarIcon className="size-3" />
+                                  {item.startDate && item.endDate ? (
+                                    <span>
+                                      {format(parseISO(item.startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })}
+                                      {" → "}
+                                      {format(parseISO(item.endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })}
+                                    </span>
+                                  ) : (
+                                    <span className="italic">{t("cart.pickDates")}</span>
+                                  )}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="range"
+                                  numberOfMonths={2}
+                                  defaultMonth={item.startDate ? parseISO(item.startDate) : undefined}
+                                  selected={
+                                    item.startDate && item.endDate
+                                      ? { from: parseISO(item.startDate), to: parseISO(item.endDate) }
+                                      : undefined
+                                  }
+                                  onSelect={(range) => {
+                                    if (!range?.from || !range?.to) return;
+                                    const start = format(range.from, "yyyy-MM-dd");
+                                    const end = format(range.to, "yyyy-MM-dd");
+                                    const days = Math.max(1, differenceInCalendarDays(range.to, range.from) + 1);
+                                    update(item.productId, { startDate: start, endDate: end, days });
+                                  }}
+                                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                  className={cn("p-3 pointer-events-auto")}
+                                />
+                              </PopoverContent>
+                            </Popover>
                             {item.selectedOptions && item.selectedOptions.length > 0 && (
                               <ul className="mt-2 space-y-0.5">
                                 {item.selectedOptions.map((o) => (

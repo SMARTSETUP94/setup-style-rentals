@@ -393,6 +393,28 @@ function ProductPage() {
   const activeSelectedOptionsList = is3DMode ? [] : selectedOptionsList;
   const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
 
+  /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
+  const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {
+    if (!opt) return false;
+    const price = Number(opt.price) || 0;
+    if (price <= 0) return false;
+    const text = `${opt.name_fr} ${opt.name_en}`.toLowerCase();
+    return text.includes("logo");
+  };
+
+  /** Does any currently-selected option require a logo upload? */
+  const logoRequired = useMemo(() => {
+    if (is3DMode) return false;
+    return activeSelectedOptionsList.some((o) =>
+      optionRequiresLogo({ name_fr: o.name_fr, name_en: o.name_en, price: o.price }),
+    );
+  }, [is3DMode, activeSelectedOptionsList]);
+
+  // Clear uploaded logo when no logo-requiring option is selected anymore
+  useEffect(() => {
+    if (!logoRequired && clientLogo) setClientLogo(null);
+  }, [logoRequired, clientLogo]);
+
   const optionsUnitPrice = useMemo(
     () =>
       activeSelectedOptionsList.reduce((s, o) => s + o.price, 0) +

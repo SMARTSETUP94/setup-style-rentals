@@ -196,6 +196,18 @@ const DICT: Dict = {
     fr: "Options gérées dans le configurateur 3D ci-dessus.",
     en: "Options are managed in the 3D configurator above.",
   },
+  "product.configRecapTitle": {
+    fr: "Récapitulatif de votre configuration 3D",
+    en: "Your 3D configuration summary",
+  },
+  "product.configRecapNotice": {
+    fr: "Important : ce récapitulatif sera joint à votre devis comme commentaire. Vous devez tout de même sélectionner les options de personnalisation tarifées ci-dessous pour valider votre choix.",
+    en: "Important: this summary will be attached to your quote as a comment. You still need to select the priced customization options below to confirm your choice.",
+  },
+  "product.optionsStillRequired": {
+    fr: "Sélectionnez vos options de personnalisation",
+    en: "Select your customization options",
+  },
   "product.add3DToQuote": {
     fr: "Ajouter cette configuration au devis",
     en: "Add this configuration to quote",

@@ -141,6 +141,35 @@ function ProductPage() {
     }
   }, [startDate, endDate]);
 
+  // Check availability whenever dates or product change
+  useEffect(() => {
+    if (!product || !startDate || !endDate) {
+      setAvailableStock(null);
+      return;
+    }
+    let cancelled = false;
+    setCheckingStock(true);
+    const timer = setTimeout(async () => {
+      const { data, error } = await supabase.rpc("get_available_stock", {
+        _product_id: product.id,
+        _start_date: startDate,
+        _end_date: endDate,
+      });
+      if (cancelled) return;
+      setCheckingStock(false);
+      if (error) {
+        console.error("availability check failed", error);
+        setAvailableStock(null);
+        return;
+      }
+      setAvailableStock(typeof data === "number" ? data : null);
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [product, startDate, endDate]);
+
   // Send dynamic prices to the configurator iframe(s) whenever data is ready
   const sendPricesToIframe = (frame: HTMLIFrameElement | null) => {
     if (!frame || !product) return;

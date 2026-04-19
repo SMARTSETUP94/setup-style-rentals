@@ -311,31 +311,7 @@ function ProductPage() {
     );
   }
 
-  /** Build synthetic SelectedOption[] from the 3D-configurator iframe payload. */
-  const buildConfiguratorOptions = (): SelectedOption[] => {
-    if (!product || !configuratorData) return [];
-    const opts = product.configurator_options || {};
-    const synthetic: SelectedOption[] = [];
-    for (const [groupKey, choices] of Object.entries(opts)) {
-      const selectedValue =
-        configuratorData[`${groupKey}Finition`] ??
-        configuratorData[`${groupKey}Option`] ??
-        configuratorData[groupKey];
-      if (typeof selectedValue !== "string") continue;
-      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
-      if (!match) continue;
-      synthetic.push({
-        categoryId: `cfg-${groupKey}`,
-        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        optionId: `cfg-${groupKey}-${match.value}`,
-        name_fr: match.label,
-        name_en: match.label,
-        price: Number(match.price) || 0,
-      });
-    }
-    return synthetic;
-  };
+  // configuratorOptionsList is computed above (memoized) and reused everywhere.
 
   /** Reset the 3D configurator: clear local state and reload the iframe(s) to default. */
   const handleResetConfigurator = () => {

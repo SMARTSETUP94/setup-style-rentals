@@ -262,6 +262,42 @@ function ProductPage() {
     return synthetic;
   }, [product, configuratorData]);
 
+  // When the 3D configurator selection changes, try to auto-preselect any
+  // DB-stored product option whose label matches the configurator choice
+  // (e.g., picking "Rouge" in the iframe selects the matching "Rouge" button).
+  useEffect(() => {
+    if (configuratorOptionsList.length === 0) return;
+    if (productOptions.length === 0 || optionCategories.length === 0) return;
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    setSelectedOptionIds((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const cfg of configuratorOptionsList) {
+        const cfgNames = [norm(cfg.name_fr), norm(cfg.name_en)].filter(Boolean);
+        const cfgCat = [norm(cfg.categoryName_fr), norm(cfg.categoryName_en)].filter(Boolean);
+        // Find a DB category whose name contains (or is contained in) the configurator group label
+        const matchingCat = optionCategories.find((c) => {
+          const cn = [norm(c.name_fr), norm(c.name_en)];
+          return cn.some((n) => cfgCat.some((cc) => n.includes(cc) || cc.includes(n)));
+        });
+        if (!matchingCat) continue;
+        // Within that category, find an option whose name matches the configurator choice
+        const matchingOpt = productOptions.find(
+          (o) =>
+            o.category_id === matchingCat.id &&
+            o.is_active &&
+            cfgNames.some((cn) => norm(o.name_fr) === cn || norm(o.name_en) === cn),
+        );
+        if (matchingOpt && next[matchingCat.id] !== matchingOpt.id) {
+          next[matchingCat.id] = matchingOpt.id;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [configuratorOptionsList, productOptions, optionCategories]);
+
   const optionsUnitPrice = useMemo(
     () =>
       selectedOptionsList.reduce((s, o) => s + o.price, 0) +

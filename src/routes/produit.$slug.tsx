@@ -384,7 +384,7 @@ function ProductPage() {
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
-          {product.configurator_url ? (
+          {product.configurator_url && show3D ? (
             <>
               <iframe
                 ref={inlineIframeRef}
@@ -397,15 +397,20 @@ function ProductPage() {
               />
               <button
                 type="button"
+                onClick={() => setShow3D(false)}
+                className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
+                aria-label={lang === "fr" ? "Voir l'image" : "Show image"}
+              >
+                <X className="size-3.5" />
+                {lang === "fr" ? "Voir l'image" : "Show image"}
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   const el = inlineIframeRef.current as (HTMLIFrameElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
                   if (!el) return;
                   const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
-                  if (req) {
-                    req().catch(() => setShow3D(true));
-                  } else {
-                    setShow3D(true);
-                  }
+                  req?.().catch(() => {});
                 }}
                 className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
                 aria-label={lang === "fr" ? "Plein écran" : "Fullscreen"}
@@ -415,13 +420,23 @@ function ProductPage() {
               </button>
             </>
           ) : (
-            <div className="aspect-[4/3]">
+            <div className="aspect-[4/3] relative">
               <ProductImage
                 name={pickLang(product, "name", lang)}
                 category_slug={product.category_slug}
                 image_url={product.image_url}
                 className="w-full h-full object-cover"
               />
+              {product.configurator_url && (
+                <button
+                  type="button"
+                  onClick={() => setShow3D(true)}
+                  className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium bg-gold text-gold-foreground hover:bg-gold/90 transition-colors shadow-md"
+                >
+                  <Sparkles className="size-3.5" />
+                  {lang === "fr" ? "Personnaliser en 3D" : "Customize in 3D"}
+                </button>
+              )}
             </div>
           )}
         </div>

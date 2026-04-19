@@ -10,6 +10,19 @@ export interface SelectedOption {
   price: number;
 }
 
+/** Volume discount tier: applies when quantity >= min_qty */
+export interface QuantityDiscountTier {
+  min_qty: number;
+  /** rate as a decimal, e.g. 0.10 for 10% */
+  rate: number;
+}
+
+/** Duration discount tier: applies when number of rental days >= min_days */
+export interface DurationDiscountTier {
+  min_days: number;
+  rate: number;
+}
+
 export interface CartItem {
   productId: string;
   slug: string;
@@ -24,6 +37,8 @@ export interface CartItem {
   startDate?: string;
   endDate?: string;
   selectedOptions?: SelectedOption[];
+  quantityDiscounts?: QuantityDiscountTier[];
+  durationDiscounts?: DurationDiscountTier[];
 }
 
 interface CartContextValue {
@@ -78,6 +93,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 days: item.days,
                 startDate: item.startDate,
                 endDate: item.endDate,
+                quantityDiscounts: item.quantityDiscounts ?? i.quantityDiscounts,
+                durationDiscounts: item.durationDiscounts ?? i.durationDiscounts,
               }
             : i,
         );
@@ -109,12 +126,34 @@ export function useCart() {
   return ctx;
 }
 
-/** Volume discount: 10% for 2-5, 15% for 6-10, 20% for 10+ */
-export function volumeDiscount(qty: number): number {
-  if (qty >= 10) return 0.2;
-  if (qty >= 6) return 0.15;
-  if (qty >= 2) return 0.1;
-  return 0;
+/** Default volume discount tiers used when a product does not override them. */
+export const DEFAULT_QUANTITY_DISCOUNTS: QuantityDiscountTier[] = [
+  { min_qty: 2, rate: 0.1 },
+  { min_qty: 6, rate: 0.15 },
+  { min_qty: 10, rate: 0.2 },
+];
+
+function pickTierRate<T extends { rate: number }>(
+  tiers: T[] | undefined,
+  matches: (t: T) => boolean,
+): number {
+  if (!tiers || tiers.length === 0) return 0;
+  const eligible = tiers.filter(matches);
+  if (eligible.length === 0) return 0;
+  // Highest matching rate wins
+  return eligible.reduce((max, t) => (t.rate > max ? t.rate : max), 0);
+}
+
+/** Volume discount based on the product's tiers (or defaults if none provided). */
+export function volumeDiscount(qty: number, tiers?: QuantityDiscountTier[]): number {
+  // If an empty array is explicitly passed, no discount applies (unique products).
+  const list = tiers ?? DEFAULT_QUANTITY_DISCOUNTS;
+  return pickTierRate(list, (t) => qty >= t.min_qty);
+}
+
+/** Duration discount based on the product's tiers. Returns 0 if no tiers. */
+export function durationDiscount(days: number, tiers?: DurationDiscountTier[]): number {
+  return pickTierRate(tiers, (t) => days >= t.min_days);
 }
 
 export function optionsTotal(item: CartItem): number {
@@ -128,14 +167,19 @@ export function lineTotal(item: CartItem): {
   deposit: number;
   optionsPerUnit: number;
   optionsTotal: number;
+  qtyRate: number;
+  durationRate: number;
 } {
   const optsUnit = optionsTotal(item);
   const rentalGross = item.price_day * item.days * item.quantity;
   const optionsGross = optsUnit * item.quantity; // fixed, not per day
   const gross = rentalGross + optionsGross;
-  const discountRate = volumeDiscount(item.quantity);
+  const qtyRate = volumeDiscount(item.quantity, item.quantityDiscounts);
+  const durationRate = durationDiscount(item.days, item.durationDiscounts);
+  // Combine rates additively, capped at 50% to stay sane
+  const combined = Math.min(0.5, qtyRate + durationRate);
   // Discount applies only on the rental part, not on fixed options
-  const discount = rentalGross * discountRate;
+  const discount = rentalGross * combined;
   const net = gross - discount;
   const deposit = item.deposit * item.quantity;
   return {
@@ -145,5 +189,7 @@ export function lineTotal(item: CartItem): {
     deposit,
     optionsPerUnit: optsUnit,
     optionsTotal: optionsGross,
+    qtyRate,
+    durationRate,
   };
 }

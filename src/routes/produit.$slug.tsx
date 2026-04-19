@@ -345,6 +345,41 @@ function ProductPage() {
         price: Number(match.price) || 0,
       });
     }
+
+    // Fallback: if the configurator did not match any DB-stored option group
+    // (e.g. configurator_options is empty in DB), but the iframe sent a price
+    // signal (extras / supplement / optionsPrice / or a "price" total field),
+    // create a synthetic line so the supplement is added to the cart total.
+    if (synthetic.length === 0) {
+      const basePrice = Number(product.price_day) || 0;
+      const rawExtras =
+        (configuratorData as Record<string, unknown>).extras ??
+        (configuratorData as Record<string, unknown>).supplement ??
+        (configuratorData as Record<string, unknown>).optionsPrice ??
+        (configuratorData as Record<string, unknown>).optionsTotal;
+      let extras = Number(rawExtras);
+      if (!Number.isFinite(extras) || extras <= 0) {
+        // Some configurators only send a final "price" (= base + extras).
+        const total = Number((configuratorData as Record<string, unknown>).price);
+        if (Number.isFinite(total) && total > basePrice) {
+          extras = total - basePrice;
+        } else {
+          extras = 0;
+        }
+      }
+      if (extras > 0) {
+        synthetic.push({
+          categoryId: "cfg-extras",
+          categoryName_fr: "Personnalisation 3D",
+          categoryName_en: "3D customization",
+          optionId: "cfg-extras-total",
+          name_fr: "Suppléments configurateur",
+          name_en: "Configurator add-ons",
+          price: extras,
+        });
+      }
+    }
+
     return synthetic;
   }, [product, configuratorData]);
 

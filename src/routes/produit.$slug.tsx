@@ -621,6 +621,7 @@ function ProductPage() {
                               delete next[cat.id];
                               return next;
                             });
+                            syncSelectionToIframe(cat.id, null);
                           }}
                           className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline ml-auto"
                         >

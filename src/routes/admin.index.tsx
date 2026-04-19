@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { FileText, Euro, TrendingUp, TrendingDown, Package, CheckCircle2, Clock } from "lucide-react";
+import { FileText, TrendingUp, TrendingDown, Package, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/lib/format";
 import { useAdminI18n } from "@/lib/admin-i18n";

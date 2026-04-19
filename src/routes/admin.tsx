@@ -1,17 +1,27 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { LogOut, Package, FileText, Layers, Settings } from "lucide-react";
+import { LogOut, Package, FileText, Layers, Settings, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { AdminI18nProvider, useAdminI18n } from "@/lib/admin-i18n";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Setup Paris" }] }),
-  component: AdminLayout,
+  component: AdminLayoutWrapper,
 });
+
+function AdminLayoutWrapper() {
+  return (
+    <AdminI18nProvider>
+      <AdminLayout />
+    </AdminI18nProvider>
+  );
+}
 
 function AdminLayout() {
   const { user, isAdmin, loading, signOut } = useAuth();
+  const { t, lang, setLang } = useAdminI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const onAuthPage = location.pathname === "/admin/auth";
@@ -30,7 +40,7 @@ function AdminLayout() {
   if (loading || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
-        Chargement…
+        {t("layout.loading")}
       </div>
     );
   }
@@ -42,16 +52,44 @@ function AdminLayout() {
           SETUP <span className="opacity-60 font-normal">PARIS</span>
         </Link>
         <nav className="flex-1 space-y-1 text-sm">
-          <NavItem to="/admin" icon={<FileText className="size-4" />} label="Devis" exact />
-          <NavItem to="/admin/categories" icon={<Layers className="size-4" />} label="Catégories" />
-          <NavItem to="/admin/products" icon={<Package className="size-4" />} label="Produits" />
-          <NavItem to="/admin/settings" icon={<Settings className="size-4" />} label="Paramètres" />
+          <NavItem to="/admin" icon={<FileText className="size-4" />} label={t("layout.quotes")} exact />
+          <NavItem to="/admin/categories" icon={<Layers className="size-4" />} label={t("layout.categories")} />
+          <NavItem to="/admin/products" icon={<Package className="size-4" />} label={t("layout.products")} />
+          <NavItem to="/admin/settings" icon={<Settings className="size-4" />} label={t("layout.settings")} />
         </nav>
-        <div className="border-t border-border pt-4 space-y-2">
+        <div className="border-t border-border pt-4 space-y-3">
+          <div className="px-2">
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+              <Globe className="size-3" />
+              {t("layout.lang")}
+            </div>
+            <div className="flex rounded-md border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setLang("fr")}
+                className={cn(
+                  "flex-1 px-2 py-1 text-xs font-medium transition-colors",
+                  lang === "fr" ? "bg-foreground text-background" : "bg-transparent hover:bg-muted",
+                )}
+              >
+                FR
+              </button>
+              <button
+                type="button"
+                onClick={() => setLang("en")}
+                className={cn(
+                  "flex-1 px-2 py-1 text-xs font-medium transition-colors border-l border-border",
+                  lang === "en" ? "bg-foreground text-background" : "bg-transparent hover:bg-muted",
+                )}
+              >
+                EN
+              </button>
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground px-2 truncate">{user.email}</p>
           <Button variant="ghost" size="sm" onClick={() => signOut()} className="w-full justify-start">
             <LogOut className="size-4" />
-            Déconnexion
+            {t("layout.signOut")}
           </Button>
         </div>
       </aside>

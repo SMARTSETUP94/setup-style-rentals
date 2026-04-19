@@ -261,6 +261,40 @@ function ProductPage() {
     return synthetic;
   }, [product, configuratorData]);
 
+  /** Inverse mapping: given a DB category + option (or null to clear), find the
+   * matching configurator group key + value, and post a sync message to both iframes. */
+  const syncSelectionToIframe = (catId: string, optId: string | null) => {
+    if (!product?.configurator_options) return;
+    const cat = optionCategories.find((c) => c.id === catId);
+    if (!cat) return;
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const catNames = [norm(cat.name_fr), norm(cat.name_en)];
+    const groupKey = Object.keys(product.configurator_options).find((k) => {
+      const kn = norm(k);
+      return catNames.some((cn) => cn.includes(kn) || kn.includes(cn));
+    });
+    if (!groupKey) return;
+    let value: string | null = null;
+    if (optId) {
+      const opt = productOptions.find((o) => o.id === optId);
+      if (!opt) return;
+      const optNames = [norm(opt.name_fr), norm(opt.name_en)];
+      const choices = (product.configurator_options[groupKey] || []) as ConfiguratorOption[];
+      const match = choices.find((c) => optNames.some((on) => norm(c.label) === on));
+      if (!match) return;
+      value = match.value;
+    }
+    const msg = { type: "parent-set-config", group: groupKey, value };
+    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+      try {
+        frame?.contentWindow?.postMessage(msg, "*");
+      } catch {
+        // ignore cross-origin failures
+      }
+    });
+  };
+
   // When the 3D configurator selection changes, try to auto-preselect any
   // DB-stored product option whose label matches the configurator choice
   // (e.g., picking "Rouge" in the iframe selects the matching "Rouge" button).

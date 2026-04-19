@@ -246,12 +246,16 @@ function ProductPage() {
     const rentalGross = product.price_day * days * qty;
     const optionsGross = optionsUnitPrice * qty; // fixed price, not per day
     const gross = rentalGross + optionsGross;
-    const discountRate = volumeDiscount(qty);
+    const qtyTiers = product.quantity_discounts ?? undefined;
+    const durTiers = product.duration_discounts ?? undefined;
+    const qtyRate = volumeDiscount(qty, qtyTiers);
+    const durRate = durationDiscount(days, durTiers);
+    const discountRate = Math.min(0.5, qtyRate + durRate);
     // Discount applies only to rental, not to fixed options
     const discount = rentalGross * discountRate;
     const net = gross - discount;
     const deposit = product.deposit * qty;
-    return { gross, discountRate, discount, net, deposit, optionsUnitPrice };
+    return { gross, discountRate, qtyRate, durRate, discount, net, deposit, optionsUnitPrice };
   }, [product, days, qty, optionsUnitPrice]);
 
   if (loading) {

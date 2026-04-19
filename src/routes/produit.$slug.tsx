@@ -54,6 +54,7 @@ interface Product {
   deposit: number; image_url: string | null;
   configurator_url: string | null;
   configurator_options: ConfiguratorOptionsMap | null;
+  stock_total: number;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
@@ -85,6 +86,10 @@ function ProductPage() {
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
+
+  // Availability
+  const [availableStock, setAvailableStock] = useState<number | null>(null);
+  const [checkingStock, setCheckingStock] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -135,6 +140,35 @@ function ProductPage() {
       setDays(d);
     }
   }, [startDate, endDate]);
+
+  // Check availability whenever dates or product change
+  useEffect(() => {
+    if (!product || !startDate || !endDate) {
+      setAvailableStock(null);
+      return;
+    }
+    let cancelled = false;
+    setCheckingStock(true);
+    const timer = setTimeout(async () => {
+      const { data, error } = await supabase.rpc("get_available_stock", {
+        _product_id: product.id,
+        _start_date: startDate,
+        _end_date: endDate,
+      });
+      if (cancelled) return;
+      setCheckingStock(false);
+      if (error) {
+        console.error("availability check failed", error);
+        setAvailableStock(null);
+        return;
+      }
+      setAvailableStock(typeof data === "number" ? data : null);
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [product, startDate, endDate]);
 
   // Send dynamic prices to the configurator iframe(s) whenever data is ready
   const sendPricesToIframe = (frame: HTMLIFrameElement | null) => {
@@ -247,6 +281,14 @@ function ProductPage() {
         lang === "fr"
           ? `Veuillez sélectionner : ${missing.map((c) => c.name_fr).join(", ")}`
           : `Please select: ${missing.map((c) => c.name_en).join(", ")}`,
+      );
+      return;
+    }
+    if (availableStock !== null && qty > availableStock) {
+      toast.error(
+        lang === "fr"
+          ? `Stock insuffisant : seulement ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} sur cette période.`
+          : `Insufficient stock: only ${availableStock} unit${availableStock > 1 ? "s" : ""} available for these dates.`,
       );
       return;
     }
@@ -589,9 +631,51 @@ function ProductPage() {
             </div>
           )}
 
+          {/* Availability indicator (visible once dates are picked) */}
+          {startDate && endDate && (
+            <div
+              className={cn(
+                "mt-6 rounded-lg border p-3 text-sm flex items-start gap-2",
+                checkingStock
+                  ? "border-border bg-secondary/40 text-muted-foreground"
+                  : availableStock === null
+                    ? "border-border bg-secondary/40 text-muted-foreground"
+                    : availableStock === 0
+                      ? "border-destructive/40 bg-destructive/5 text-destructive"
+                      : qty > availableStock
+                        ? "border-destructive/40 bg-destructive/5 text-destructive"
+                        : availableStock <= 2
+                          ? "border-gold/40 bg-gold/5 text-gold"
+                          : "border-accent/40 bg-accent/5 text-accent",
+              )}
+            >
+              <span className="mt-0.5 size-2 rounded-full shrink-0 bg-current" />
+              <span>
+                {checkingStock
+                  ? lang === "fr" ? "Vérification de la disponibilité…" : "Checking availability…"
+                  : availableStock === null
+                    ? lang === "fr" ? "Disponibilité non vérifiée" : "Availability not checked"
+                    : availableStock === 0
+                      ? lang === "fr"
+                        ? "Indisponible sur cette période"
+                        : "Unavailable for these dates"
+                      : qty > availableStock
+                        ? lang === "fr"
+                          ? `Stock insuffisant : ${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} (vous demandez ${qty})`
+                          : `Insufficient stock: ${availableStock} available (you requested ${qty})`
+                        : lang === "fr"
+                          ? `${availableStock} unité${availableStock > 1 ? "s" : ""} disponible${availableStock > 1 ? "s" : ""} du ${startDate} au ${endDate}`
+                          : `${availableStock} unit${availableStock > 1 ? "s" : ""} available from ${startDate} to ${endDate}`}
+              </span>
+            </div>
+          )}
+
           <button
             onClick={handleAdd}
-            className="mt-8 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30"
+            disabled={
+              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+            }
+            className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
           >
             <ShoppingBag className="size-5" />
             {t("product.addToQuote")}

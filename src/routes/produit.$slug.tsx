@@ -7,7 +7,7 @@ import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
-import { useCart, volumeDiscount, type SelectedOption } from "@/lib/cart";
+import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -59,6 +59,8 @@ interface Product {
   configurator_url: string | null;
   configurator_options: ConfiguratorOptionsMap | null;
   stock_total: number;
+  quantity_discounts: QuantityDiscountTier[] | null;
+  duration_discounts: DurationDiscountTier[] | null;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
@@ -244,12 +246,16 @@ function ProductPage() {
     const rentalGross = product.price_day * days * qty;
     const optionsGross = optionsUnitPrice * qty; // fixed price, not per day
     const gross = rentalGross + optionsGross;
-    const discountRate = volumeDiscount(qty);
+    const qtyTiers = product.quantity_discounts ?? undefined;
+    const durTiers = product.duration_discounts ?? undefined;
+    const qtyRate = volumeDiscount(qty, qtyTiers);
+    const durRate = durationDiscount(days, durTiers);
+    const discountRate = Math.min(0.5, qtyRate + durRate);
     // Discount applies only to rental, not to fixed options
     const discount = rentalGross * discountRate;
     const net = gross - discount;
     const deposit = product.deposit * qty;
-    return { gross, discountRate, discount, net, deposit, optionsUnitPrice };
+    return { gross, discountRate, qtyRate, durRate, discount, net, deposit, optionsUnitPrice };
   }, [product, days, qty, optionsUnitPrice]);
 
   if (loading) {
@@ -310,6 +316,8 @@ function ProductPage() {
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       selectedOptions: selectedOptionsList.length > 0 ? selectedOptionsList : undefined,
+      quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
+      durationDiscounts: product.duration_discounts ?? [],
     });
     toast.success(t("product.added"), { icon: <Check className="size-4" /> });
   };
@@ -353,6 +361,8 @@ function ProductPage() {
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       selectedOptions: synthetic.length > 0 ? synthetic : undefined,
+      quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
+      durationDiscounts: product.duration_discounts ?? [],
     });
     toast.success(
       lang === "fr" ? "Configuration ajoutée au devis" : "Configuration added to quote",
@@ -738,11 +748,33 @@ function ProductPage() {
             {t("product.addToQuote")}
           </button>
 
-          <div className="mt-4 text-xs text-muted-foreground">
-            {lang === "fr"
-              ? "Remises : -10% dès 2, -15% dès 6, -20% dès 10."
-              : "Volume discounts: -10% from 2, -15% from 6, -20% from 10."}
-          </div>
+          {(() => {
+            const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);
+            const dTiers = [...(product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
+            if (qTiers.length === 0 && dTiers.length === 0) return null;
+            const fmtQ = qTiers
+              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_qty}`)
+              .join(", ");
+            const fmtD = dTiers
+              .map((t) => `-${Math.round(t.rate * 100)}% ${lang === "fr" ? "dès" : "from"} ${t.min_days} ${lang === "fr" ? "j" : "d"}`)
+              .join(", ");
+            return (
+              <div className="mt-4 text-xs text-muted-foreground space-y-0.5">
+                {qTiers.length > 0 && (
+                  <div>
+                    {lang === "fr" ? "Remises quantité : " : "Volume discounts: "}
+                    {fmtQ}.
+                  </div>
+                )}
+                {dTiers.length > 0 && (
+                  <div>
+                    {lang === "fr" ? "Remises durée : " : "Duration discounts: "}
+                    {fmtD}.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

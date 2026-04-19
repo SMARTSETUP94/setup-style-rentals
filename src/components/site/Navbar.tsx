@@ -34,26 +34,25 @@ export function Navbar() {
       )}
     >
       <div className="container-x flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <span className={cn("inline-block size-2 rounded-full transition-colors", transparent ? "bg-white" : "bg-accent")} />
-          <span className="flex flex-col leading-none">
-            <span className="font-display font-bold tracking-tight text-base sm:text-lg whitespace-nowrap">
+        <div className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <span className={cn("inline-block size-2 rounded-full transition-colors", transparent ? "bg-white" : "bg-accent")} />
+            <span className="font-display font-bold tracking-tight text-base sm:text-lg whitespace-nowrap leading-none">
               SETUP <span className="opacity-60 font-normal">PARIS</span>
             </span>
-            <a
-              href="https://www.setup.paris"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className={cn(
-                "text-[9px] sm:text-[10px] font-medium tracking-wider uppercase mt-0.5 whitespace-nowrap transition-opacity hover:opacity-100",
-                transparent ? "text-white/70" : "text-muted-foreground",
-              )}
-            >
-              by setup.paris ↗
-            </a>
-          </span>
-        </Link>
+          </Link>
+          <a
+            href="https://www.setup.paris"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "text-[9px] sm:text-[10px] font-medium tracking-wider uppercase whitespace-nowrap transition-opacity hover:opacity-100 leading-none self-end pb-0.5",
+              transparent ? "text-white/70" : "text-muted-foreground",
+            )}
+          >
+            by setup.paris ↗
+          </a>
+        </div>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           <Link to="/" className="hover:opacity-70 transition-opacity" activeProps={{ className: "opacity-100" }}>

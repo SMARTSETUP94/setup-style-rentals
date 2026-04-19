@@ -215,7 +215,6 @@ function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
-
   const selectedOptionsList: SelectedOption[] = useMemo(() => {
     return optionCategories
       .map((c) => {

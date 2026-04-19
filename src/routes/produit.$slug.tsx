@@ -283,6 +283,32 @@ function ProductPage() {
     );
   }
 
+  /** Build synthetic SelectedOption[] from the 3D-configurator iframe payload. */
+  const buildConfiguratorOptions = (): SelectedOption[] => {
+    if (!product || !configuratorData) return [];
+    const opts = product.configurator_options || {};
+    const synthetic: SelectedOption[] = [];
+    for (const [groupKey, choices] of Object.entries(opts)) {
+      const selectedValue =
+        configuratorData[`${groupKey}Finition`] ??
+        configuratorData[`${groupKey}Option`] ??
+        configuratorData[groupKey];
+      if (typeof selectedValue !== "string") continue;
+      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
+      if (!match) continue;
+      synthetic.push({
+        categoryId: `cfg-${groupKey}`,
+        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
+        optionId: `cfg-${groupKey}-${match.value}`,
+        name_fr: match.label,
+        name_en: match.label,
+        price: Number(match.price) || 0,
+      });
+    }
+    return synthetic;
+  };
+
   const handleAdd = () => {
     if (!calc) return;
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
@@ -302,6 +328,9 @@ function ProductPage() {
       );
       return;
     }
+    // Merge manually-selected options with the 3D configurator selection (if any)
+    const configuratorOptions = buildConfiguratorOptions();
+    const mergedOptions: SelectedOption[] = [...selectedOptionsList, ...configuratorOptions];
     add({
       productId: product.id,
       slug: product.slug,
@@ -315,57 +344,14 @@ function ProductPage() {
       days,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      selectedOptions: selectedOptionsList.length > 0 ? selectedOptionsList : undefined,
-      quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
-      durationDiscounts: product.duration_discounts ?? [],
-    });
-    toast.success(t("product.added"), { icon: <Check className="size-4" /> });
-  };
-
-  /**
-   * Add the current 3D-configurator selection as a cart line.
-   * We translate the iframe payload into synthetic SelectedOption[] entries so it
-   * flows through the existing cart / quote pipeline (pricing, recap, email).
-   */
-  const handleAddConfiguredToQuote = () => {
-    if (!product || !configuratorData) return;
-    const opts = product.configurator_options || {};
-    const synthetic: SelectedOption[] = [];
-    for (const [groupKey, choices] of Object.entries(opts)) {
-      const selectedValue = configuratorData[`${groupKey}Finition`] ?? configuratorData[`${groupKey}Option`] ?? configuratorData[groupKey];
-      if (typeof selectedValue !== "string") continue;
-      const match = (choices as ConfiguratorOption[]).find((o) => o.value === selectedValue);
-      if (!match) continue;
-      const label = match.label;
-      synthetic.push({
-        categoryId: `cfg-${groupKey}`,
-        categoryName_fr: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        categoryName_en: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        optionId: `cfg-${groupKey}-${match.value}`,
-        name_fr: label,
-        name_en: label,
-        price: Number(match.price) || 0,
-      });
-    }
-    add({
-      productId: product.id,
-      slug: product.slug,
-      name_fr: product.name_fr,
-      name_en: product.name_en,
-      category_slug: product.category_slug,
-      image_url: product.image_url,
-      price_day: product.price_day,
-      deposit: product.deposit,
-      quantity: qty,
-      days,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-      selectedOptions: synthetic.length > 0 ? synthetic : undefined,
+      selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
     });
     toast.success(
-      lang === "fr" ? "Configuration ajoutée au devis" : "Configuration added to quote",
+      configuratorOptions.length > 0
+        ? lang === "fr" ? "Produit configuré ajouté au devis" : "Configured product added to quote"
+        : t("product.added"),
       { icon: <Check className="size-4" /> },
     );
   };

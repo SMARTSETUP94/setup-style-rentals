@@ -215,20 +215,6 @@ function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
-  // DEV: allow simulating an iframe config via ?simulate_cfg=plateau:couleur,champs:placage
-  useEffect(() => {
-    if (typeof window === "undefined" || !product) return;
-    const params = new URLSearchParams(window.location.search);
-    const sim = params.get("simulate_cfg");
-    if (!sim) return;
-    const data: Record<string, string> = {};
-    sim.split(",").forEach((p) => {
-      const [k, v] = p.split(":");
-      if (k && v) data[k.trim()] = v.trim();
-    });
-    if (Object.keys(data).length > 0) setConfiguratorData(data);
-  }, [product?.id]);
-
   const selectedOptionsList: SelectedOption[] = useMemo(() => {
     return optionCategories
       .map((c) => {

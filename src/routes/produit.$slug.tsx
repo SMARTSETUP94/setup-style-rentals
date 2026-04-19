@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +12,14 @@ import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface OptionCategory {
   id: string;
@@ -66,6 +74,43 @@ interface Product {
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
 
 export const Route = createFileRoute("/produit/$slug")({
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("products")
+      .select("slug,name_fr,name_en,description_fr,description_en,image_url")
+      .eq("slug", params.slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null } | null };
+  },
+  head: ({ loaderData }) => {
+    const m = loaderData?.meta;
+    if (!m) {
+      return {
+        meta: [
+          { title: "Produit — Setup Paris" },
+          { name: "description", content: "Location d'objets événementiels à Paris." },
+        ],
+      };
+    }
+    const title = `${m.name_fr} — Setup Paris`;
+    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D, livraison et reprise incluses.`;
+    const meta: Array<Record<string, string>> = [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "product" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+    ];
+    if (m.image_url) {
+      meta.push({ property: "og:image", content: m.image_url });
+      meta.push({ name: "twitter:image", content: m.image_url });
+    }
+    return { meta };
+  },
   component: ProductPage,
 });
 
@@ -73,7 +118,6 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const { add } = useCart();
-  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
@@ -450,10 +494,11 @@ function ProductPage() {
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
+      configuratorRecap: configuratorRecap || undefined,
     });
     toast.success(
       configuratorOptions.length > 0
-        ? lang === "fr" ? "Produit configuré ajouté au devis" : "Configured product added to quote"
+        ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },
     );

@@ -17,6 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/format";
 import { ProductOptionsManager } from "@/components/admin/ProductOptionsManager";
+import {
+  DEFAULT_QUANTITY_DISCOUNTS,
+  type QuantityDiscountTier,
+  type DurationDiscountTier,
+} from "@/lib/cart";
 
 export const Route = createFileRoute("/admin/products")({
   component: AdminProductsPage,
@@ -41,6 +46,8 @@ type Product = {
   sort_order: number;
   is_active: boolean;
   stock_total: number;
+  quantity_discounts: QuantityDiscountTier[];
+  duration_discounts: DurationDiscountTier[];
 };
 
 type Category = { slug: string; name_fr: string };
@@ -63,6 +70,8 @@ const empty: Partial<Product> = {
   sort_order: 0,
   is_active: true,
   stock_total: 1,
+  quantity_discounts: DEFAULT_QUANTITY_DISCOUNTS,
+  duration_discounts: [],
 };
 
 function slugify(input: string): string {

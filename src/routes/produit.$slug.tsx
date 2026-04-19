@@ -653,20 +653,15 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Configurator CTA — toggles 3D view in the visual area */}
-          {product.configurator_url && !show3D && (
+          {/* 3D mode: close button (returns to simple options) */}
+          {product.configurator_url && show3D && (
             <button
               type="button"
-              onClick={() => {
-                setShow3D(true);
-                if (typeof window !== "undefined") {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-              className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
+              onClick={() => setShow3D(false)}
+              className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-all duration-300"
             >
-              <Sparkles className="size-4" />
-              {t("product.config3d")}
+              <X className="size-4" />
+              {t("product.close3D")}
             </button>
           )}
 

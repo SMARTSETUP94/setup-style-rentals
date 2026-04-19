@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useId, useState } from "react";
-import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2 } from "lucide-react";
+import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { ProductImage } from "@/components/site/ProductImage";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/devis")({

@@ -162,6 +162,7 @@ export type Database = {
           price_week: number | null
           slug: string
           sort_order: number
+          stock_total: number
           updated_at: string
         }
         Insert: {
@@ -184,6 +185,7 @@ export type Database = {
           price_week?: number | null
           slug: string
           sort_order?: number
+          stock_total?: number
           updated_at?: string
         }
         Update: {
@@ -206,6 +208,7 @@ export type Database = {
           price_week?: number | null
           slug?: string
           sort_order?: number
+          stock_total?: number
           updated_at?: string
         }
         Relationships: [
@@ -337,6 +340,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_available_stock: {
+        Args: { _end_date: string; _product_id: string; _start_date: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -299,6 +299,14 @@ function QuotePage() {
                                 </pre>
                               </div>
                             )}
+                            {item.logoUrl && (
+                              <div className="mt-2 rounded-md border border-accent/30 bg-accent/5 p-2 text-[11px] flex items-center gap-2">
+                                <span className="font-semibold text-accent">📎 {t("logoUpload.attachedLabel")} :</span>
+                                <a href={item.logoUrl} target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline truncate text-foreground/80">
+                                  {item.logoFilename || t("logoUpload.preview")}
+                                </a>
+                              </div>
+                            )}
                           </div>
                           <button onClick={() => remove(item.productId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
                             <Trash2 className="size-4" />

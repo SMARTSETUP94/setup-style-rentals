@@ -258,11 +258,23 @@ function AdminQuotesPage() {
                   <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.detail.items")}</p>
                   <div className="rounded-lg border border-border divide-y divide-border">
                     {(selected.items as any[]).map((it, i) => (
-                      <div key={i} className="px-3 py-2 flex justify-between text-sm">
-                        <span>
-                          {(lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}{lang === "fr" ? "j" : "d"})
-                        </span>
-                        <span className="font-medium">{formatPrice(it.line_total ?? 0)}</span>
+                      <div key={i} className="px-3 py-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>
+                            {(lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}{lang === "fr" ? "j" : "d"})
+                          </span>
+                          <span className="font-medium">{formatPrice(it.line_total ?? it.line_net ?? 0)}</span>
+                        </div>
+                        {it.logo_url && (
+                          <a
+                            href={it.logo_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                          >
+                            📎 {it.logo_filename || "Logo client"}
+                          </a>
+                        )}
                       </div>
                     ))}
                   </div>

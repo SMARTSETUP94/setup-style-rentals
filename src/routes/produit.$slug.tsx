@@ -9,6 +9,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
+import { LogoUpload } from "@/components/site/LogoUpload";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -169,6 +170,8 @@ function ProductPage() {
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
   /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
+  /** Uploaded client logo (when an option containing "logo" with a price > 0 is selected). */
+  const [clientLogo, setClientLogo] = useState<{ url: string; filename: string } | null>(null);
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);

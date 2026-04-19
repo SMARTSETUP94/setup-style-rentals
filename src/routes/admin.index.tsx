@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+
 import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/")({
@@ -382,16 +382,3 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    contacted: "bg-blue-100 text-blue-800",
-    validated: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
-  };
-  return (
-    <Badge variant="outline" className={`${map[status] || "bg-muted"} border-transparent capitalize`}>
-      {status}
-    </Badge>
-  );
-}

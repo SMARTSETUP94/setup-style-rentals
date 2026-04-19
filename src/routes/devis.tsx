@@ -36,6 +36,8 @@ function QuotePage() {
     message: "",
     event_date: "",
     event_location: "",
+    delivery_time: "",
+    pickup_time: "",
   });
 
   useEffect(() => {
@@ -88,6 +90,8 @@ function QuotePage() {
     const payload = {
       ...form,
       event_date: form.event_date || null,
+      delivery_time: form.delivery_time || null,
+      pickup_time: form.pickup_time || null,
       items: items.map((i) => {
         const lt = lineTotal(i);
         return {
@@ -148,7 +152,7 @@ function QuotePage() {
     setSubmitting(false);
     toast.success(t("cart.sent"));
     clear();
-    setForm({ customer_name: "", company: "", email: "", phone: "", message: "", event_date: "", event_location: "" });
+    setForm({ customer_name: "", company: "", email: "", phone: "", message: "", event_date: "", event_location: "", delivery_time: "", pickup_time: "" });
   };
 
   const handleExportPdf = async () => {

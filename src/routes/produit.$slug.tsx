@@ -85,6 +85,8 @@ function ProductPage() {
   const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
   const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
+  /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
+  const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);

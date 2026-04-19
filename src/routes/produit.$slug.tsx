@@ -770,11 +770,22 @@ function ProductPage() {
 
           {product.configurator_url && (configuratorData || configuratorRecap) && (
             <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10">
-              <div className="flex items-center gap-2 mb-3">
-                <Wand2 className="size-4 text-gold" />
-                <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold">
-                  {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Wand2 className="size-4 text-gold shrink-0" />
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold truncate">
+                    {lang === "fr" ? "Votre configuration personnalisée" : "Your custom configuration"}
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleResetConfigurator}
+                  title={lang === "fr" ? "Réinitialiser la configuration" : "Reset configuration"}
+                  className="inline-flex items-center gap-1 rounded-md border border-gold/30 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:border-gold/50 transition-colors shrink-0"
+                >
+                  <RotateCcw className="size-3" />
+                  {lang === "fr" ? "Réinitialiser" : "Reset"}
+                </button>
               </div>
               <pre className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground/90 font-mono bg-background border border-border rounded-lg p-3 overflow-auto max-h-56">
                 {configuratorRecap || (configuratorData ? JSON.stringify(configuratorData, null, 2) : "")}

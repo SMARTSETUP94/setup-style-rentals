@@ -462,15 +462,21 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Configurator CTA — scrolls to inline preview below */}
-          {product.configurator_url && (
-            <a
-              href="#configurator-preview"
+          {/* Configurator CTA — toggles 3D view in the visual area */}
+          {product.configurator_url && !show3D && (
+            <button
+              type="button"
+              onClick={() => {
+                setShow3D(true);
+                if (typeof window !== "undefined") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-gold text-gold hover:bg-gold hover:text-gold-foreground transition-all duration-300"
             >
               <Sparkles className="size-4" />
               {t("product.config3d")}
-            </a>
+            </button>
           )}
 
           {/* Price grid */}

@@ -987,7 +987,7 @@ function ProductPage() {
 
           {/* Single quote button — exclusive between simple mode and 3D mode.
               In 3D mode, only show once the user has produced a configuration. */}
-          {(!show3D || configuratorData || configuratorRecap) && (
+          {(!is3DMode || configuratorData || configuratorRecap) && (
             <button
               onClick={handleAdd}
               disabled={
@@ -995,7 +995,7 @@ function ProductPage() {
               }
               className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
             >
-              {show3D && (configuratorData || configuratorRecap) ? (
+              {is3DMode && (configuratorData || configuratorRecap) ? (
                 <>
                   <Wand2 className="size-5" />
                   {t("product.add3DToQuote")}
@@ -1056,34 +1056,6 @@ function ProductPage() {
         </section>
       )}
 
-      {/* 3D Modal */}
-      {show3D && product.configurator_url && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setShow3D(false)}
-        >
-          <div
-            className="relative bg-white rounded-2xl w-full max-w-6xl h-[85vh] overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShow3D(false)}
-              className="absolute top-4 right-4 z-10 size-10 rounded-full bg-white shadow-elev flex items-center justify-center hover:bg-secondary transition-colors"
-              aria-label={t("product.close")}
-            >
-              <X className="size-5" />
-            </button>
-            <iframe
-              ref={modalIframeRef}
-              src={product.configurator_url}
-              title={`Configurateur 3D — ${pickLang(product, "name", lang)}`}
-              style={{ width: "100%", height: "100%", border: "none" }}
-              allow="clipboard-write"
-              onLoad={() => sendPricesToIframe(modalIframeRef.current)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

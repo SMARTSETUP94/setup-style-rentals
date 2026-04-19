@@ -546,7 +546,7 @@ function ProductPage() {
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
           {product.configurator_url && is3DMode ? (
-            <>
+            <div key="visual-3d" className="animate-fade-in">
               <iframe
                 ref={inlineIframeRef}
                 src={product.configurator_url}
@@ -570,9 +570,9 @@ function ProductPage() {
                 <Sparkles className="size-3.5" />
                 {t("product.fullscreen")}
               </button>
-            </>
+            </div>
           ) : (
-            <div className="aspect-[4/3] relative">
+            <div key="visual-image" className="aspect-[4/3] relative animate-fade-in">
               <ProductImage
                 name={pickLang(product, "name", lang)}
                 category_slug={product.category_slug}

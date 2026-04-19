@@ -1,4 +1,4 @@
-import { Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { Link, Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { CartProvider } from "@/lib/cart";
@@ -18,12 +18,12 @@ function NotFoundComponent() {
           Cette page n'existe pas ou a été déplacée.
         </p>
         <div className="mt-6">
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-md bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Retour à l'accueil
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -44,8 +44,6 @@ export const Route = createRootRoute({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Setup Paris — Location d'objets événementiels" },
       { name: "twitter:description", content: "Personnalisez, configurez, louez. Setup Paris : location d'objets événementiels avec configurateur 3D pour Paris et l'Île-de-France." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b2e6bdb0-ea86-4a8e-b066-12994325d5fb/id-preview-a5ab9426--d2f52a27-1cab-4bee-9166-44f0884a2d40.lovable.app-1776512582671.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b2e6bdb0-ea86-4a8e-b066-12994325d5fb/id-preview-a5ab9426--d2f52a27-1cab-4bee-9166-44f0884a2d40.lovable.app-1776512582671.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

@@ -39,6 +39,8 @@ export interface CartItem {
   selectedOptions?: SelectedOption[];
   quantityDiscounts?: QuantityDiscountTier[];
   durationDiscounts?: DurationDiscountTier[];
+  /** Multiline summary of the 3D configurator selection (sent by the iframe). */
+  configuratorRecap?: string;
 }
 
 interface CartContextValue {
@@ -76,22 +78,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  // Two cart lines are considered the same only if same product AND same option selection
-  const optionsKey = (opts?: SelectedOption[]) =>
-    (opts ?? [])
+  // Two cart lines are considered the same only if same product, same options, AND same dates
+  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap">) => {
+    const opts = (item.selectedOptions ?? [])
       .map((o) => o.optionId)
       .sort()
       .join("|");
+    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? ""].join("¦");
+  };
 
   const add = (item: CartItem) => {
     setItems((prev) => {
-      const key = optionsKey(item.selectedOptions);
+      const key = lineKey(item);
       const existing = prev.find(
-        (i) => i.productId === item.productId && optionsKey(i.selectedOptions) === key,
+        (i) => i.productId === item.productId && lineKey(i) === key,
       );
       if (existing) {
         return prev.map((i) =>
-          i.productId === item.productId && optionsKey(i.selectedOptions) === key
+          i.productId === item.productId && lineKey(i) === key
             ? {
                 ...i,
                 quantity: i.quantity + item.quantity,
@@ -100,6 +104,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 endDate: item.endDate,
                 quantityDiscounts: item.quantityDiscounts ?? i.quantityDiscounts,
                 durationDiscounts: item.durationDiscounts ?? i.durationDiscounts,
+                configuratorRecap: item.configuratorRecap ?? i.configuratorRecap,
               }
             : i,
         );

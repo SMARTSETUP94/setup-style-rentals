@@ -103,6 +103,55 @@ const DICT: Dict = {
   "footer.legal": { fr: "Légal", en: "Legal" },
   "footer.cgl": { fr: "Conditions générales de location", en: "General rental terms" },
   "footer.legalNotice": { fr: "Mentions légales", en: "Legal notice" },
+
+  // Catalog extras
+  "catalog.results": { fr: "résultats", en: "results" },
+  "catalog.result": { fr: "résultat", en: "result" },
+
+  // Product page extras
+  "product.pickDate": { fr: "Choisir une date", en: "Pick a date" },
+  "product.customize": { fr: "Personnalisation", en: "Customization" },
+  "product.required": { fr: "Requis", en: "Required" },
+  "product.clear": { fr: "Désélectionner", en: "Clear" },
+  "product.included": { fr: "Inclus", en: "Included" },
+  "product.rentalRates": { fr: "Tarifs de location", en: "Rental rates" },
+  "product.customizeIn3D": { fr: "Personnaliser en 3D", en: "Customize in 3D" },
+  "product.showImage": { fr: "Voir l'image", en: "Show image" },
+  "product.fullscreen": { fr: "Plein écran", en: "Fullscreen" },
+  "product.threeDConfig": { fr: "Configurateur 3D", en: "3D configurator" },
+  "product.yourCustomConfig": { fr: "Votre configuration personnalisée", en: "Your custom configuration" },
+  "product.threeDConfiguration": { fr: "Configuration 3D", en: "3D configuration" },
+  "product.resetConfig": { fr: "Réinitialiser", en: "Reset" },
+  "product.resetConfigTitle": { fr: "Réinitialiser la configuration", en: "Reset configuration" },
+  "product.configReset": { fr: "Configuration réinitialisée", en: "Configuration reset" },
+  "product.configuredPrice": { fr: "Prix configuré", en: "Configured price" },
+  "product.configIncludedNote": {
+    fr: "Cette configuration sera incluse dans votre devis avec les dates et quantités ci-dessus.",
+    en: "This configuration will be included in your quote along with the dates and quantities above.",
+  },
+  "product.addWithConfig": { fr: "Ajouter au devis avec ma configuration", en: "Add to quote with my configuration" },
+  "product.configuredAdded": { fr: "Produit configuré ajouté au devis", en: "Configured product added to quote" },
+  "product.autoSelectedHint": { fr: "Sélectionné via le configurateur 3D", en: "Auto-selected from 3D configurator" },
+  "product.checkingAvail": { fr: "Vérification de la disponibilité…", en: "Checking availability…" },
+  "product.notChecked": { fr: "Disponibilité non vérifiée", en: "Availability not checked" },
+  "product.unavailable": { fr: "Indisponible sur cette période", en: "Unavailable for these dates" },
+  "product.qtyDecrease": { fr: "Diminuer la quantité", en: "Decrease quantity" },
+  "product.qtyIncrease": { fr: "Augmenter la quantité", en: "Increase quantity" },
+  "product.daysDecrease": { fr: "Diminuer la durée", en: "Decrease duration" },
+  "product.daysIncrease": { fr: "Augmenter la durée", en: "Increase duration" },
+  "product.volumeDiscounts": { fr: "Remises quantité", en: "Volume discounts" },
+  "product.durationDiscounts": { fr: "Remises durée", en: "Duration discounts" },
+  "product.from": { fr: "dès", en: "from" },
+  "product.daysShort": { fr: "j", en: "d" },
+
+  // Cart/quote extras
+  "cart.setup": { fr: "Installation", en: "Setup" },
+  "cart.pickup": { fr: "Reprise", en: "Pickup" },
+  "cart.configRecap": { fr: "Configuration 3D", en: "3D configuration" },
+
+  // Common
+  "common.back": { fr: "Retour", en: "Back" },
+  "common.home": { fr: "Accueil", en: "Home" },
 };
 
 interface I18nContextValue {
@@ -123,6 +172,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY) as Lang | null;
     if (stored === "fr" || stored === "en") setLangState(stored);
   }, []);
+
+  // Keep <html lang> in sync with the current language for a11y/SEO.
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = lang;
+    }
+  }, [lang]);
 
   const setLang = (next: Lang) => {
     setLangState(next);

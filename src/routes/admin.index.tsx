@@ -341,16 +341,19 @@ function AdminQuotesPage() {
                       <button
                         key={s}
                         onClick={() => updateStatus(selected.id, s)}
-                        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                        className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
                           selected.status === s
-                            ? "bg-foreground text-background border-foreground"
+                            ? STATUS_COLORS[s] || "bg-foreground text-background border-foreground"
                             : "border-border hover:bg-muted"
                         }`}
                       >
-                        {s}
+                        {STATUS_LABELS_FR[s]}
                       </button>
                     ))}
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Les statuts <strong>Confirmé</strong> et <strong>Terminé</strong> bloquent le stock sur les dates de l'événement.
+                  </p>
                 </div>
               </div>
             </>

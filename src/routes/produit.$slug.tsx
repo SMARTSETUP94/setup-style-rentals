@@ -495,6 +495,10 @@ function ProductPage() {
       toast.error(`${t("product.selectRequired")} ${labels}`);
       return;
     }
+    if (logoRequired && !clientLogo) {
+      toast.error(t("logoUpload.required"));
+      return;
+    }
     if (availableStock !== null && qty > availableStock) {
       toast.error(t("product.insufficientStock"));
       return;
@@ -520,6 +524,8 @@ function ProductPage() {
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
       configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
+      logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
+      logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
       configuratorOptions.length > 0
@@ -764,6 +770,16 @@ function ProductPage() {
                         );
                       })}
                     </div>
+                    {(() => {
+                      const selectedOpt = opts.find((o) => o.id === selected) ?? null;
+                      if (!optionRequiresLogo(selectedOpt)) return null;
+                      return (
+                        <LogoUpload
+                          value={clientLogo}
+                          onChange={setClientLogo}
+                        />
+                      );
+                    })()}
                   </div>
                 );
               })}

@@ -636,9 +636,10 @@ function ProductPage() {
                           <button
                             key={o.id}
                             type="button"
-                            onClick={() =>
-                              setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }))
-                            }
+                            onClick={() => {
+                              setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }));
+                              syncSelectionToIframe(cat.id, o.id);
+                            }}
                             className={cn(
                               "text-left rounded-lg border p-3 transition-all",
                               active

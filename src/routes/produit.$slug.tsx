@@ -696,13 +696,7 @@ function ProductPage() {
             </div>
           </div>
 
-          {/* Customization options — hidden in 3D mode (handled by configurator) */}
-          {optionCategories.length > 0 && show3D && (
-            <div className="mt-8 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-4 text-sm text-muted-foreground flex items-start gap-2">
-              <Wand2 className="size-4 text-gold shrink-0 mt-0.5" />
-              <span>{t("product.optionsManagedIn3D")}</span>
-            </div>
-          )}
+          {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
           {optionCategories.length > 0 && !show3D && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">

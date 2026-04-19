@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAdminI18n } from "@/lib/admin-i18n";
+import { ScrollableTable } from "@/components/admin/ScrollableTable";
 
 export const Route = createFileRoute("/admin/categories")({
   component: AdminCategoriesPage,
@@ -163,7 +164,7 @@ function AdminCategoriesPage() {
         </Button>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <ScrollableTable minWidth={720}>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
@@ -218,7 +219,7 @@ function AdminCategoriesPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableTable>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">

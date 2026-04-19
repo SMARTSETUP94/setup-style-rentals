@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/format";
 import { ProductOptionsManager } from "@/components/admin/ProductOptionsManager";
+import { ScrollableTable } from "@/components/admin/ScrollableTable";
 import {
   DEFAULT_QUANTITY_DISCOUNTS,
   type QuantityDiscountTier,
@@ -246,7 +247,7 @@ function AdminProductsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <ScrollableTable minWidth={720}>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
@@ -298,7 +299,7 @@ function AdminProductsPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableTable>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">

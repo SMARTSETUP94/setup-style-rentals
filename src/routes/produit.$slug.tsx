@@ -604,25 +604,19 @@ function ProductPage() {
             </div>
           )}
 
-          {product.configurator_url && !is3DMode && (
+          {product.configurator_url && (
             <button
               type="button"
-              onClick={() => setIs3DMode(true)}
-              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition-all duration-300 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30"
+              onClick={() => setIs3DMode((prev) => !prev)}
+              className={cn(
+                "mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold transition-all duration-300",
+                is3DMode
+                  ? "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
+                  : "bg-gold text-gold-foreground hover:bg-gold/90 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30",
+              )}
             >
-              <Sparkles className="size-4" />
-              {t("product.config3d")}
-            </button>
-          )}
-
-          {product.configurator_url && is3DMode && (
-            <button
-              type="button"
-              onClick={() => setIs3DMode(false)}
-              className="mt-6 inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-all duration-300"
-            >
-              <X className="size-4" />
-              {t("product.close3D")}
+              {is3DMode ? <X className="size-4" /> : <Sparkles className="size-4" />}
+              {is3DMode ? `✕ ${t("product.close3D")}` : t("product.config3d")}
             </button>
           )}
 
@@ -865,20 +859,20 @@ function ProductPage() {
                 label={`${t("product.subtotal")} (${formatPrice(product.price_day, lang)} ${t("catalog.perDay")})`}
                 value={formatPrice(product.price_day * days * qty, lang)}
               />
-              {selectedOptionsList.map((o) => (
+              {activeSelectedOptionsList.map((o) => (
                 <Row
                   key={o.optionId}
                   label={`+ ${pickLang(o, "name", lang)}`}
                   value={`+${formatPrice(o.price * qty, lang)}`}
                 />
               ))}
-              {configuratorOptionsList.length > 0 && (
+              {activeConfiguratorOptionsList.length > 0 && (
                 <div className="pt-1 border-t border-dashed border-border/60 mt-1">
                   <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
                     <Wand2 className="size-3" />
                     {t("product.threeDConfiguration")}
                   </div>
-                  {configuratorOptionsList.map((o) => (
+                  {activeConfiguratorOptionsList.map((o) => (
                     <Row
                       key={o.optionId}
                       label={`+ ${o.categoryName_fr ? `${pickLang(o, "categoryName", lang)} : ` : ""}${pickLang(o, "name", lang)}`}
@@ -944,7 +938,7 @@ function ProductPage() {
             </div>
           )}
 
-          {product.configurator_url && (configuratorData || configuratorRecap) && (
+          {product.configurator_url && is3DMode && (configuratorData || configuratorRecap) && (
             <div className="mt-6 rounded-xl border-2 border-gold/40 bg-gold/5 p-4 shadow-md shadow-gold/10">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2 min-w-0">
@@ -982,12 +976,22 @@ function ProductPage() {
               <p className="mt-3 text-[11px] text-muted-foreground italic">
                 {t("product.configIncludedNote")}
               </p>
+
+              <button
+                onClick={handleAdd}
+                disabled={
+                  !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+                }
+                className="mt-4 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
+              >
+                <Wand2 className="size-5" />
+                {t("product.add3DToQuote")}
+              </button>
             </div>
           )}
 
-          {/* Single quote button — exclusive between simple mode and 3D mode.
-              In 3D mode, only show once the user has produced a configuration. */}
-          {(!is3DMode || configuratorData || configuratorRecap) && (
+          {/* Simple mode quote button only */}
+          {!is3DMode && (
             <button
               onClick={handleAdd}
               disabled={
@@ -995,17 +999,8 @@ function ProductPage() {
               }
               className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold"
             >
-              {is3DMode && (configuratorData || configuratorRecap) ? (
-                <>
-                  <Wand2 className="size-5" />
-                  {t("product.add3DToQuote")}
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="size-5" />
-                  {t("product.addToQuote")}
-                </>
-              )}
+              <ShoppingBag className="size-5" />
+              {t("product.addToQuote")}
             </button>
           )}
 
@@ -1038,7 +1033,7 @@ function ProductPage() {
       </div>
 
       {/* Configuration recap (full width) — only shown as hint when nothing has been configured yet */}
-      {product.configurator_url && !configuratorData && !configuratorRecap && (
+      {product.configurator_url && is3DMode && !configuratorData && !configuratorRecap && (
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">

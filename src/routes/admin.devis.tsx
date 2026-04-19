@@ -32,6 +32,8 @@ type Quote = {
   message: string | null;
   event_date: string | null;
   event_location: string | null;
+  delivery_time: string | null;
+  pickup_time: string | null;
   items: any;
   subtotal_ht: number;
   total_ht: number;

@@ -410,11 +410,10 @@ function ProductPage() {
 
   /** Does any currently-selected option require a logo upload? */
   const logoRequired = useMemo(() => {
-    if (is3DMode) return false;
     return activeSelectedOptionsList.some((o) =>
       optionRequiresLogo({ name_fr: o.name_fr, name_en: o.name_en, price: o.price }),
     );
-  }, [is3DMode, activeSelectedOptionsList]);
+  }, [activeSelectedOptionsList]);
 
   // Clear uploaded logo when no logo-requiring option is selected anymore
   useEffect(() => {

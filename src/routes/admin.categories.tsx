@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useAdminI18n } from "@/lib/admin-i18n";
 
 export const Route = createFileRoute("/admin/categories")({
   component: AdminCategoriesPage,
@@ -55,6 +56,7 @@ function slugify(input: string): string {
 }
 
 function AdminCategoriesPage() {
+  const { t, lang } = useAdminI18n();
   const [categories, setCategories] = useState<Category[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -98,7 +100,7 @@ function AdminCategoriesPage() {
   const save = async () => {
     if (!editing) return;
     if (!editing.slug || !editing.name_fr || !editing.name_en) {
-      toast.error("Slug, nom FR et nom EN sont requis");
+      toast.error(t("cats.requiredFields"));
       return;
     }
     setSaving(true);
@@ -117,7 +119,7 @@ function AdminCategoriesPage() {
       : await supabase.from("categories").insert(payload);
     setSaving(false);
     if (res.error) return toast.error(res.error.message);
-    toast.success(editing.id ? "Catégorie modifiée" : "Catégorie créée");
+    toast.success(editing.id ? t("cats.updated") : t("cats.created"));
     setEditing(null);
     load();
   };
@@ -125,13 +127,14 @@ function AdminCategoriesPage() {
   const remove = async (c: Category) => {
     const count = counts[c.slug] || 0;
     if (count > 0) {
-      toast.error(`Impossible de supprimer : ${count} produit(s) associé(s)`);
+      toast.error(t("cats.cantDelete", { n: count }));
       return;
     }
-    if (!confirm(`Supprimer la catégorie "${c.name_fr}" ?`)) return;
+    const name = lang === "en" ? c.name_en : c.name_fr;
+    if (!confirm(t("cats.confirmDelete", { name }))) return;
     const { error } = await supabase.from("categories").delete().eq("id", c.id);
     if (error) return toast.error(error.message);
-    toast.success("Catégorie supprimée");
+    toast.success(t("cats.deleted"));
     load();
   };
 
@@ -144,15 +147,19 @@ function AdminCategoriesPage() {
     setCategories((list) => list.map((x) => (x.id === c.id ? { ...x, is_active: !c.is_active } : x)));
   };
 
+  const displayName = (c: Category) => (lang === "en" ? c.name_en : c.name_fr);
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Catégories</h1>
-          <p className="text-sm text-muted-foreground mt-1">{categories.length} catégorie(s)</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("cats.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {categories.length} {t("cats.count")}
+          </p>
         </div>
         <Button onClick={() => openEdit({ ...empty })}>
-          <Plus className="size-4" /> Ajouter une catégorie
+          <Plus className="size-4" /> {t("cats.add")}
         </Button>
       </div>
 
@@ -160,20 +167,20 @@ function AdminCategoriesPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-medium w-16">Ordre</th>
-              <th className="text-left px-4 py-3 font-medium w-20">Visuel</th>
-              <th className="text-left px-4 py-3 font-medium">Nom FR</th>
-              <th className="text-left px-4 py-3 font-medium">Slug</th>
-              <th className="text-right px-4 py-3 font-medium">Produits</th>
-              <th className="text-center px-4 py-3 font-medium">Actif</th>
+              <th className="text-left px-4 py-3 font-medium w-16">{t("cats.col.order")}</th>
+              <th className="text-left px-4 py-3 font-medium w-20">{t("cats.col.visual")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("cats.col.nameFr")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("cats.col.slug")}</th>
+              <th className="text-right px-4 py-3 font-medium">{t("cats.col.products")}</th>
+              <th className="text-center px-4 py-3 font-medium">{t("common.active")}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Chargement…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("layout.loading")}</td></tr>
             ) : categories.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Aucune catégorie</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("cats.empty")}</td></tr>
             ) : (
               categories.map((c) => (
                 <tr key={c.id} className="border-t border-border hover:bg-muted/30">
@@ -186,11 +193,11 @@ function AdminCategoriesPage() {
                         className="h-10 w-10 rounded flex items-center justify-center text-xs font-medium text-white"
                         style={{ background: c.color }}
                       >
-                        {c.icon || c.name_fr.slice(0, 1)}
+                        {c.icon || displayName(c).slice(0, 1)}
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-medium">{c.name_fr}</td>
+                  <td className="px-4 py-3 font-medium">{displayName(c)}</td>
                   <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{c.slug}</td>
                   <td className="px-4 py-3 text-right">{counts[c.slug] || 0}</td>
                   <td className="px-4 py-3 text-center">
@@ -216,35 +223,35 @@ function AdminCategoriesPage() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? "Modifier la catégorie" : "Nouvelle catégorie"}</DialogTitle>
+            <DialogTitle>{editing?.id ? t("cats.editTitle") : t("cats.newTitle")}</DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="grid grid-cols-2 gap-4 mt-2">
-              <Field label="Nom FR *" value={editing.name_fr || ""} onChange={onNameFrChange} />
-              <Field label="Nom EN *" value={editing.name_en || ""} onChange={(v) => setEditing({ ...editing, name_en: v })} />
+              <Field label={t("cats.field.nameFr")} value={editing.name_fr || ""} onChange={onNameFrChange} />
+              <Field label={t("cats.field.nameEn")} value={editing.name_en || ""} onChange={(v) => setEditing({ ...editing, name_en: v })} />
               <Field
-                label="Slug *"
+                label={t("cats.field.slug")}
                 value={editing.slug || ""}
                 onChange={(v) => { setSlugManuallyEdited(true); setEditing({ ...editing, slug: slugify(v) }); }}
               />
               <Field
-                label="Icône Lucide (ex: Package)"
+                label={t("cats.field.icon")}
                 value={editing.icon || ""}
                 onChange={(v) => setEditing({ ...editing, icon: v })}
               />
               <Field
-                label="Couleur (hex)"
+                label={t("cats.field.color")}
                 value={editing.color || "#A08CFF"}
                 onChange={(v) => setEditing({ ...editing, color: v })}
               />
               <Field
-                label="Ordre"
+                label={t("common.order")}
                 type="number"
                 value={String(editing.sort_order ?? 0)}
                 onChange={(v) => setEditing({ ...editing, sort_order: Number(v) })}
               />
               <div className="col-span-2">
-                <Label>Image de catégorie</Label>
+                <Label>{t("cats.field.image")}</Label>
                 <CategoryImageUploader
                   value={editing.image_url || ""}
                   onChange={(url) => setEditing({ ...editing, image_url: url })}
@@ -255,13 +262,13 @@ function AdminCategoriesPage() {
                   checked={editing.is_active ?? true}
                   onCheckedChange={(v) => setEditing({ ...editing, is_active: v })}
                 />
-                <Label>Catégorie active</Label>
+                <Label>{t("cats.field.activeLabel")}</Label>
               </div>
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setEditing(null)}>Annuler</Button>
-            <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>{t("common.cancel")}</Button>
+            <Button onClick={save} disabled={saving}>{saving ? t("common.saving") : t("common.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -281,13 +288,14 @@ function Field({
 }
 
 function CategoryImageUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { t } = useAdminI18n();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const upload = async (file: File) => {
-    if (!file.type.startsWith("image/")) return toast.error("Le fichier doit être une image");
-    if (file.size > 5 * 1024 * 1024) return toast.error("Image trop lourde (max 5 Mo)");
+    if (!file.type.startsWith("image/")) return toast.error(t("common.imageMustBe"));
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("common.imageTooLarge"));
     setUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -301,14 +309,14 @@ function CategoryImageUploader({ value, onChange }: { value: string; onChange: (
     const { data } = supabase.storage.from("category-images").getPublicUrl(path);
     onChange(data.publicUrl);
     setUploading(false);
-    toast.success("Image téléversée");
+    toast.success(t("common.imageUploaded"));
   };
 
   return (
     <div className="mt-1.5 space-y-2">
       {value ? (
         <div className="relative inline-block">
-          <img src={value} alt="Aperçu" className="h-32 w-32 rounded-lg object-cover border border-border" />
+          <img src={value} alt={t("common.preview")} className="h-32 w-32 rounded-lg object-cover border border-border" />
           <button
             type="button"
             onClick={() => onChange("")}
@@ -334,9 +342,9 @@ function CategoryImageUploader({ value, onChange }: { value: string; onChange: (
         >
           <Upload className="size-6 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            {uploading ? "Téléversement…" : "Glissez une image ou cliquez"}
+            {uploading ? t("common.uploading") : t("common.dragImage")}
           </p>
-          <p className="text-xs text-muted-foreground">PNG, JPG, WEBP — max 5 Mo</p>
+          <p className="text-xs text-muted-foreground">{t("common.imageHint")}</p>
         </div>
       )}
       <input
@@ -351,7 +359,7 @@ function CategoryImageUploader({ value, onChange }: { value: string; onChange: (
         }}
       />
       <Input
-        placeholder="ou collez une URL d'image"
+        placeholder={t("common.orPasteUrl")}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

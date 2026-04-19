@@ -55,6 +55,7 @@ const STORAGE_KEY = "setup-paris-cart";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -64,12 +65,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Don't persist until we've loaded the existing cart from storage,
+    // otherwise the empty initial state would overwrite it.
+    if (!hydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
   // Two cart lines are considered the same only if same product AND same option selection
   const optionsKey = (opts?: SelectedOption[]) =>

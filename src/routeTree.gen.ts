@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as DevisRouteImport } from './routes/devis'
 import { Route as CglRouteImport } from './routes/cgl'
@@ -23,6 +25,16 @@ import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
   id: '/mentions-legales',
   path: '/mentions-legales',
@@ -96,6 +108,8 @@ export interface FileRoutesByFullPath {
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
@@ -110,6 +124,8 @@ export interface FileRoutesByTo {
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
@@ -126,6 +142,8 @@ export interface FileRoutesById {
   '/cgl': typeof CglRoute
   '/devis': typeof DevisRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/auth': typeof AdminAuthRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/products': typeof AdminProductsRoute
@@ -143,6 +161,8 @@ export interface FileRouteTypes {
     | '/cgl'
     | '/devis'
     | '/mentions-legales'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/admin/auth'
     | '/admin/categories'
     | '/admin/products'
@@ -157,6 +177,8 @@ export interface FileRouteTypes {
     | '/cgl'
     | '/devis'
     | '/mentions-legales'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/admin/auth'
     | '/admin/categories'
     | '/admin/products'
@@ -172,6 +194,8 @@ export interface FileRouteTypes {
     | '/cgl'
     | '/devis'
     | '/mentions-legales'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/admin/auth'
     | '/admin/categories'
     | '/admin/products'
@@ -188,12 +212,28 @@ export interface RootRouteChildren {
   CglRoute: typeof CglRoute
   DevisRoute: typeof DevisRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mentions-legales': {
       id: '/mentions-legales'
       path: '/mentions-legales'
@@ -313,6 +353,8 @@ const rootRouteChildren: RootRouteChildren = {
   CglRoute: CglRoute,
   DevisRoute: DevisRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   ProduitSlugRoute: ProduitSlugRoute,
 }

@@ -645,8 +645,8 @@ function ProductPage() {
                       : qty > availableStock
                         ? "border-destructive/40 bg-destructive/5 text-destructive"
                         : availableStock <= 2
-                          ? "border-gold/40 bg-gold/5 text-gold-foreground"
-                          : "border-emerald-500/30 bg-emerald-500/5 text-emerald-700",
+                          ? "border-gold/40 bg-gold/5 text-gold"
+                          : "border-accent/40 bg-accent/5 text-accent",
               )}
             >
               <span className="mt-0.5 size-2 rounded-full shrink-0 bg-current" />

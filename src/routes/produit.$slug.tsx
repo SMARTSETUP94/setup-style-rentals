@@ -687,11 +687,27 @@ function ProductPage() {
             </div>
           </div>
 
-          {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
-          {optionCategories.length > 0 && !is3DMode && (
+          {/* 3D configurator recap (informational, sent as comment with the quote) */}
+          {is3DMode && configuratorRecap && (
+            <div className="mt-8 rounded-xl border border-gold/40 bg-gold/5 p-5 animate-fade-in">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="size-4 text-gold" />
+                <div className="text-sm font-semibold">{t("product.configRecapTitle")}</div>
+              </div>
+              <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
+                {configuratorRecap}
+              </pre>
+              <div className="mt-3 pt-3 border-t border-gold/30 text-xs text-foreground/80">
+                ⚠️ {t("product.configRecapNotice")}
+              </div>
+            </div>
+          )}
+
+          {/* Customization options — always visible (also in 3D mode, with notice) */}
+          {optionCategories.length > 0 && (
             <div className="mt-8 space-y-5 animate-fade-in">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {t("product.customize")}
+                {is3DMode ? t("product.optionsStillRequired") : t("product.customize")}
               </div>
               {optionCategories.map((cat) => {
                 const opts = productOptions

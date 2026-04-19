@@ -309,6 +309,30 @@ function ProductPage() {
     return synthetic;
   };
 
+  /** Reset the 3D configurator: clear local state and reload the iframe(s) to default. */
+  const handleResetConfigurator = () => {
+    setConfiguratorData(null);
+    setConfiguratorRecap("");
+    [inlineIframeRef.current, modalIframeRef.current].forEach((frame) => {
+      if (!frame) return;
+      try {
+        frame.contentWindow?.postMessage({ type: "reset-config" }, "*");
+      } catch {
+        // ignore cross-origin
+      }
+      // Force reload to guarantee defaults
+      const src = frame.src;
+      frame.src = "about:blank";
+      setTimeout(() => {
+        if (frame) frame.src = src;
+      }, 50);
+    });
+    toast.success(
+      lang === "fr" ? "Configuration réinitialisée" : "Configuration reset",
+      { icon: <RotateCcw className="size-4" /> },
+    );
+  };
+
   const handleAdd = () => {
     if (!calc) return;
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);

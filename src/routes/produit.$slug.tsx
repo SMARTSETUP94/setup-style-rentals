@@ -618,16 +618,6 @@ function ProductPage() {
                 image_url={product.image_url}
                 className="w-full h-full object-cover"
               />
-              {product.configurator_url && (
-                <button
-                  type="button"
-                  onClick={() => setShow3D(true)}
-                  className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium bg-gold text-gold-foreground hover:bg-gold/90 transition-colors shadow-md"
-                >
-                  <Sparkles className="size-3.5" />
-                  {t("product.customizeIn3D")}
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -651,6 +641,18 @@ function ProductPage() {
             <div className="mt-4 text-sm">
               <span className="text-muted-foreground">Dimensions :</span> <span>{product.dimensions}</span>
             </div>
+          )}
+
+          {/* Single 3D mode toggle — only visible when configurator is available and not yet active */}
+          {product.configurator_url && !show3D && (
+            <button
+              type="button"
+              onClick={() => setShow3D(true)}
+              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition-all duration-300 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30"
+            >
+              <Sparkles className="size-4" />
+              {t("product.customizeIn3D")}
+            </button>
           )}
 
           {/* 3D mode: close button (returns to simple options) */}
@@ -694,13 +696,7 @@ function ProductPage() {
             </div>
           </div>
 
-          {/* Customization options — hidden in 3D mode (handled by configurator) */}
-          {optionCategories.length > 0 && show3D && (
-            <div className="mt-8 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-4 text-sm text-muted-foreground flex items-start gap-2">
-              <Wand2 className="size-4 text-gold shrink-0 mt-0.5" />
-              <span>{t("product.optionsManagedIn3D")}</span>
-            </div>
-          )}
+          {/* Customization options — completely hidden in 3D mode (handled by configurator) */}
           {optionCategories.length > 0 && !show3D && (
             <div className="mt-8 space-y-5">
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">

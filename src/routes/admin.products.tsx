@@ -166,6 +166,8 @@ function AdminProductsPage() {
       sort_order: Number(editing.sort_order) || 0,
       is_active: editing.is_active ?? true,
       stock_total: Math.max(0, Number(editing.stock_total ?? 1) || 0),
+      quantity_discounts: (editing.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS) as never,
+      duration_discounts: (editing.duration_discounts ?? []) as never,
     };
     const res = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)

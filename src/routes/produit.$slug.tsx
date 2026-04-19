@@ -394,7 +394,9 @@ function ProductPage() {
     setAutoSelectedCatIds(new Set());
   }, [is3DMode]);
 
-  const activeSelectedOptionsList = is3DMode ? [] : selectedOptionsList;
+  // DB-stored paid options always apply (even in 3D mode the client must still
+  // pick them — the 3D recap is informational and attached as a comment).
+  const activeSelectedOptionsList = selectedOptionsList;
   const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
 
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */

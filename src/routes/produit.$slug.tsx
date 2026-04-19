@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, type SelectedOption } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface OptionCategory {
   id: string;
@@ -554,22 +558,75 @@ function ProductPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground">{t("product.startDate")}</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      data-testid="start-date-trigger"
+                      className={cn(
+                        "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
+                        !startDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="size-4 shrink-0 opacity-60" />
+                      {startDate
+                        ? format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })
+                        : lang === "fr" ? "Choisir une date" : "Pick a date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate ? parseISO(startDate) : undefined}
+                      onSelect={(d) => {
+                        if (!d) return;
+                        setStartDate(format(d, "yyyy-MM-dd"));
+                        if (endDate && parseISO(endDate) < d) {
+                          setEndDate(format(d, "yyyy-MM-dd"));
+                        }
+                      }}
+                      disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                      locale={lang === "fr" ? dfFr : dfEn}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">{t("product.endDate")}</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate}
-                  className="mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      data-testid="end-date-trigger"
+                      className={cn(
+                        "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
+                        !endDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="size-4 shrink-0 opacity-60" />
+                      {endDate
+                        ? format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn })
+                        : lang === "fr" ? "Choisir une date" : "Pick a date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate ? parseISO(endDate) : undefined}
+                      onSelect={(d) => {
+                        if (!d) return;
+                        setEndDate(format(d, "yyyy-MM-dd"));
+                      }}
+                      disabled={(d) => {
+                        const min = startDate ? parseISO(startDate) : new Date(new Date().setHours(0, 0, 0, 0));
+                        return d < min;
+                      }}
+                      locale={lang === "fr" ? dfFr : dfEn}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 

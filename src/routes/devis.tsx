@@ -286,8 +286,8 @@ function QuotePage() {
                             <button onClick={() => update(item.productId, { quantity: item.quantity + 1 })} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
                           </div>
                           <div className="text-right">
-                            {volumeDiscount(item.quantity) > 0 && (
-                              <div className="text-[11px] text-accent">-{Math.round(volumeDiscount(item.quantity) * 100)}%</div>
+                            {lt.qtyRate + lt.durationRate > 0 && (
+                              <div className="text-[11px] text-accent">-{Math.round((lt.qtyRate + lt.durationRate) * 100)}%</div>
                             )}
                             <div className="font-semibold">{formatPrice(lt.net, lang)}</div>
                           </div>

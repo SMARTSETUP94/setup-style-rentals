@@ -160,6 +160,7 @@ const DICT: Dict = {
   "cart.setup": { fr: "Installation", en: "Setup" },
   "cart.pickup": { fr: "Reprise", en: "Pickup" },
   "cart.configRecap": { fr: "Configuration 3D", en: "3D configuration" },
+  "cart.pickDates": { fr: "Choisir les dates de location", en: "Pick rental dates" },
   "cart.quoteSimulation": { fr: "Simulation de devis", en: "Quote simulation" },
   "cart.col.product": { fr: "Produit", en: "Product" },
   "cart.col.qty": { fr: "Qté", en: "Qty" },

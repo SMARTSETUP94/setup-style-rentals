@@ -70,8 +70,13 @@ function RoadmapPage() {
             {done.map((item) => (
               <li key={item.title} className="px-4 py-3 flex gap-3">
                 <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-500 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">{item.title}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="font-medium text-sm">{item.title}</p>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium shrink-0">
+                      {item.date}
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                 </div>
               </li>

@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LogOut, Package, FileText, Layers, Settings, Globe, Menu, X, LayoutDashboard, CalendarDays } from "lucide-react";
+import { LogOut, Package, FileText, Layers, Settings, Globe, Menu, X, LayoutDashboard, CalendarDays, Map } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,7 @@ function AdminLayout() {
         <NavItem to="/admin/calendrier" icon={<CalendarDays className="size-4" />} label={t("layout.calendar")} />
         <NavItem to="/admin/categories" icon={<Layers className="size-4" />} label={t("layout.categories")} />
         <NavItem to="/admin/products" icon={<Package className="size-4" />} label={t("layout.products")} />
+        <NavItem to="/admin/roadmap" icon={<Map className="size-4" />} label="Roadmap" />
         <NavItem to="/admin/settings" icon={<Settings className="size-4" />} label={t("layout.settings")} />
       </nav>
       <div className="border-t border-border pt-4 space-y-3">

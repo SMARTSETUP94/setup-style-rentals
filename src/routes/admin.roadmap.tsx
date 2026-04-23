@@ -9,16 +9,14 @@ export const Route = createFileRoute("/admin/roadmap")({
 
 type Status = "done" | "in-progress" | "planned";
 
-const done: { title: string; description: string }[] = [
-  { title: "Catalogue produit complet", description: "Catégories, fiches produits, options, recherche et filtres." },
-  { title: "Configurateur 3D", description: "Iframe interactive avec postMessage (Cornhole, Stèle Miroir, etc.)." },
-  { title: "Système de devis", description: "Panier, demande de devis, calcul HT/TTC, caution, frais logistiques." },
-  { title: "Espace administrateur", description: "Authentification, gestion produits, catégories, options et paramètres." },
-  { title: "Suivi des demandes", description: "Liste des devis, statuts, détails client et logistique." },
-  { title: "Calendrier événements", description: "Vue mensuelle des devis confirmés et livrés." },
-  { title: "Bilingue FR / EN", description: "Site public et back-office traduits." },
-  { title: "SEO & sitemap", description: "Métadonnées par route, robots.txt et sitemap.xml dynamiques." },
-  { title: "Domaine personnalisé", description: "catalogue.setup.paris en production." },
+const done: { title: string; description: string; date: string }[] = [
+  { title: "Catalogue produits avec fiches détaillées", description: "Pages produits complètes avec descriptions, dimensions, prix et galeries.", date: "Mars 2025" },
+  { title: "Configurateurs 3D intégrés (17 produits)", description: "Iframes interactives avec postMessage pour personnalisation en temps réel.", date: "Mars 2025" },
+  { title: "Système de devis / panier", description: "Ajout au panier, demande de devis, calcul HT/TTC, caution et frais logistiques.", date: "Mars 2025" },
+  { title: "Page admin avec gestion produits", description: "Création, édition, activation, options et remises par produit.", date: "Mars 2025" },
+  { title: "Gestion des catégories", description: "CRUD complet des catégories avec visuels, ordre et statut actif.", date: "Mars 2025" },
+  { title: "Gestion des configurateurs 3D", description: "Upload HTML ou URL externe, options JSON envoyées via postMessage.", date: "Avril 2025" },
+  { title: "Intégration Netlify pour les configurateurs", description: "Hébergement dédié sur setup-paris-configurators.netlify.app.", date: "Avril 2025" },
 ];
 
 const upcoming: { title: string; description: string; status: Exclude<Status, "done"> }[] = [
@@ -72,8 +70,13 @@ function RoadmapPage() {
             {done.map((item) => (
               <li key={item.title} className="px-4 py-3 flex gap-3">
                 <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-500 shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">{item.title}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="font-medium text-sm">{item.title}</p>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium shrink-0">
+                      {item.date}
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                 </div>
               </li>

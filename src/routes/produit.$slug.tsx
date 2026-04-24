@@ -296,6 +296,34 @@ function ProductPage() {
     }
   };
 
+  /** Replay the previously-saved configuration into a freshly-loaded iframe.
+   * Sends both a generic `restore-config` payload (newer Pro configurators)
+   * and per-group `parent-set-config` messages (legacy support) so the user
+   * lands back on the exact options they had picked before clicking Modifier. */
+  const restoreConfigToIframe = (frame: HTMLIFrameElement | null) => {
+    if (!frame || !configuratorData) return;
+    const win = frame.contentWindow;
+    if (!win) return;
+    try {
+      // Newer Pro configurators (Basketball, Chamboule-tout, Mini-Golf, …)
+      // accept the full payload back.
+      win.postMessage({ type: "restore-config", configuration: configuratorData }, "*");
+      // Legacy fallback: per-field messages keyed by the configurator group.
+      const opts = product?.configurator_options ?? {};
+      for (const groupKey of Object.keys(opts)) {
+        const value =
+          configuratorData[`${groupKey}Finition`] ??
+          configuratorData[`${groupKey}Option`] ??
+          configuratorData[groupKey];
+        if (typeof value === "string") {
+          win.postMessage({ type: "parent-set-config", group: groupKey, value }, "*");
+        }
+      }
+    } catch {
+      // ignore cross-origin failures
+    }
+  };
+
   // Listen for configurator messages
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {

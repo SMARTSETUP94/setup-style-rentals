@@ -71,6 +71,11 @@ interface ConfiguratorMessage {
   configuration?: ConfiguratorConfigData;
   share_url?: string;
   height?: number;
+  /** Optional explicit signal flags some configurators send alongside a
+   *  `*-config` payload to mark a deliberate user "Save" click. */
+  action?: string;
+  event?: string;
+  trigger?: string;
 }
 
 interface Product {

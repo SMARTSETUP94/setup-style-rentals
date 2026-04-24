@@ -15,6 +15,16 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -61,6 +71,11 @@ interface ConfiguratorMessage {
   configuration?: ConfiguratorConfigData;
   share_url?: string;
   height?: number;
+  /** Optional explicit signal flags some configurators send alongside a
+   *  `*-config` payload to mark a deliberate user "Save" click. */
+  action?: string;
+  event?: string;
+  trigger?: string;
 }
 
 interface Product {
@@ -185,6 +200,10 @@ function ProductPage() {
   const [iframeHeight, setIframeHeight] = useState<number>(900);
   const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownInitialConfigRef = useRef<boolean>(false);
+  /** Controls the "are you sure you want to close?" dialog shown when the
+   *  user clicks Close on the immersive 3D iframe before sending an
+   *  explicit save signal from the configurator. */
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   /** Timestamp (ms) when the immersive 3D iframe was last opened. Used to
    *  ignore the burst of auto-emitted `*-config` messages that some
    *  configurators fire on initial mount/render — only messages arriving
@@ -365,17 +384,25 @@ function ProductPage() {
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
-        // Configurators auto-emit a `*-config` burst on initial mount AND
-        // on every interactive change (color picker, dropdowns, etc.) —
-        // only an explicit "Enregistrer" click should auto-close the
-        // iframe. We treat any message arriving within the first 3 minutes
-        // of opening as part of the configuration session and silently
-        // update the recap state. Past that grace window, we assume the
-        // user has clearly indicated "save" and close the immersive view.
-        const GRACE_MS = 3 * 60 * 1000; // 3 minutes
-        const elapsed = Date.now() - iframeOpenedAtRef.current;
-        const isUserSave = elapsed > GRACE_MS;
-        if (!isUserSave) {
+        // Auto-close ONLY on an explicit save signal. Configurators emit
+        // `*-config` continuously (initial mount, every interactive change),
+        // so a time-based heuristic is unreliable. We accept any of the
+        // following as an explicit "Save" intent:
+        //   • `d.type` ending in `-save` / `-saved` (e.g. `cornhole-save`)
+        //   • `d.action === "save"` / `d.event === "save"` /
+        //     `d.trigger === "save"` flags piggy-backed onto `*-config`
+        // Otherwise we silently persist the recap and keep the iframe open.
+        // The user closes manually via the "Fermer" button (with confirm).
+        const flag = (d.action ?? d.event ?? d.trigger ?? "").toLowerCase();
+        const typeStr = d.type.toLowerCase();
+        const isExplicitSave =
+          flag === "save" ||
+          flag === "saved" ||
+          flag === "submit" ||
+          flag === "confirm" ||
+          typeStr.endsWith("-save") ||
+          typeStr.endsWith("-saved");
+        if (!isExplicitSave) {
           hasShownInitialConfigRef.current = true;
           return;
         }
@@ -389,6 +416,25 @@ function ProductPage() {
         // Auto-close the immersive 3D mode so the user lands back on the
         // product page where they can pick dates & quantity. The recap is
         // already preserved in state and will render under the CTA.
+        setIs3DMode(false);
+      }
+      // Standalone explicit "save" message types (no `-config` suffix).
+      if (
+        typeof d.type === "string" &&
+        (d.type.endsWith("-save") || d.type.endsWith("-saved") || d.type === "configurator-save")
+      ) {
+        const cfg = d.configuration ?? d.data;
+        if (cfg) setConfiguratorData(cfg);
+        if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+        if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
+        setHasSavedConfig(true);
+        if (configToastTimer.current) clearTimeout(configToastTimer.current);
+        configToastTimer.current = setTimeout(() => {
+          toast.success(t("product.configSavedToast"), {
+            icon: <Check className="size-4" />,
+            duration: 2200,
+          });
+        }, 300);
         setIs3DMode(false);
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
@@ -721,7 +767,17 @@ function ProductPage() {
             />
             <button
               type="button"
-              onClick={() => setIs3DMode(false)}
+              onClick={() => {
+                // If the user has interacted with the configurator (we
+                // received at least one silent `*-config` update) but never
+                // sent an explicit "Save" signal, confirm before leaving
+                // immersive mode so they can finish saving in the iframe.
+                if (hasShownInitialConfigRef.current) {
+                  setConfirmCloseOpen(true);
+                  return;
+                }
+                setIs3DMode(false);
+              }}
               className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.close3D")}
             >
@@ -739,6 +795,32 @@ function ProductPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm before closing the 3D iframe when the user has touched the
+          configurator but not yet sent an explicit save signal. The recap is
+          already preserved in state, so closing is safe — we just want to
+          give them a chance to save inside the iframe first. */}
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("product.confirmClose3DTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("product.confirmClose3DDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("product.confirmClose3DKeepOpen")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmCloseOpen(false);
+                setIs3DMode(false);
+              }}
+            >
+              {t("product.confirmClose3DLeave")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="container-x py-5">
         <Breadcrumb>

@@ -233,6 +233,22 @@ const DICT: Dict = {
     fr: "Configuration disponible, mais contenu non affichable",
     en: "Configuration available, but content cannot be displayed",
   },
+  "product.confirmClose3DTitle": {
+    fr: "Fermer le configurateur ?",
+    en: "Close the configurator?",
+  },
+  "product.confirmClose3DDesc": {
+    fr: "Vous avez modifié votre configuration mais ne l'avez pas enregistrée dans le configurateur. Si vous fermez maintenant, votre dernière sélection sera tout de même conservée pour votre devis.",
+    en: "You changed your configuration but didn't save it in the configurator. If you close now, your latest selection will still be kept for your quote.",
+  },
+  "product.confirmClose3DKeepOpen": {
+    fr: "Continuer à configurer",
+    en: "Keep configuring",
+  },
+  "product.confirmClose3DLeave": {
+    fr: "Fermer et garder ma configuration",
+    en: "Close and keep my configuration",
+  },
 
   // Common
   "common.back": { fr: "Retour", en: "Back" },

@@ -500,6 +500,30 @@ function ProductPage() {
   );
   const activeConfiguratorOptionsList = hasPendingConfig ? configuratorOptionsList : [];
 
+  /** Sanitized version of the iframe-provided recap HTML. The configurator
+   * iframes are trusted today, but `recap_html` is still untrusted user
+   * input as far as our app is concerned (cross-origin postMessage payload),
+   * so we strip every script/handler/dangerous URL before rendering it
+   * with `dangerouslySetInnerHTML`. */
+  const safeRecapHtml = useMemo(() => {
+    if (!configuratorRecapHtml) return "";
+    if (typeof window === "undefined") return ""; // SSR — render nothing
+    return DOMPurify.sanitize(configuratorRecapHtml, {
+      ALLOWED_TAGS: [
+        "div", "span", "p", "br", "hr",
+        "strong", "b", "em", "i", "u", "small", "sup", "sub", "mark",
+        "ul", "ol", "li",
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        "table", "thead", "tbody", "tr", "th", "td",
+        "img",
+      ],
+      ALLOWED_ATTR: ["class", "style", "src", "alt", "title", "width", "height"],
+      ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|#|\/)/i,
+      FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus"],
+      KEEP_CONTENT: true,
+    });
+  }, [configuratorRecapHtml]);
+
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
   const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {
     if (!opt) return false;

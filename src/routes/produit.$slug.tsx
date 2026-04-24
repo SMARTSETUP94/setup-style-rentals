@@ -616,42 +616,14 @@ function ProductPage() {
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
-          {product.configurator_url && is3DMode ? (
-            <div key="visual-3d" className="animate-fade-in">
-              <iframe
-                ref={inlineIframeRef}
-                src={product.configurator_url}
-                title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
-                className="block w-full"
-                style={{ height: `${iframeHeight}px`, minHeight: "600px", maxHeight: "min(80vh, 1200px)", border: "none" }}
-                allow="clipboard-write; fullscreen"
-                onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const el = inlineIframeRef.current as (HTMLIFrameElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
-                  if (!el) return;
-                  const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
-                  req?.().catch(() => {});
-                }}
-                className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={t("product.fullscreen")}
-              >
-                <Sparkles className="size-3.5" />
-                {t("product.fullscreen")}
-              </button>
-            </div>
-          ) : (
-            <div key="visual-image" className="aspect-[4/3] relative animate-fade-in">
-              <ProductImage
-                name={pickLang(product, "name", lang)}
-                category_slug={product.category_slug}
-                image_url={product.image_url}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+          <div key="visual-image" className="aspect-[4/3] relative animate-fade-in">
+            <ProductImage
+              name={pickLang(product, "name", lang)}
+              category_slug={product.category_slug}
+              image_url={product.image_url}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         {/* Details — 40% on desktop */}

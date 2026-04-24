@@ -41,6 +41,8 @@ export interface CartItem {
   durationDiscounts?: DurationDiscountTier[];
   /** Multiline summary of the 3D configurator selection (sent by the iframe). */
   configuratorRecap?: string;
+  /** Optional pre-styled HTML summary from newer Pro configurators. Preferred for rendering when present. */
+  configuratorRecapHtml?: string;
   /** Public URL of an uploaded client logo (when "Avec logo personnalisé" option is selected). */
   logoUrl?: string;
   /** Original filename of the uploaded logo, for display purposes. */

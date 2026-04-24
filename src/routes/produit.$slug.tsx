@@ -767,7 +767,17 @@ function ProductPage() {
             />
             <button
               type="button"
-              onClick={() => setIs3DMode(false)}
+              onClick={() => {
+                // If the user has interacted with the configurator (we
+                // received at least one silent `*-config` update) but never
+                // sent an explicit "Save" signal, confirm before leaving
+                // immersive mode so they can finish saving in the iframe.
+                if (hasShownInitialConfigRef.current) {
+                  setConfirmCloseOpen(true);
+                  return;
+                }
+                setIs3DMode(false);
+              }}
               className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.close3D")}
             >

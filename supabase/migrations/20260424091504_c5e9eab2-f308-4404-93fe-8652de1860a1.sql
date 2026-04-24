@@ -1,0 +1,1 @@
+UPDATE public.products SET configurator_url = 'https://catloc-configurateurs.netlify.app/basketball/', updated_at = now() WHERE slug = 'panier-basketball';

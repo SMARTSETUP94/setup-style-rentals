@@ -4,13 +4,13 @@ import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, Calenda
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
-import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
+import { sanitizeRecapHtml } from "@/lib/sanitize-recap";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -500,29 +500,13 @@ function ProductPage() {
   );
   const activeConfiguratorOptionsList = hasPendingConfig ? configuratorOptionsList : [];
 
-  /** Sanitized version of the iframe-provided recap HTML. The configurator
-   * iframes are trusted today, but `recap_html` is still untrusted user
-   * input as far as our app is concerned (cross-origin postMessage payload),
-   * so we strip every script/handler/dangerous URL before rendering it
-   * with `dangerouslySetInnerHTML`. */
-  const safeRecapHtml = useMemo(() => {
-    if (!configuratorRecapHtml) return "";
-    if (typeof window === "undefined") return ""; // SSR — render nothing
-    return DOMPurify.sanitize(configuratorRecapHtml, {
-      ALLOWED_TAGS: [
-        "div", "span", "p", "br", "hr",
-        "strong", "b", "em", "i", "u", "small", "sup", "sub", "mark",
-        "ul", "ol", "li",
-        "h1", "h2", "h3", "h4", "h5", "h6",
-        "table", "thead", "tbody", "tr", "th", "td",
-        "img",
-      ],
-      ALLOWED_ATTR: ["class", "style", "src", "alt", "title", "width", "height"],
-      ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|#|\/)/i,
-      FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus"],
-      KEEP_CONTENT: true,
-    });
-  }, [configuratorRecapHtml]);
+  /** Sanitized version of the iframe-provided recap HTML. `recap_html`
+   * arrives via cross-origin postMessage and MUST be sanitized before
+   * rendering via `dangerouslySetInnerHTML`. */
+  const safeRecapHtml = useMemo(
+    () => sanitizeRecapHtml(configuratorRecapHtml),
+    [configuratorRecapHtml],
+  );
 
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
   const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {

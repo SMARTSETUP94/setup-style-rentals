@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
+import { sanitizeRecapHtml } from "@/lib/sanitize-recap";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -499,6 +500,14 @@ function ProductPage() {
   );
   const activeConfiguratorOptionsList = hasPendingConfig ? configuratorOptionsList : [];
 
+  /** Sanitized version of the iframe-provided recap HTML. `recap_html`
+   * arrives via cross-origin postMessage and MUST be sanitized before
+   * rendering via `dangerouslySetInnerHTML`. */
+  const safeRecapHtml = useMemo(
+    () => sanitizeRecapHtml(configuratorRecapHtml),
+    [configuratorRecapHtml],
+  );
+
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
   const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {
     if (!opt) return false;
@@ -813,11 +822,11 @@ function ProductPage() {
                   {t("product.modifyConfig")}
                 </button>
               </div>
-              {configuratorRecapHtml ? (
+              {safeRecapHtml ? (
                 <div
                   className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
                   // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
+                  dangerouslySetInnerHTML={{ __html: safeRecapHtml }}
                 />
               ) : configuratorRecap ? (
                 <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">

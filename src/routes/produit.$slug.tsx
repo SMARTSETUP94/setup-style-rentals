@@ -329,10 +329,18 @@ function ProductPage() {
     const onMsg = (e: MessageEvent) => {
       const d = e.data as ConfiguratorMessage | undefined;
       if (!d || typeof d !== "object") return;
-      if (d.type === "cornhole-ready") {
-        // Iframe just signalled it's ready: push prices to whichever iframe sent it
+      // Generic "ready" handshake — accept legacy `cornhole-ready` and any
+      // newer `*-ready` / `configurator-ready` signal so we know the iframe
+      // is mounted and listening for `set-prices` / `restore-config`.
+      if (
+        typeof d.type === "string" &&
+        (d.type === "configurator-ready" || d.type.endsWith("-ready"))
+      ) {
         const src = e.source as Window | null;
-        if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
+        if (inlineIframeRef.current?.contentWindow === src) {
+          sendPricesToIframe(inlineIframeRef.current);
+          if (configuratorData) restoreConfigToIframe(inlineIframeRef.current);
+        }
       }
       // Accept any "<slug>-config" message from configurator iframes (e.g.
       // cornhole-config, lettres-geantes-config, photobooth-config, …).

@@ -339,19 +339,40 @@ function QuotePage() {
                                   <Wand2 className="size-3" />
                                   {t("cart.configRecap")}
                                 </div>
-                                {item.configuratorRecapHtml ? (
-                                  <div
-                                    className="text-[11px] leading-snug text-foreground/80 [&_*]:max-w-full"
-                                    // eslint-disable-next-line react/no-danger
-                                    dangerouslySetInnerHTML={{
-                                      __html: sanitizeRecapHtml(item.configuratorRecapHtml),
-                                    }}
-                                  />
-                                ) : (
-                                  <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">
-                                    {item.configuratorRecap}
-                                  </pre>
-                                )}
+                                {(() => {
+                                  const safe = sanitizeRecapHtml(item.configuratorRecapHtml);
+                                  // Detect "sanitized to nothing visible" so
+                                  // we never render an empty card.
+                                  let visible = !!safe;
+                                  if (safe && typeof window !== "undefined") {
+                                    const probe = document.createElement("div");
+                                    probe.innerHTML = safe;
+                                    visible =
+                                      (probe.textContent ?? "").trim().length > 0 ||
+                                      probe.querySelector("img") !== null;
+                                  }
+                                  if (visible) {
+                                    return (
+                                      <div
+                                        className="text-[11px] leading-snug text-foreground/80 [&_*]:max-w-full"
+                                        // eslint-disable-next-line react/no-danger
+                                        dangerouslySetInnerHTML={{ __html: safe }}
+                                      />
+                                    );
+                                  }
+                                  if (item.configuratorRecap) {
+                                    return (
+                                      <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">
+                                        {item.configuratorRecap}
+                                      </pre>
+                                    );
+                                  }
+                                  return (
+                                    <div className="text-[11px] italic text-muted-foreground">
+                                      {t("product.configUnrenderable")}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
                             {item.logoUrl && (

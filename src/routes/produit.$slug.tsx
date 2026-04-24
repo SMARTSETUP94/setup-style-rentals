@@ -518,6 +518,21 @@ function ProductPage() {
     [configuratorRecapHtml],
   );
 
+  /** True when the configurator provided some `recap_html` but, after
+   * sanitization, nothing visible would render (every tag was stripped, or
+   * the surviving tags carry no text/image). Drives the fallback message
+   * so the "Configuration choisie" block never looks empty. */
+  const recapHtmlIsEmpty = useMemo(() => {
+    if (!configuratorRecapHtml) return false; // nothing to render at all
+    if (!safeRecapHtml) return true; // 100% stripped
+    if (typeof window === "undefined") return false;
+    const probe = document.createElement("div");
+    probe.innerHTML = safeRecapHtml;
+    const hasText = (probe.textContent ?? "").trim().length > 0;
+    const hasMedia = probe.querySelector("img") !== null;
+    return !hasText && !hasMedia;
+  }, [configuratorRecapHtml, safeRecapHtml]);
+
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
   const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {
     if (!opt) return false;
@@ -832,7 +847,7 @@ function ProductPage() {
                   {t("product.modifyConfig")}
                 </button>
               </div>
-              {safeRecapHtml ? (
+              {safeRecapHtml && !recapHtmlIsEmpty ? (
                 <div
                   className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
                   // eslint-disable-next-line react/no-danger
@@ -842,6 +857,10 @@ function ProductPage() {
                 <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
                   {configuratorRecap}
                 </pre>
+              ) : recapHtmlIsEmpty ? (
+                <div className="text-xs italic text-muted-foreground">
+                  {t("product.configUnrenderable")}
+                </div>
               ) : null}
             </div>
           )}

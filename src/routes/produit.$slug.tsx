@@ -552,6 +552,12 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
+    // Products with a 3D configurator must be configured first.
+    if (product?.configurator_url && !hasPendingConfig) {
+      toast.error(t("product.configRequiredFirst"));
+      setIs3DMode(true);
+      return;
+    }
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
       const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
@@ -588,13 +594,13 @@ function ProductPage() {
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
-      configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
-      configuratorRecapHtml: is3DMode ? configuratorRecapHtml || undefined : undefined,
+      configuratorRecap: configuratorRecap || undefined,
+      configuratorRecapHtml: configuratorRecapHtml || undefined,
       logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
-      is3DMode && (configuratorRecap || configuratorRecapHtml)
+      hasPendingConfig
         ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },

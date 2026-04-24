@@ -119,6 +119,7 @@ function QuotePage() {
           options_per_unit_per_day: lt.optionsPerUnit,
           options_total: lt.optionsTotal,
           configurator_recap: i.configuratorRecap ?? null,
+          configurator_recap_html: i.configuratorRecapHtml ?? null,
           logo_url: i.logoUrl ?? null,
           logo_filename: i.logoFilename ?? null,
         };

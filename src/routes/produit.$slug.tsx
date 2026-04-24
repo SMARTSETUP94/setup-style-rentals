@@ -185,6 +185,11 @@ function ProductPage() {
   const [iframeHeight, setIframeHeight] = useState<number>(900);
   const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownInitialConfigRef = useRef<boolean>(false);
+  /** Timestamp (ms) when the immersive 3D iframe was last opened. Used to
+   *  ignore the burst of auto-emitted `*-config` messages that some
+   *  configurators fire on initial mount/render — only messages arriving
+   *  meaningfully after the open are treated as user "Save" clicks. */
+  const iframeOpenedAtRef = useRef<number>(0);
   /** Always-fresh mirror of `configuratorData` so the long-lived `message`
    *  listener (whose closure is captured once per product) can read the
    *  latest saved configuration when the user clicks "Modifier". */

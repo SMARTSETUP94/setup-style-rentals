@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import { sanitizeRecapHtml } from "@/lib/sanitize-recap";
 import { ProductImage } from "@/components/site/ProductImage";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -342,7 +343,9 @@ function QuotePage() {
                                   <div
                                     className="text-[11px] leading-snug text-foreground/80 [&_*]:max-w-full"
                                     // eslint-disable-next-line react/no-danger
-                                    dangerouslySetInnerHTML={{ __html: item.configuratorRecapHtml }}
+                                    dangerouslySetInnerHTML={{
+                                      __html: sanitizeRecapHtml(item.configuratorRecapHtml),
+                                    }}
                                   />
                                 ) : (
                                   <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">

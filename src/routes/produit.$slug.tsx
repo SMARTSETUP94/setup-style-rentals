@@ -728,6 +728,44 @@ function ProductPage() {
             </button>
           )}
 
+          {/* "Configuration choisie" — shown right under the 3D CTA once the
+              user has clicked "Enregistrer ma configuration" inside the iframe.
+              Persists after immersive mode closes so the user can pick dates
+              & quantity before adding to the quote. */}
+          {product.configurator_url && hasPendingConfig && !is3DMode && (
+            <div className="mt-4 rounded-xl border border-gold/40 bg-gold/5 p-4 animate-fade-in">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold">
+                    <Check className="size-4" />
+                  </span>
+                  <div className="text-sm font-semibold">
+                    {t("product.configChosenTitle")}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIs3DMode(true)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-secondary transition-colors"
+                >
+                  <Wand2 className="size-3.5" />
+                  {t("product.modifyConfig")}
+                </button>
+              </div>
+              {configuratorRecapHtml ? (
+                <div
+                  className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
+                  // eslint-disable-next-line react/no-danger
+                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
+                />
+              ) : configuratorRecap ? (
+                <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
+                  {configuratorRecap}
+                </pre>
+              ) : null}
+            </div>
+          )}
+
           {/* Price grid */}
           <div className="mt-8 rounded-xl bg-secondary/60 border border-border p-5">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">

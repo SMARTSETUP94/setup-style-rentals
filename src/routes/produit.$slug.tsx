@@ -767,7 +767,17 @@ function ProductPage() {
             />
             <button
               type="button"
-              onClick={() => setIs3DMode(false)}
+              onClick={() => {
+                // If the user has interacted with the configurator (we
+                // received at least one silent `*-config` update) but never
+                // sent an explicit "Save" signal, confirm before leaving
+                // immersive mode so they can finish saving in the iframe.
+                if (hasShownInitialConfigRef.current) {
+                  setConfirmCloseOpen(true);
+                  return;
+                }
+                setIs3DMode(false);
+              }}
               className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.close3D")}
             >
@@ -785,6 +795,38 @@ function ProductPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm before closing the 3D iframe when the user has touched the
+          configurator but not yet sent an explicit save signal. The recap is
+          already preserved in state, so closing is safe — we just want to
+          give them a chance to save inside the iframe first.
+
+          IMPORTANT: the immersive 3D block above uses `z-[60]`, so the Radix
+          AlertDialog overlay/content (default `z-50`) would render BEHIND
+          the iframe and clicks on dialog buttons would be swallowed by the
+          configurator. We force both the overlay and the content to `z-[80]`
+          so the dialog sits above the immersive block. */}
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent className="z-[80] [&_~_[data-radix-alert-dialog-overlay]]:z-[80]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("product.confirmClose3DTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("product.confirmClose3DDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("product.confirmClose3DKeepOpen")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmCloseOpen(false);
+                setIs3DMode(false);
+              }}
+            >
+              {t("product.confirmClose3DLeave")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="container-x py-5">
         <Breadcrumb>

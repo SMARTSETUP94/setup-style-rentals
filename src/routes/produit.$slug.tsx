@@ -838,11 +838,11 @@ function ProductPage() {
                   {t("product.modifyConfig")}
                 </button>
               </div>
-              {configuratorRecapHtml ? (
+              {safeRecapHtml ? (
                 <div
                   className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
                   // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
+                  dangerouslySetInnerHTML={{ __html: safeRecapHtml }}
                 />
               ) : configuratorRecap ? (
                 <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">

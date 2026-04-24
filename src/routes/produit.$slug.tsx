@@ -1123,12 +1123,15 @@ function ProductPage() {
           <button
             onClick={handleAdd}
             disabled={
-              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock)) ||
+              !!(product.configurator_url && !hasPendingConfig)
             }
             className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold animate-fade-in"
           >
             <ShoppingBag className="size-5" />
-            {t("product.addToQuote")}
+            {product.configurator_url && !hasPendingConfig
+              ? t("product.configRequiredFirst")
+              : t("product.addToQuote")}
           </button>
 
 

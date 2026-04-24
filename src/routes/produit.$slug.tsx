@@ -316,10 +316,9 @@ function ProductPage() {
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
-        // Debounced "saved" toast — confirms to the user that the live recap
-        // is in sync with the iframe. Skip the very first message (initial
-        // load fires automatically) so we don't pop a toast just for opening
-        // the configurator.
+        // Debounced "saved" toast — confirms the recap was captured.
+        // Skip the very first auto-fire on iframe load so we don't pop a
+        // toast just for opening the configurator.
         if (!hasShownInitialConfigRef.current) {
           hasShownInitialConfigRef.current = true;
         } else {
@@ -330,6 +329,10 @@ function ProductPage() {
               duration: 2200,
             });
           }, 300);
+          // Auto-close the immersive 3D mode so the user lands back on the
+          // product page where they can pick dates & quantity. The recap is
+          // already preserved in state and will render under the CTA.
+          setIs3DMode(false);
         }
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
@@ -432,16 +435,26 @@ function ProductPage() {
   // DB-stored product option whose label matches the configurator choice
   // (e.g., picking "Rouge" in the iframe selects the matching "Rouge" button).
   useEffect(() => {
-    if (is3DMode) return;
+    // Each time the user (re)opens the 3D configurator, reset the
+    // "first message" guard so the next save still triggers the toast.
+    if (is3DMode) {
+      hasShownInitialConfigRef.current = false;
+      setHasSavedConfig(false);
+      return;
+    }
     setAutoSelectedCatIds(new Set());
-    hasShownInitialConfigRef.current = false;
-    setHasSavedConfig(false);
   }, [is3DMode]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still
   // pick them — the 3D recap is informational and attached as a comment).
   const activeSelectedOptionsList = selectedOptionsList;
-  const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
+  // Synthetic options derived from the iframe payload — kept active as long
+  // as we have a saved configuration (even after the immersive view is
+  // closed) so the price recap & quote item include the 3D choices.
+  const hasPendingConfig = Boolean(
+    configuratorRecap || configuratorRecapHtml || configuratorData,
+  );
+  const activeConfiguratorOptionsList = hasPendingConfig ? configuratorOptionsList : [];
 
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
   const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {
@@ -539,6 +552,12 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
+    // Products with a 3D configurator must be configured first.
+    if (product?.configurator_url && !hasPendingConfig) {
+      toast.error(t("product.configRequiredFirst"));
+      setIs3DMode(true);
+      return;
+    }
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
       const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
@@ -575,13 +594,13 @@ function ProductPage() {
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
-      configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
-      configuratorRecapHtml: is3DMode ? configuratorRecapHtml || undefined : undefined,
+      configuratorRecap: configuratorRecap || undefined,
+      configuratorRecapHtml: configuratorRecapHtml || undefined,
       logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
-      is3DMode && (configuratorRecap || configuratorRecapHtml)
+      hasPendingConfig
         ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },
@@ -619,47 +638,6 @@ function ProductPage() {
             >
               <RotateCcw className="size-4" />
             </button>
-
-            {/* Sticky bottom action bar — visible after the user clicks
-                "Enregistrer ma configuration" inside the iframe. Lets them
-                add to the quote (or close 3D) without leaving immersive. */}
-            {hasSavedConfig && (
-              <div className="absolute bottom-0 inset-x-0 z-10 bg-background/95 backdrop-blur border-t border-gold/40 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)] animate-fade-in">
-                <div className="container-x py-3 flex flex-wrap items-center gap-3 justify-between">
-                  <div className="flex items-center gap-2 text-sm font-medium min-w-0">
-                    <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold shrink-0">
-                      <Check className="size-4" />
-                    </span>
-                    <span className="truncate">
-                      {t("product.configSavedToast").replace(/^✓\s*/, "")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIs3DMode(false)}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-secondary transition-colors"
-                    >
-                      {t("product.close3D")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleAdd();
-                        setIs3DMode(false);
-                      }}
-                      disabled={
-                        !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-md bg-gold text-gold-foreground px-4 py-2 text-sm font-semibold hover:bg-gold/90 shadow-md shadow-gold/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      <ShoppingBag className="size-4" />
-                      {t("product.addToQuote")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -750,6 +728,44 @@ function ProductPage() {
             </button>
           )}
 
+          {/* "Configuration choisie" — shown right under the 3D CTA once the
+              user has clicked "Enregistrer ma configuration" inside the iframe.
+              Persists after immersive mode closes so the user can pick dates
+              & quantity before adding to the quote. */}
+          {product.configurator_url && hasPendingConfig && !is3DMode && (
+            <div className="mt-4 rounded-xl border border-gold/40 bg-gold/5 p-4 animate-fade-in">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold">
+                    <Check className="size-4" />
+                  </span>
+                  <div className="text-sm font-semibold">
+                    {t("product.configChosenTitle")}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIs3DMode(true)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-secondary transition-colors"
+                >
+                  <Wand2 className="size-3.5" />
+                  {t("product.modifyConfig")}
+                </button>
+              </div>
+              {configuratorRecapHtml ? (
+                <div
+                  className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
+                  // eslint-disable-next-line react/no-danger
+                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
+                />
+              ) : configuratorRecap ? (
+                <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
+                  {configuratorRecap}
+                </pre>
+              ) : null}
+            </div>
+          )}
+
           {/* Price grid */}
           <div className="mt-8 rounded-xl bg-secondary/60 border border-border p-5">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
@@ -780,29 +796,6 @@ function ProductPage() {
           </div>
 
           {/* 3D configurator recap (informational, sent as comment with the quote) */}
-          {is3DMode && (configuratorRecapHtml || configuratorRecap) && (
-            <div className="mt-8 rounded-xl border border-gold/40 bg-gold/5 p-5 animate-fade-in">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="size-4 text-gold" />
-                <div className="text-sm font-semibold">{t("product.configRecapTitle")}</div>
-              </div>
-              {configuratorRecapHtml ? (
-                <div
-                  className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
-                />
-              ) : (
-                <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
-                  {configuratorRecap}
-                </pre>
-              )}
-              <div className="mt-3 pt-3 border-t border-gold/30 text-xs text-foreground/80">
-                ⚠️ {t("product.configRecapNotice")}
-              </div>
-            </div>
-          )}
-
           {/* Customization options — always visible (also in 3D mode, with notice) */}
           {optionCategories.length > 0 && (
             <div className="mt-8 space-y-5 animate-fade-in">
@@ -1107,12 +1100,15 @@ function ProductPage() {
           <button
             onClick={handleAdd}
             disabled={
-              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock)) ||
+              !!(product.configurator_url && !hasPendingConfig)
             }
             className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold animate-fade-in"
           >
             <ShoppingBag className="size-5" />
-            {t("product.addToQuote")}
+            {product.configurator_url && !hasPendingConfig
+              ? t("product.configRequiredFirst")
+              : t("product.addToQuote")}
           </button>
 
 

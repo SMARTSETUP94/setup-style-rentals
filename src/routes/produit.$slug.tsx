@@ -304,8 +304,12 @@ function ProductPage() {
       // Accept any "<slug>-config" message from configurator iframes (e.g.
       // cornhole-config, lettres-geantes-config, photobooth-config, …).
       if (typeof d.type === "string" && d.type.endsWith("-config") && d.type !== "configurator-resize") {
-        if (d.data) setConfiguratorData(d.data);
+        // Newer Pro configurators send `configuration` (preferred) alongside
+        // `recap_html` (styled HTML) and `recap` (plain text fallback).
+        const cfg = d.configuration ?? d.data;
+        if (cfg) setConfiguratorData(cfg);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+        if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
         setIframeHeight(Math.max(400, Math.min(3000, d.height)));

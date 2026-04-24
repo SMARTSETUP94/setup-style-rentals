@@ -658,7 +658,14 @@ function ProductPage() {
               title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
               className="block w-full h-full border-0"
               allow="clipboard-write; fullscreen"
-              onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
+              onLoad={() => {
+                sendPricesToIframe(inlineIframeRef.current);
+                // Give the configurator a beat to mount its scene before
+                // replaying the saved selection.
+                if (configuratorData) {
+                  setTimeout(() => restoreConfigToIframe(inlineIframeRef.current), 250);
+                }
+              }}
             />
             <button
               type="button"

@@ -384,17 +384,25 @@ function ProductPage() {
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
-        // Configurators auto-emit a `*-config` burst on initial mount AND
-        // on every interactive change (color picker, dropdowns, etc.) —
-        // only an explicit "Enregistrer" click should auto-close the
-        // iframe. We treat any message arriving within the first 3 minutes
-        // of opening as part of the configuration session and silently
-        // update the recap state. Past that grace window, we assume the
-        // user has clearly indicated "save" and close the immersive view.
-        const GRACE_MS = 3 * 60 * 1000; // 3 minutes
-        const elapsed = Date.now() - iframeOpenedAtRef.current;
-        const isUserSave = elapsed > GRACE_MS;
-        if (!isUserSave) {
+        // Auto-close ONLY on an explicit save signal. Configurators emit
+        // `*-config` continuously (initial mount, every interactive change),
+        // so a time-based heuristic is unreliable. We accept any of the
+        // following as an explicit "Save" intent:
+        //   • `d.type` ending in `-save` / `-saved` (e.g. `cornhole-save`)
+        //   • `d.action`/`d.event`/`d.trigger` flags piggy-backed onto
+        //     `*-config` with values like "save", "saved", "submit", "confirm"
+        // Otherwise we silently persist the recap and keep the iframe open;
+        // the user closes manually via the "Fermer" button (with confirm).
+        const flag = (d.action ?? d.event ?? d.trigger ?? "").toLowerCase();
+        const typeStr = d.type.toLowerCase();
+        const isExplicitSave =
+          flag === "save" ||
+          flag === "saved" ||
+          flag === "submit" ||
+          flag === "confirm" ||
+          typeStr.endsWith("-save") ||
+          typeStr.endsWith("-saved");
+        if (!isExplicitSave) {
           hasShownInitialConfigRef.current = true;
           return;
         }
@@ -408,6 +416,25 @@ function ProductPage() {
         // Auto-close the immersive 3D mode so the user lands back on the
         // product page where they can pick dates & quantity. The recap is
         // already preserved in state and will render under the CTA.
+        setIs3DMode(false);
+      }
+      // Standalone explicit "save" message types (no `-config` suffix).
+      if (
+        typeof d.type === "string" &&
+        (d.type.endsWith("-save") || d.type.endsWith("-saved") || d.type === "configurator-save")
+      ) {
+        const cfg = d.configuration ?? d.data;
+        if (cfg) setConfiguratorData(cfg);
+        if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+        if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
+        setHasSavedConfig(true);
+        if (configToastTimer.current) clearTimeout(configToastTimer.current);
+        configToastTimer.current = setTimeout(() => {
+          toast.success(t("product.configSavedToast"), {
+            icon: <Check className="size-4" />,
+            duration: 2200,
+          });
+        }, 300);
         setIs3DMode(false);
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {

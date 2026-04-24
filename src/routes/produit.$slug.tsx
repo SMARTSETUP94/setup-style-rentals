@@ -56,6 +56,9 @@ interface ConfiguratorMessage {
   type: string;
   data?: ConfiguratorConfigData;
   recap?: string;
+  recap_html?: string;
+  configuration?: ConfiguratorConfigData;
+  share_url?: string;
   height?: number;
 }
 
@@ -177,6 +180,7 @@ function ProductPage() {
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
+  const [configuratorRecapHtml, setConfiguratorRecapHtml] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
 
   // Availability
@@ -300,8 +304,12 @@ function ProductPage() {
       // Accept any "<slug>-config" message from configurator iframes (e.g.
       // cornhole-config, lettres-geantes-config, photobooth-config, …).
       if (typeof d.type === "string" && d.type.endsWith("-config") && d.type !== "configurator-resize") {
-        if (d.data) setConfiguratorData(d.data);
+        // Newer Pro configurators send `configuration` (preferred) alongside
+        // `recap_html` (styled HTML) and `recap` (plain text fallback).
+        const cfg = d.configuration ?? d.data;
+        if (cfg) setConfiguratorData(cfg);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
+        if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
         setIframeHeight(Math.max(400, Math.min(3000, d.height)));
@@ -485,6 +493,7 @@ function ProductPage() {
   const handleResetConfigurator = () => {
     setConfiguratorData(null);
     setConfiguratorRecap("");
+    setConfiguratorRecapHtml("");
     [inlineIframeRef.current].forEach((frame) => {
       if (!frame) return;
       try {
@@ -541,11 +550,12 @@ function ProductPage() {
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
       configuratorRecap: is3DMode ? configuratorRecap || undefined : undefined,
+      configuratorRecapHtml: is3DMode ? configuratorRecapHtml || undefined : undefined,
       logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
-      is3DMode && configuratorRecap
+      is3DMode && (configuratorRecap || configuratorRecapHtml)
         ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },
@@ -703,15 +713,23 @@ function ProductPage() {
           </div>
 
           {/* 3D configurator recap (informational, sent as comment with the quote) */}
-          {is3DMode && configuratorRecap && (
+          {is3DMode && (configuratorRecapHtml || configuratorRecap) && (
             <div className="mt-8 rounded-xl border border-gold/40 bg-gold/5 p-5 animate-fade-in">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="size-4 text-gold" />
                 <div className="text-sm font-semibold">{t("product.configRecapTitle")}</div>
               </div>
-              <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
-                {configuratorRecap}
-              </pre>
+              {configuratorRecapHtml ? (
+                <div
+                  className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
+                  // eslint-disable-next-line react/no-danger
+                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
+                />
+              ) : (
+                <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
+                  {configuratorRecap}
+                </pre>
+              )}
               <div className="mt-3 pt-3 border-t border-gold/30 text-xs text-foreground/80">
                 ⚠️ {t("product.configRecapNotice")}
               </div>
@@ -1060,7 +1078,7 @@ function ProductPage() {
       </div>
 
       {/* Configuration recap (full width) — only shown as hint when nothing has been configured yet */}
-      {product.configurator_url && is3DMode && !configuratorData && !configuratorRecap && (
+      {product.configurator_url && is3DMode && !configuratorData && !configuratorRecap && !configuratorRecapHtml && (
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">

@@ -22,6 +22,7 @@ const ItemSchema = z.object({
   options: z.array(OptionSchema).max(50).optional().default([]),
   options_total: z.number().min(0).optional().default(0),
   configurator_recap: z.string().max(5000).nullable().optional(),
+  configurator_recap_html: z.string().max(20000).nullable().optional(),
   logo_url: z.string().url().max(2000).nullable().optional(),
   logo_filename: z.string().max(300).nullable().optional(),
 });
@@ -57,6 +58,20 @@ const escapeHtml = (s: string) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
 
+/**
+ * Minimal HTML sanitizer for configurator-supplied `recap_html`.
+ * Strips script/style/iframe blocks and any inline event handlers / javascript: URLs.
+ * Allows arbitrary safe inline styling so the configurator's design is preserved.
+ */
+const sanitizeRecapHtml = (html: string) =>
+  html
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta)[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta)\b[^>]*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/javascript:/gi, "");
+
 function itemsTable(items: z.infer<typeof ItemSchema>[]) {
   const rows = items
     .map((i) => {
@@ -73,14 +88,19 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
         </tr>`,
         )
         .join("");
-      const recapRow = i.configurator_recap
+      const recapHtmlContent = i.configurator_recap_html
+        ? `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#444;line-height:1.5;">${sanitizeRecapHtml(i.configurator_recap_html)}</div>`
+        : i.configurator_recap
+          ? `<pre style="margin:0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;">${escapeHtml(i.configurator_recap)}</pre>`
+          : "";
+      const recapRow = recapHtmlContent
         ? `
         <tr>
           <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#fffbe6;">
             <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#a07c00;font-weight:600;margin-bottom:4px;">
               ✦ Configuration 3D
             </div>
-            <pre style="margin:0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;">${escapeHtml(i.configurator_recap)}</pre>
+            ${recapHtmlContent}
           </td>
         </tr>`
         : "";

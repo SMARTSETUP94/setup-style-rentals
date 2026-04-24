@@ -184,6 +184,13 @@ function ProductPage() {
   const [iframeHeight, setIframeHeight] = useState<number>(900);
   const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownInitialConfigRef = useRef<boolean>(false);
+  /** Always-fresh mirror of `configuratorData` so the long-lived `message`
+   *  listener (whose closure is captured once per product) can read the
+   *  latest saved configuration when the user clicks "Modifier". */
+  const configuratorDataRef = useRef<ConfiguratorConfigData | null>(null);
+  useEffect(() => {
+    configuratorDataRef.current = configuratorData;
+  }, [configuratorData]);
   /** Set when at least one *-config message has been received in the current
    *  immersive session — drives the visibility of the "saved" sticky bar. */
   const [hasSavedConfig, setHasSavedConfig] = useState(false);

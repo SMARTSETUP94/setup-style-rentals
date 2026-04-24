@@ -1078,7 +1078,7 @@ function ProductPage() {
       </div>
 
       {/* Configuration recap (full width) — only shown as hint when nothing has been configured yet */}
-      {product.configurator_url && is3DMode && !configuratorData && !configuratorRecap && (
+      {product.configurator_url && is3DMode && !configuratorData && !configuratorRecap && !configuratorRecapHtml && (
         <section id="configurator-preview" className="container-x pb-20 scroll-mt-24">
           <div className="mb-4">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">

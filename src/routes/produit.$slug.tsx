@@ -847,7 +847,7 @@ function ProductPage() {
                   {t("product.modifyConfig")}
                 </button>
               </div>
-              {safeRecapHtml ? (
+              {safeRecapHtml && !recapHtmlIsEmpty ? (
                 <div
                   className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
                   // eslint-disable-next-line react/no-danger
@@ -857,6 +857,10 @@ function ProductPage() {
                 <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
                   {configuratorRecap}
                 </pre>
+              ) : recapHtmlIsEmpty ? (
+                <div className="text-xs italic text-muted-foreground">
+                  {t("product.configUnrenderable")}
+                </div>
               ) : null}
             </div>
           )}

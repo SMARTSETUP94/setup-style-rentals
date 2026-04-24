@@ -489,6 +489,7 @@ function ProductPage() {
     if (is3DMode) {
       hasShownInitialConfigRef.current = false;
       setHasSavedConfig(false);
+      iframeOpenedAtRef.current = Date.now();
       return;
     }
     setAutoSelectedCatIds(new Set());

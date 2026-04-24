@@ -200,6 +200,10 @@ function ProductPage() {
   const [iframeHeight, setIframeHeight] = useState<number>(900);
   const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownInitialConfigRef = useRef<boolean>(false);
+  /** Controls the "are you sure you want to close?" dialog shown when the
+   *  user clicks Close on the immersive 3D iframe before sending an
+   *  explicit save signal from the configurator. */
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   /** Timestamp (ms) when the immersive 3D iframe was last opened. Used to
    *  ignore the burst of auto-emitted `*-config` messages that some
    *  configurators fire on initial mount/render — only messages arriving

@@ -389,10 +389,10 @@ function ProductPage() {
         // so a time-based heuristic is unreliable. We accept any of the
         // following as an explicit "Save" intent:
         //   • `d.type` ending in `-save` / `-saved` (e.g. `cornhole-save`)
-        //   • `d.action === "save"` / `d.event === "save"` /
-        //     `d.trigger === "save"` flags piggy-backed onto `*-config`
-        // Otherwise we silently persist the recap and keep the iframe open.
-        // The user closes manually via the "Fermer" button (with confirm).
+        //   • `d.action`/`d.event`/`d.trigger` flags piggy-backed onto
+        //     `*-config` with values like "save", "saved", "submit", "confirm"
+        // Otherwise we silently persist the recap and keep the iframe open;
+        // the user closes manually via the "Fermer" button (with confirm).
         const flag = (d.action ?? d.event ?? d.trigger ?? "").toLowerCase();
         const typeStr = d.type.toLowerCase();
         const isExplicitSave =
@@ -799,9 +799,15 @@ function ProductPage() {
       {/* Confirm before closing the 3D iframe when the user has touched the
           configurator but not yet sent an explicit save signal. The recap is
           already preserved in state, so closing is safe — we just want to
-          give them a chance to save inside the iframe first. */}
+          give them a chance to save inside the iframe first.
+
+          IMPORTANT: the immersive 3D block above uses `z-[60]`, so the Radix
+          AlertDialog overlay/content (default `z-50`) would render BEHIND
+          the iframe and clicks on dialog buttons would be swallowed by the
+          configurator. We force both the overlay and the content to `z-[80]`
+          so the dialog sits above the immersive block. */}
       <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[80]">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("product.confirmClose3DTitle")}</AlertDialogTitle>
             <AlertDialogDescription>

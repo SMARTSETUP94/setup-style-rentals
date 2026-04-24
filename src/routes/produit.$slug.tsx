@@ -554,8 +554,19 @@ function ProductPage() {
     if (!calc) return;
     // Products with a 3D configurator must be configured first.
     if (product?.configurator_url && !hasPendingConfig) {
-      toast.error(t("product.configRequiredFirst"));
+      // Single, dedup'd toast — clicking the disabled-looking button
+      // multiple times must not stack notifications.
+      toast.error(t("product.configRequiredFirst"), {
+        id: "config-required",
+        icon: <Sparkles className="size-4" />,
+        duration: 3500,
+      });
+      // Reopen (or open) the immersive 3D iframe and scroll it into view.
       setIs3DMode(true);
+      requestAnimationFrame(() => {
+        inlineIframeRef.current?.focus();
+        inlineIframeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
       return;
     }
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);

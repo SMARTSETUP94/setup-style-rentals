@@ -58,6 +58,20 @@ const escapeHtml = (s: string) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
 
+/**
+ * Minimal HTML sanitizer for configurator-supplied `recap_html`.
+ * Strips script/style/iframe blocks and any inline event handlers / javascript: URLs.
+ * Allows arbitrary safe inline styling so the configurator's design is preserved.
+ */
+const sanitizeRecapHtml = (html: string) =>
+  html
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta)[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta)\b[^>]*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/javascript:/gi, "");
+
 function itemsTable(items: z.infer<typeof ItemSchema>[]) {
   const rows = items
     .map((i) => {

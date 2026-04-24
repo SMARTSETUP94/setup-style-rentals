@@ -556,8 +556,8 @@ function ProductPage() {
     <div className="pt-20 md:pt-24">
       {/* Immersive 3D mode — covers the page body, hides title/breadcrumbs/pricing */}
       {product.configurator_url && is3DMode && (
-        <div className="fixed inset-0 top-20 md:top-24 z-40 bg-background animate-fade-in">
-          <div className="relative w-full h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)]">
+        <div className="fixed inset-0 z-[60] bg-background animate-fade-in md:top-24">
+          <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)]">
             <iframe
               ref={inlineIframeRef}
               src={product.configurator_url}
@@ -569,16 +569,16 @@ function ProductPage() {
             <button
               type="button"
               onClick={() => setIs3DMode(false)}
-              className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
+              className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.close3D")}
             >
               <X className="size-4" />
-              {t("product.close3D")}
+              <span className="hidden sm:inline">{t("product.close3D")}</span>
             </button>
             <button
               type="button"
               onClick={handleResetConfigurator}
-              className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
+              className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.configResetToast")}
             >
               <RotateCcw className="size-4" />

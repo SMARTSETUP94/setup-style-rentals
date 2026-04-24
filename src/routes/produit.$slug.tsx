@@ -796,29 +796,6 @@ function ProductPage() {
           </div>
 
           {/* 3D configurator recap (informational, sent as comment with the quote) */}
-          {is3DMode && (configuratorRecapHtml || configuratorRecap) && (
-            <div className="mt-8 rounded-xl border border-gold/40 bg-gold/5 p-5 animate-fade-in">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="size-4 text-gold" />
-                <div className="text-sm font-semibold">{t("product.configRecapTitle")}</div>
-              </div>
-              {configuratorRecapHtml ? (
-                <div
-                  className="text-xs text-muted-foreground leading-relaxed [&_*]:max-w-full"
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: configuratorRecapHtml }}
-                />
-              ) : (
-                <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-sans leading-relaxed">
-                  {configuratorRecap}
-                </pre>
-              )}
-              <div className="mt-3 pt-3 border-t border-gold/30 text-xs text-foreground/80">
-                ⚠️ {t("product.configRecapNotice")}
-              </div>
-            </div>
-          )}
-
           {/* Customization options — always visible (also in 3D mode, with notice) */}
           {optionCategories.length > 0 && (
             <div className="mt-8 space-y-5 animate-fade-in">

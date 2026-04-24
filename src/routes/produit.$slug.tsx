@@ -435,10 +435,14 @@ function ProductPage() {
   // DB-stored product option whose label matches the configurator choice
   // (e.g., picking "Rouge" in the iframe selects the matching "Rouge" button).
   useEffect(() => {
-    if (is3DMode) return;
+    // Each time the user (re)opens the 3D configurator, reset the
+    // "first message" guard so the next save still triggers the toast.
+    if (is3DMode) {
+      hasShownInitialConfigRef.current = false;
+      setHasSavedConfig(false);
+      return;
+    }
     setAutoSelectedCatIds(new Set());
-    hasShownInitialConfigRef.current = false;
-    setHasSavedConfig(false);
   }, [is3DMode]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still

@@ -22,6 +22,7 @@ const ItemSchema = z.object({
   options: z.array(OptionSchema).max(50).optional().default([]),
   options_total: z.number().min(0).optional().default(0),
   configurator_recap: z.string().max(5000).nullable().optional(),
+  configurator_recap_html: z.string().max(20000).nullable().optional(),
   logo_url: z.string().url().max(2000).nullable().optional(),
   logo_filename: z.string().max(300).nullable().optional(),
 });

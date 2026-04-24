@@ -448,7 +448,13 @@ function ProductPage() {
   // DB-stored paid options always apply (even in 3D mode the client must still
   // pick them — the 3D recap is informational and attached as a comment).
   const activeSelectedOptionsList = selectedOptionsList;
-  const activeConfiguratorOptionsList = is3DMode ? configuratorOptionsList : [];
+  // Synthetic options derived from the iframe payload — kept active as long
+  // as we have a saved configuration (even after the immersive view is
+  // closed) so the price recap & quote item include the 3D choices.
+  const hasPendingConfig = Boolean(
+    configuratorRecap || configuratorRecapHtml || configuratorData,
+  );
+  const activeConfiguratorOptionsList = hasPendingConfig ? configuratorOptionsList : [];
 
   /** True if a paid "logo" option is selected (e.g. "Avec logo personnalisé"). */
   const optionRequiresLogo = (opt: { name_fr: string; name_en: string; price: number | string } | null | undefined) => {

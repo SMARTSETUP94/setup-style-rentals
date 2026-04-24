@@ -365,24 +365,28 @@ function ProductPage() {
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
-        // Debounced "saved" toast — confirms the recap was captured.
-        // Skip the very first auto-fire on iframe load so we don't pop a
-        // toast just for opening the configurator.
-        if (!hasShownInitialConfigRef.current) {
+        // Configurators auto-emit a `*-config` burst on initial mount
+        // (sometimes 2–4 messages back-to-back to seed prices/state).
+        // Only treat a message as a real "Save" click if it arrives at
+        // least 2.5s after the iframe opened — that's the user-interaction
+        // window. Earlier messages still update the recap state silently.
+        const elapsed = Date.now() - iframeOpenedAtRef.current;
+        const isUserSave = elapsed > 2500;
+        if (!isUserSave) {
           hasShownInitialConfigRef.current = true;
-        } else {
-          if (configToastTimer.current) clearTimeout(configToastTimer.current);
-          configToastTimer.current = setTimeout(() => {
-            toast.success(t("product.configSavedToast"), {
-              icon: <Check className="size-4" />,
-              duration: 2200,
-            });
-          }, 300);
-          // Auto-close the immersive 3D mode so the user lands back on the
-          // product page where they can pick dates & quantity. The recap is
-          // already preserved in state and will render under the CTA.
-          setIs3DMode(false);
+          return;
         }
+        if (configToastTimer.current) clearTimeout(configToastTimer.current);
+        configToastTimer.current = setTimeout(() => {
+          toast.success(t("product.configSavedToast"), {
+            icon: <Check className="size-4" />,
+            duration: 2200,
+          });
+        }, 300);
+        // Auto-close the immersive 3D mode so the user lands back on the
+        // product page where they can pick dates & quantity. The recap is
+        // already preserved in state and will render under the CTA.
+        setIs3DMode(false);
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
         setIframeHeight(Math.max(400, Math.min(3000, d.height)));

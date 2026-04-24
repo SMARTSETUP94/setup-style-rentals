@@ -619,6 +619,47 @@ function ProductPage() {
             >
               <RotateCcw className="size-4" />
             </button>
+
+            {/* Sticky bottom action bar — visible after the user clicks
+                "Enregistrer ma configuration" inside the iframe. Lets them
+                add to the quote (or close 3D) without leaving immersive. */}
+            {hasSavedConfig && (
+              <div className="absolute bottom-0 inset-x-0 z-10 bg-background/95 backdrop-blur border-t border-gold/40 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)] animate-slide-in-up">
+                <div className="container-x py-3 flex flex-wrap items-center gap-3 justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium min-w-0">
+                    <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold shrink-0">
+                      <Check className="size-4" />
+                    </span>
+                    <span className="truncate">
+                      {t("product.configSavedToast").replace(/^✓\s*/, "")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIs3DMode(false)}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-secondary transition-colors"
+                    >
+                      {t("product.close3D")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAdd();
+                        setIs3DMode(false);
+                      }}
+                      disabled={
+                        !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-md bg-gold text-gold-foreground px-4 py-2 text-sm font-semibold hover:bg-gold/90 shadow-md shadow-gold/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      <ShoppingBag className="size-4" />
+                      {t("product.addToQuote")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

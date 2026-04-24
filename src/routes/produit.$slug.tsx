@@ -182,6 +182,8 @@ function ProductPage() {
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
   const [configuratorRecapHtml, setConfiguratorRecapHtml] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
+  const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasShownInitialConfigRef = useRef<boolean>(false);
 
   // Availability
   const [availableStock, setAvailableStock] = useState<number | null>(null);
@@ -310,13 +312,30 @@ function ProductPage() {
         if (cfg) setConfiguratorData(cfg);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
+        // Debounced "saved" toast — confirms to the user that the live recap
+        // is in sync with the iframe. Skip the very first message (initial
+        // load) so we don't pop a toast just for opening the configurator.
+        if (!hasShownInitialConfigRef.current) {
+          hasShownInitialConfigRef.current = true;
+        } else {
+          if (configToastTimer.current) clearTimeout(configToastTimer.current);
+          configToastTimer.current = setTimeout(() => {
+            toast.success(t("product.configSavedToast"), {
+              icon: <Check className="size-4" />,
+              duration: 1800,
+            });
+          }, 400);
+        }
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
         setIframeHeight(Math.max(400, Math.min(3000, d.height)));
       }
     };
     window.addEventListener("message", onMsg);
-    return () => window.removeEventListener("message", onMsg);
+    return () => {
+      window.removeEventListener("message", onMsg);
+      if (configToastTimer.current) clearTimeout(configToastTimer.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
@@ -410,6 +429,7 @@ function ProductPage() {
   useEffect(() => {
     if (is3DMode) return;
     setAutoSelectedCatIds(new Set());
+    hasShownInitialConfigRef.current = false;
   }, [is3DMode]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still

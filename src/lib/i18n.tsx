@@ -134,6 +134,7 @@ const DICT: Dict = {
   },
   "product.addWithConfig": { fr: "Ajouter au devis avec ma configuration", en: "Add to quote with my configuration" },
   "product.configuredAdded": { fr: "Produit configuré ajouté au devis", en: "Configured product added to quote" },
+  "product.configSavedToast": { fr: "✓ Configuration enregistrée pour votre devis", en: "✓ Configuration saved for your quote" },
   "product.autoSelectedHint": { fr: "Sélectionné via le configurateur 3D", en: "Auto-selected from 3D configurator" },
   "product.checkingAvail": { fr: "Vérification de la disponibilité…", en: "Checking availability…" },
   "product.notChecked": { fr: "Disponibilité non vérifiée", en: "Availability not checked" },

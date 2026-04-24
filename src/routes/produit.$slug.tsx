@@ -183,6 +183,16 @@ function ProductPage() {
   const [availableStock, setAvailableStock] = useState<number | null>(null);
   const [checkingStock, setCheckingStock] = useState(false);
 
+  // Lock body scroll while immersive 3D mode is active
+  useEffect(() => {
+    if (!is3DMode) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [is3DMode]);
+
   useEffect(() => {
     setLoading(true);
     supabase
@@ -544,6 +554,39 @@ function ProductPage() {
 
   return (
     <div className="pt-20 md:pt-24">
+      {/* Immersive 3D mode — covers the page body, hides title/breadcrumbs/pricing */}
+      {product.configurator_url && is3DMode && (
+        <div className="fixed inset-0 top-20 md:top-24 z-40 bg-background animate-fade-in">
+          <div className="relative w-full h-[calc(100vh-5rem)] md:h-[calc(100vh-6rem)]">
+            <iframe
+              ref={inlineIframeRef}
+              src={product.configurator_url}
+              title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
+              className="block w-full h-full border-0"
+              allow="clipboard-write; fullscreen"
+              onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
+            />
+            <button
+              type="button"
+              onClick={() => setIs3DMode(false)}
+              className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
+              aria-label={t("product.close3D")}
+            >
+              <X className="size-4" />
+              {t("product.close3D")}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetConfigurator}
+              className="absolute top-4 left-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
+              aria-label={t("product.configResetToast")}
+            >
+              <RotateCcw className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="container-x py-5">
         <Breadcrumb>
           <BreadcrumbList>
@@ -583,42 +626,14 @@ function ProductPage() {
       <div className="container-x grid lg:grid-cols-5 gap-8 lg:gap-12 pb-20">
         {/* Visual — configurator if available, otherwise product image */}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden bg-secondary border border-border lg:sticky lg:top-24 self-start relative">
-          {product.configurator_url && is3DMode ? (
-            <div key="visual-3d" className="animate-fade-in">
-              <iframe
-                ref={inlineIframeRef}
-                src={product.configurator_url}
-                title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
-                className="block w-full"
-                style={{ height: `${iframeHeight}px`, minHeight: "600px", maxHeight: "min(80vh, 1200px)", border: "none" }}
-                allow="clipboard-write; fullscreen"
-                onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const el = inlineIframeRef.current as (HTMLIFrameElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
-                  if (!el) return;
-                  const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
-                  req?.().catch(() => {});
-                }}
-                className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-sm"
-                aria-label={t("product.fullscreen")}
-              >
-                <Sparkles className="size-3.5" />
-                {t("product.fullscreen")}
-              </button>
-            </div>
-          ) : (
-            <div key="visual-image" className="aspect-[4/3] relative animate-fade-in">
-              <ProductImage
-                name={pickLang(product, "name", lang)}
-                category_slug={product.category_slug}
-                image_url={product.image_url}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+          <div key="visual-image" className="aspect-[4/3] relative animate-fade-in">
+            <ProductImage
+              name={pickLang(product, "name", lang)}
+              category_slug={product.category_slug}
+              image_url={product.image_url}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         {/* Details — 40% on desktop */}

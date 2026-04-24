@@ -4,6 +4,7 @@ import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, Calenda
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";

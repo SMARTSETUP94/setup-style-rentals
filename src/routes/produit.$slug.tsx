@@ -429,6 +429,7 @@ function ProductPage() {
   useEffect(() => {
     if (is3DMode) return;
     setAutoSelectedCatIds(new Set());
+    hasShownInitialConfigRef.current = false;
   }, [is3DMode]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still

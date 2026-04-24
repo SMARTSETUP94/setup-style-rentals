@@ -184,6 +184,13 @@ function ProductPage() {
   const [iframeHeight, setIframeHeight] = useState<number>(900);
   const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownInitialConfigRef = useRef<boolean>(false);
+  /** Always-fresh mirror of `configuratorData` so the long-lived `message`
+   *  listener (whose closure is captured once per product) can read the
+   *  latest saved configuration when the user clicks "Modifier". */
+  const configuratorDataRef = useRef<ConfiguratorConfigData | null>(null);
+  useEffect(() => {
+    configuratorDataRef.current = configuratorData;
+  }, [configuratorData]);
   /** Set when at least one *-config message has been received in the current
    *  immersive session — drives the visibility of the "saved" sticky bar. */
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
@@ -296,15 +303,51 @@ function ProductPage() {
     }
   };
 
+  /** Replay the previously-saved configuration into a freshly-loaded iframe.
+   * Sends both a generic `restore-config` payload (newer Pro configurators)
+   * and per-group `parent-set-config` messages (legacy support) so the user
+   * lands back on the exact options they had picked before clicking Modifier. */
+  const restoreConfigToIframe = (frame: HTMLIFrameElement | null) => {
+    if (!frame || !configuratorData) return;
+    const win = frame.contentWindow;
+    if (!win) return;
+    try {
+      // Newer Pro configurators (Basketball, Chamboule-tout, Mini-Golf, …)
+      // accept the full payload back.
+      win.postMessage({ type: "restore-config", configuration: configuratorData }, "*");
+      // Legacy fallback: per-field messages keyed by the configurator group.
+      const opts = product?.configurator_options ?? {};
+      for (const groupKey of Object.keys(opts)) {
+        const value =
+          configuratorData[`${groupKey}Finition`] ??
+          configuratorData[`${groupKey}Option`] ??
+          configuratorData[groupKey];
+        if (typeof value === "string") {
+          win.postMessage({ type: "parent-set-config", group: groupKey, value }, "*");
+        }
+      }
+    } catch {
+      // ignore cross-origin failures
+    }
+  };
+
   // Listen for configurator messages
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       const d = e.data as ConfiguratorMessage | undefined;
       if (!d || typeof d !== "object") return;
-      if (d.type === "cornhole-ready") {
-        // Iframe just signalled it's ready: push prices to whichever iframe sent it
+      // Generic "ready" handshake — accept legacy `cornhole-ready` and any
+      // newer `*-ready` / `configurator-ready` signal so we know the iframe
+      // is mounted and listening for `set-prices` / `restore-config`.
+      if (
+        typeof d.type === "string" &&
+        (d.type === "configurator-ready" || d.type.endsWith("-ready"))
+      ) {
         const src = e.source as Window | null;
-        if (inlineIframeRef.current?.contentWindow === src) sendPricesToIframe(inlineIframeRef.current);
+        if (inlineIframeRef.current?.contentWindow === src) {
+          sendPricesToIframe(inlineIframeRef.current);
+          if (configuratorDataRef.current) restoreConfigToIframe(inlineIframeRef.current);
+        }
       }
       // Accept any "<slug>-config" message from configurator iframes (e.g.
       // cornhole-config, lettres-geantes-config, photobooth-config, …).
@@ -630,7 +673,14 @@ function ProductPage() {
               title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
               className="block w-full h-full border-0"
               allow="clipboard-write; fullscreen"
-              onLoad={() => sendPricesToIframe(inlineIframeRef.current)}
+              onLoad={() => {
+                sendPricesToIframe(inlineIframeRef.current);
+                // Give the configurator a beat to mount its scene before
+                // replaying the saved selection.
+                if (configuratorData) {
+                  setTimeout(() => restoreConfigToIframe(inlineIframeRef.current), 250);
+                }
+              }}
             />
             <button
               type="button"

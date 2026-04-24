@@ -346,7 +346,7 @@ function ProductPage() {
         const src = e.source as Window | null;
         if (inlineIframeRef.current?.contentWindow === src) {
           sendPricesToIframe(inlineIframeRef.current);
-          if (configuratorData) restoreConfigToIframe(inlineIframeRef.current);
+          if (configuratorDataRef.current) restoreConfigToIframe(inlineIframeRef.current);
         }
       }
       // Accept any "<slug>-config" message from configurator iframes (e.g.

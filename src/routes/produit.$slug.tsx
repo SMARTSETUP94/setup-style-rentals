@@ -624,7 +624,7 @@ function ProductPage() {
                 "Enregistrer ma configuration" inside the iframe. Lets them
                 add to the quote (or close 3D) without leaving immersive. */}
             {hasSavedConfig && (
-              <div className="absolute bottom-0 inset-x-0 z-10 bg-background/95 backdrop-blur border-t border-gold/40 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)] animate-slide-in-up">
+              <div className="absolute bottom-0 inset-x-0 z-10 bg-background/95 backdrop-blur border-t border-gold/40 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)] animate-fade-in">
                 <div className="container-x py-3 flex flex-wrap items-center gap-3 justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium min-w-0">
                     <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold shrink-0">

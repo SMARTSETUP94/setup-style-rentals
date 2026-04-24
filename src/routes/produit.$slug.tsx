@@ -493,6 +493,7 @@ function ProductPage() {
   const handleResetConfigurator = () => {
     setConfiguratorData(null);
     setConfiguratorRecap("");
+    setConfiguratorRecapHtml("");
     [inlineIframeRef.current].forEach((frame) => {
       if (!frame) return;
       try {

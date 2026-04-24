@@ -183,6 +183,16 @@ function ProductPage() {
   const [availableStock, setAvailableStock] = useState<number | null>(null);
   const [checkingStock, setCheckingStock] = useState(false);
 
+  // Lock body scroll while immersive 3D mode is active
+  useEffect(() => {
+    if (!is3DMode) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [is3DMode]);
+
   useEffect(() => {
     setLoading(true);
     supabase

@@ -555,7 +555,7 @@ function ProductPage() {
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
     });
     toast.success(
-      is3DMode && configuratorRecap
+      is3DMode && (configuratorRecap || configuratorRecapHtml)
         ? t("product.configuredAdded")
         : t("product.added"),
       { icon: <Check className="size-4" /> },

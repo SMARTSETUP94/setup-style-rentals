@@ -365,13 +365,16 @@ function ProductPage() {
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
-        // Configurators auto-emit a `*-config` burst on initial mount
-        // (sometimes 2–4 messages back-to-back to seed prices/state).
-        // Only treat a message as a real "Save" click if it arrives at
-        // least 2.5s after the iframe opened — that's the user-interaction
-        // window. Earlier messages still update the recap state silently.
+        // Configurators auto-emit a `*-config` burst on initial mount AND
+        // on every interactive change (color picker, dropdowns, etc.) —
+        // only an explicit "Enregistrer" click should auto-close the
+        // iframe. We treat any message arriving within the first 3 minutes
+        // of opening as part of the configuration session and silently
+        // update the recap state. Past that grace window, we assume the
+        // user has clearly indicated "save" and close the immersive view.
+        const GRACE_MS = 3 * 60 * 1000; // 3 minutes
         const elapsed = Date.now() - iframeOpenedAtRef.current;
-        const isUserSave = elapsed > 2500;
+        const isUserSave = elapsed > GRACE_MS;
         if (!isUserSave) {
           hasShownInitialConfigRef.current = true;
           return;

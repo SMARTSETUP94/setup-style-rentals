@@ -331,15 +331,23 @@ function QuotePage() {
                                 ))}
                               </ul>
                             )}
-                            {item.configuratorRecap && (
+                            {(item.configuratorRecapHtml || item.configuratorRecap) && (
                               <div className="mt-2 rounded-md border border-gold/30 bg-gold/5 p-2">
                                 <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold font-semibold mb-1">
                                   <Wand2 className="size-3" />
                                   {t("cart.configRecap")}
                                 </div>
-                                <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">
-                                  {item.configuratorRecap}
-                                </pre>
+                                {item.configuratorRecapHtml ? (
+                                  <div
+                                    className="text-[11px] leading-snug text-foreground/80 [&_*]:max-w-full"
+                                    // eslint-disable-next-line react/no-danger
+                                    dangerouslySetInnerHTML={{ __html: item.configuratorRecapHtml }}
+                                  />
+                                ) : (
+                                  <pre className="whitespace-pre-wrap text-[11px] leading-snug text-foreground/80 font-mono">
+                                    {item.configuratorRecap}
+                                  </pre>
+                                )}
                               </div>
                             )}
                             {item.logoUrl && (

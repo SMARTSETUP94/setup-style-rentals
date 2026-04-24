@@ -56,6 +56,9 @@ interface ConfiguratorMessage {
   type: string;
   data?: ConfiguratorConfigData;
   recap?: string;
+  recap_html?: string;
+  configuration?: ConfiguratorConfigData;
+  share_url?: string;
   height?: number;
 }
 

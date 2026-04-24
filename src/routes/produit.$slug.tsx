@@ -807,7 +807,7 @@ function ProductPage() {
           configurator. We force both the overlay and the content to `z-[80]`
           so the dialog sits above the immersive block. */}
       <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
-        <AlertDialogContent className="z-[80] [&_~_[data-radix-alert-dialog-overlay]]:z-[80]">
+        <AlertDialogContent className="z-[80]">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("product.confirmClose3DTitle")}</AlertDialogTitle>
             <AlertDialogDescription>

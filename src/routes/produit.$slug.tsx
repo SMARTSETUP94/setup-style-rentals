@@ -184,6 +184,9 @@ function ProductPage() {
   const [iframeHeight, setIframeHeight] = useState<number>(900);
   const configToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownInitialConfigRef = useRef<boolean>(false);
+  /** Set when at least one *-config message has been received in the current
+   *  immersive session — drives the visibility of the "saved" sticky bar. */
+  const [hasSavedConfig, setHasSavedConfig] = useState(false);
 
   // Availability
   const [availableStock, setAvailableStock] = useState<number | null>(null);
@@ -312,9 +315,11 @@ function ProductPage() {
         if (cfg) setConfiguratorData(cfg);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
+        setHasSavedConfig(true);
         // Debounced "saved" toast — confirms to the user that the live recap
         // is in sync with the iframe. Skip the very first message (initial
-        // load) so we don't pop a toast just for opening the configurator.
+        // load fires automatically) so we don't pop a toast just for opening
+        // the configurator.
         if (!hasShownInitialConfigRef.current) {
           hasShownInitialConfigRef.current = true;
         } else {
@@ -322,9 +327,9 @@ function ProductPage() {
           configToastTimer.current = setTimeout(() => {
             toast.success(t("product.configSavedToast"), {
               icon: <Check className="size-4" />,
-              duration: 1800,
+              duration: 2200,
             });
-          }, 400);
+          }, 300);
         }
       }
       if (d.type === "configurator-resize" && typeof d.height === "number" && d.height > 0) {
@@ -430,6 +435,7 @@ function ProductPage() {
     if (is3DMode) return;
     setAutoSelectedCatIds(new Set());
     hasShownInitialConfigRef.current = false;
+    setHasSavedConfig(false);
   }, [is3DMode]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still

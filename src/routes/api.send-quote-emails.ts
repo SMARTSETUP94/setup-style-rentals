@@ -88,14 +88,19 @@ function itemsTable(items: z.infer<typeof ItemSchema>[]) {
         </tr>`,
         )
         .join("");
-      const recapRow = i.configurator_recap
+      const recapHtmlContent = i.configurator_recap_html
+        ? `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#444;line-height:1.5;">${sanitizeRecapHtml(i.configurator_recap_html)}</div>`
+        : i.configurator_recap
+          ? `<pre style="margin:0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;">${escapeHtml(i.configurator_recap)}</pre>`
+          : "";
+      const recapRow = recapHtmlContent
         ? `
         <tr>
           <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#fffbe6;">
             <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#a07c00;font-weight:600;margin-bottom:4px;">
               ✦ Configuration 3D
             </div>
-            <pre style="margin:0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;">${escapeHtml(i.configurator_recap)}</pre>
+            ${recapHtmlContent}
           </td>
         </tr>`
         : "";

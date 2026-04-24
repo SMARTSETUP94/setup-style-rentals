@@ -796,6 +796,32 @@ function ProductPage() {
         </div>
       )}
 
+      {/* Confirm before closing the 3D iframe when the user has touched the
+          configurator but not yet sent an explicit save signal. The recap is
+          already preserved in state, so closing is safe — we just want to
+          give them a chance to save inside the iframe first. */}
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("product.confirmClose3DTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("product.confirmClose3DDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("product.confirmClose3DKeepOpen")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmCloseOpen(false);
+                setIs3DMode(false);
+              }}
+            >
+              {t("product.confirmClose3DLeave")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="container-x py-5">
         <Breadcrumb>
           <BreadcrumbList>

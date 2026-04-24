@@ -1,0 +1,1 @@
+UPDATE public.products SET configurator_url = 'https://setup-paris-configurators.netlify.app/basketball/', updated_at = now() WHERE slug = 'panier-basketball';

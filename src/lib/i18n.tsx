@@ -217,6 +217,18 @@ const DICT: Dict = {
     fr: "unité(s) disponible(s) sur cette période",
     en: "unit(s) available for these dates",
   },
+  "product.configChosenTitle": {
+    fr: "Configuration choisie",
+    en: "Chosen configuration",
+  },
+  "product.modifyConfig": {
+    fr: "Modifier",
+    en: "Edit",
+  },
+  "product.configRequiredFirst": {
+    fr: "Configurez d'abord votre produit en 3D",
+    en: "Configure your product in 3D first",
+  },
 
   // Common
   "common.back": { fr: "Retour", en: "Back" },

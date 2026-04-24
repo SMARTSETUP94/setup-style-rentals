@@ -229,6 +229,10 @@ const DICT: Dict = {
     fr: "Configurez d'abord votre produit en 3D",
     en: "Configure your product in 3D first",
   },
+  "product.configUnrenderable": {
+    fr: "Configuration disponible, mais contenu non affichable",
+    en: "Configuration available, but content cannot be displayed",
+  },
 
   // Common
   "common.back": { fr: "Retour", en: "Back" },

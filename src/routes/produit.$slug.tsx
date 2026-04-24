@@ -180,6 +180,7 @@ function ProductPage() {
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
+  const [configuratorRecapHtml, setConfiguratorRecapHtml] = useState<string>("");
   const [iframeHeight, setIframeHeight] = useState<number>(900);
 
   // Availability

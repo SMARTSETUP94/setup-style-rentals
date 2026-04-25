@@ -10,7 +10,7 @@ import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
-import { sanitizeRecapHtml } from "@/lib/sanitize-recap";
+import { sanitizeRecapHtml, sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -561,10 +561,12 @@ function ProductPage() {
 
   /** Sanitized version of the iframe-provided recap HTML. `recap_html`
    * arrives via cross-origin postMessage and MUST be sanitized before
-   * rendering via `dangerouslySetInnerHTML`. */
+   * rendering via `dangerouslySetInnerHTML`. We also translate any known
+   * FR/EN labels (e.g. "Décor du fond" ↔ "Background decor") so the recap
+   * stays coherent with the active site language. */
   const safeRecapHtml = useMemo(
-    () => sanitizeRecapHtml(configuratorRecapHtml),
-    [configuratorRecapHtml],
+    () => sanitizeAndTranslateRecapHtml(configuratorRecapHtml, lang),
+    [configuratorRecapHtml, lang],
   );
 
   /** True when the configurator provided some `recap_html` but, after

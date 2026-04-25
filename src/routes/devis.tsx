@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
-import { sanitizeRecapHtml, sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
+import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { ProductImage } from "@/components/site/ProductImage";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

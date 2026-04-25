@@ -1,4 +1,6 @@
 import DOMPurify from "dompurify";
+import type { Lang } from "@/lib/i18n";
+import { translateRecapHtml } from "@/lib/recap-i18n";
 
 /**
  * Sanitize the configurator-provided HTML recap before rendering it via
@@ -26,4 +28,20 @@ export function sanitizeRecapHtml(html: string | null | undefined): string {
     FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus"],
     KEEP_CONTENT: true,
   });
+}
+
+/**
+ * Sanitize and then translate a configurator-provided recap HTML so the
+ * visible labels match the active site language. Use this on UI surfaces
+ * (product page, quote page) where the FR/EN toggle should also affect
+ * the 3D recap. The plain `sanitizeRecapHtml` stays available for places
+ * that want raw output (e.g. server-side email rendering).
+ */
+export function sanitizeAndTranslateRecapHtml(
+  html: string | null | undefined,
+  lang: Lang,
+): string {
+  const safe = sanitizeRecapHtml(html);
+  if (!safe) return "";
+  return translateRecapHtml(safe, lang);
 }

@@ -78,6 +78,38 @@ const PAIRS: Array<[string, string]> = [
   ["Module", "Module"],
   ["Modules", "Modules"],
 
+  // Lettres LED
+  ["Texte", "Text"],
+  ["Corps des lettres", "Letter body"],
+  ["Couleur LED", "LED color"],
+  ["Socle / pied", "Base / stand"],
+  ["Socle", "Base"],
+  ["Pied", "Stand"],
+  ["Ambre chaud", "Warm amber"],
+  ["Texte personnalisé", "Custom text"],
+
+  // Shuffleboard / Carrom / Bowling
+  ["Surface de jeu", "Playing surface"],
+  ["Cadre / piétement", "Frame / legs"],
+  ["Piétement", "Legs"],
+  ["Palets équipe A", "Team A pucks"],
+  ["Palets équipe B", "Team B pucks"],
+  ["Palets", "Pucks"],
+  ["Palet", "Puck"],
+  ["Striker", "Striker"],
+  ["Piste / lane", "Lane"],
+  ["Piste", "Lane"],
+  ["Quilles (corps)", "Pins (body)"],
+  ["Quilles", "Pins"],
+  ["Quille", "Pin"],
+  ["Rayures des quilles", "Pin stripes"],
+  ["Rayures", "Stripes"],
+  ["Boule de bowling", "Bowling ball"],
+  ["Boule", "Ball"],
+  ["Bois clair", "Light wood"],
+  ["Bois foncé", "Dark wood"],
+  ["Bleu marine", "Navy blue"],
+
   // Common values
   ["Standard", "Standard"],
   ["Mat", "Matte"],

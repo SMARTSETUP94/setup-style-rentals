@@ -154,7 +154,7 @@ function HomePage() {
       </RevealSection>
 
       <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
+        <SectionHeader num="03" title={t("cats.title")} sub={t("cats.sub")} />
         <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
           {categories.map((cat, idx) => (
             <Link
@@ -206,7 +206,7 @@ function HomePage() {
       {featured.length > 0 && (
         <RevealSection className="container-x py-20 md:py-28">
           <div className="flex items-end justify-between gap-4 flex-wrap">
-            <SectionHeader num="03" title={t("featured.title")} sub={t("featured.sub")} />
+            <SectionHeader num="04" title={t("featured.title")} sub={t("featured.sub")} />
             <Link
               to="/catalogue"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold transition-colors duration-300 shrink-0"
@@ -249,7 +249,7 @@ function HomePage() {
 
       {/* HOW */}
       <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="04" title={t("how.title")} />
+        <SectionHeader num="05" title={t("how.title")} />
         <div className="mt-12 grid md:grid-cols-3 gap-5">
           {[
             { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },

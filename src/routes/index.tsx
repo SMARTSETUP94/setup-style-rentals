@@ -123,8 +123,38 @@ function HomePage() {
         </div>
       </section>
 
+      {/* VIDEO PRESENTATION */}
+      <RevealSection className="container-x py-16 md:py-24">
+        <div className="text-center max-w-3xl mx-auto">
+          <div className="section-num">— 02</div>
+          <h2 className="mt-4 font-display font-semibold text-balance text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight">
+            {lang === "fr" ? "Configurez votre événement en 3D" : "Design your event in 3D"}
+          </h2>
+          <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
+            {lang === "fr"
+              ? "Découvrez la plateforme en 51 secondes."
+              : "Discover the platform in 51 seconds."}
+          </p>
+        </div>
+        <div className="mt-10 mx-auto max-w-[1200px] rounded-2xl overflow-hidden shadow-premium border border-border bg-black aspect-video">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
+            className="w-full h-full object-cover"
+          >
+            <source
+              src="https://setup-paris-configurators.netlify.app/setup-paris-presentation.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+      </RevealSection>
+
       <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
+        <SectionHeader num="03" title={t("cats.title")} sub={t("cats.sub")} />
         <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
           {categories.map((cat, idx) => (
             <Link
@@ -176,7 +206,7 @@ function HomePage() {
       {featured.length > 0 && (
         <RevealSection className="container-x py-20 md:py-28">
           <div className="flex items-end justify-between gap-4 flex-wrap">
-            <SectionHeader num="03" title={t("featured.title")} sub={t("featured.sub")} />
+            <SectionHeader num="04" title={t("featured.title")} sub={t("featured.sub")} />
             <Link
               to="/catalogue"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold transition-colors duration-300 shrink-0"
@@ -219,7 +249,7 @@ function HomePage() {
 
       {/* HOW */}
       <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="04" title={t("how.title")} />
+        <SectionHeader num="05" title={t("how.title")} />
         <div className="mt-12 grid md:grid-cols-3 gap-5">
           {[
             { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },

@@ -125,6 +125,39 @@ function HomePage() {
 
       <RevealSection className="container-x py-20 md:py-28">
         <SectionHeader num="02" title={t("cats.title")} sub={t("cats.sub")} />
+      </RevealSection>
+
+      {/* VIDEO PRESENTATION */}
+      <RevealSection className="container-x py-12 md:py-20">
+        <div className="text-center max-w-3xl mx-auto">
+          <div className="section-num">— 02</div>
+          <h2 className="mt-4 font-display font-semibold text-balance text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight">
+            {lang === "fr" ? "Configurez votre événement en 3D" : "Design your event in 3D"}
+          </h2>
+          <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
+            {lang === "fr"
+              ? "Découvrez la plateforme en 51 secondes."
+              : "Discover the platform in 51 seconds."}
+          </p>
+        </div>
+        <div className="mt-10 mx-auto max-w-[1200px] rounded-2xl overflow-hidden shadow-premium border border-border bg-black aspect-video">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
+            className="w-full h-full object-cover"
+          >
+            <source
+              src="https://setup-paris-configurators.netlify.app/setup-paris-presentation.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+      </RevealSection>
+
+      <RevealSection className="container-x py-20 md:py-28">
         <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
           {categories.map((cat, idx) => (
             <Link

@@ -6,14 +6,15 @@ import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { canonicalLink, ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { applyNotFoundStatus } from "@/lib/ssr-status.server";
 
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   // Set the real HTTP 404 status during SSR so crawlers and clients
   // receive a proper not-found response (not 200) for unknown routes.
-  if (typeof window === "undefined") applyNotFoundStatus();
+  if (typeof window === "undefined") {
+    void import("@/lib/ssr-status.server").then((m) => m.applyNotFoundStatus());
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">

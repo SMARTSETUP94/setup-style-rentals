@@ -18,6 +18,7 @@ export function ProductImage({ name, category_slug: _category_slug, image_url, c
         src={image_url}
         alt={name}
         loading="lazy"
+        decoding="async"
         className={className ?? "w-full h-full object-cover"}
       />
     );

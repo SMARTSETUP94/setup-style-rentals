@@ -5,7 +5,7 @@ import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
-import { canonicalLink, ogImageMeta } from "@/lib/seo";
+import { canonicalLink, ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
 
@@ -57,6 +57,28 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Setup Paris",
+          legalName: "Smart Restructuring",
+          url: SITE_URL,
+          logo: DEFAULT_OG_IMAGE,
+          image: DEFAULT_OG_IMAGE,
+          description:
+            "Location d'objets événementiels personnalisables avec configurateur 3D à Paris et en Île-de-France.",
+          areaServed: { "@type": "Place", name: "Paris et Île-de-France" },
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Paris",
+            addressCountry: "FR",
+          },
+        }),
       },
     ],
   }),

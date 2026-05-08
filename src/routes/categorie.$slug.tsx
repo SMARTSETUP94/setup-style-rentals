@@ -127,7 +127,8 @@ function CategoryPage() {
     [products, name, lang],
   );
 
-  const faqList = (category.faq ?? []).filter((f) => {
+  type FaqEntry = { q_fr?: string; q_en?: string; a_fr?: string; a_en?: string };
+  const faqList: FaqEntry[] = ((category.faq ?? []) as FaqEntry[]).filter((f) => {
     const q = lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en;
     return !!q;
   });
@@ -140,7 +141,7 @@ function CategoryPage() {
     return {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: faqList.map((f) => ({
+      mainEntity: faqList.map((f: FaqEntry) => ({
         "@type": "Question",
         name: lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en,
         acceptedAnswer: {
@@ -224,7 +225,7 @@ function CategoryPage() {
             {t("catalog.faq")}
           </h2>
           <Accordion type="single" collapsible className="max-w-3xl">
-            {faqList.map((f, i) => (
+            {faqList.map((f: FaqEntry, i: number) => (
               <AccordionItem key={i} value={`item-${i}`}>
                 <AccordionTrigger className="text-left">
                   {lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en}

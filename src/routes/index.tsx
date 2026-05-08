@@ -282,6 +282,69 @@ function HomePage() {
   );
 }
 
+type Cue = { start: number; end: number; fr: string; en: string };
+
+const PRESENTATION_CUES: Cue[] = [
+  { start: 0, end: 4, fr: "Bienvenue chez Setup Paris.", en: "Welcome to Setup Paris." },
+  { start: 4, end: 9, fr: "La location d'objets événementiels, réinventée.", en: "Event object rentals, reinvented." },
+  { start: 9, end: 14, fr: "Explorez notre catalogue : jeux, structures, signalétique, décoration, mobilier.", en: "Browse our catalogue: games, structures, signage, decor, furniture." },
+  { start: 14, end: 20, fr: "Choisissez un objet et lancez le configurateur 3D.", en: "Pick an object and launch the 3D configurator." },
+  { start: 20, end: 26, fr: "Personnalisez les couleurs, matières et finitions en temps réel.", en: "Customize colors, materials and finishes in real time." },
+  { start: 26, end: 32, fr: "Ajoutez votre logo, votre texte, vos visuels.", en: "Add your logo, your text, your artwork." },
+  { start: 32, end: 38, fr: "Visualisez le rendu sous tous les angles avant de réserver.", en: "Preview the result from every angle before booking." },
+  { start: 38, end: 44, fr: "Recevez un devis instantané et une livraison à Paris et en Île-de-France.", en: "Get an instant quote with delivery in Paris and Île-de-France." },
+  { start: 44, end: 51, fr: "Setup Paris — Personnalisez. Configurez. Louez.", en: "Setup Paris — Customize. Configure. Rent." },
+];
+
+function PresentationVideo({ lang }: { lang: "fr" | "en" }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const onTime = () => setTime(v.currentTime);
+    v.addEventListener("timeupdate", onTime);
+    return () => v.removeEventListener("timeupdate", onTime);
+  }, []);
+
+  const cue = PRESENTATION_CUES.find((c) => time >= c.start && time < c.end);
+  const text = cue ? (lang === "fr" ? cue.fr : cue.en) : "";
+
+  return (
+    <div className="mt-10 mx-auto max-w-[1200px] relative rounded-2xl overflow-hidden shadow-premium border border-border bg-black aspect-video">
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
+        className="w-full h-full object-cover"
+      >
+        <source
+          src="https://setup-paris-configurators.netlify.app/setup-paris-presentation.mp4"
+          type="video/mp4"
+        />
+      </video>
+      {text && (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-4 md:pb-6"
+          aria-live="polite"
+        >
+          <p
+            lang={lang}
+            className="max-w-[90%] md:max-w-[80%] text-center text-sm md:text-lg font-medium leading-snug text-white rounded-md px-3 py-1.5 md:px-4 md:py-2"
+            style={{ background: "rgba(0,0,0,0.6)", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
+          >
+            {text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SectionHeader({ num, title, sub }: { num: string; title: string; sub?: string }) {
   return (
     <div>

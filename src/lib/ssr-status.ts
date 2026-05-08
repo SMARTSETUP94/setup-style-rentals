@@ -1,14 +1,14 @@
 import { createIsomorphicFn } from "@tanstack/react-start";
+import {
+  setResponseStatus,
+  setResponseHeader,
+  getRequestHeader,
+} from "@tanstack/react-start/server";
 
 export const applyNotFoundStatus = createIsomorphicFn()
   .client(() => {})
   .server(() => {
     try {
-      const {
-        setResponseStatus,
-        setResponseHeader,
-        getRequestHeader,
-      } = require("@tanstack/react-start/server");
       setResponseStatus(404);
       const accept = getRequestHeader("accept") ?? "";
       if (accept.includes("application/json") && !accept.includes("text/html")) {

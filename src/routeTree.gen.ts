@@ -19,6 +19,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
+import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
@@ -76,6 +77,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const ProduitSlugRoute = ProduitSlugRouteImport.update({
   id: '/produit/$slug',
   path: '/produit/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategorieSlugRoute = CategorieSlugRouteImport.update({
+  id: '/categorie/$slug',
+  path: '/categorie/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
+  '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
+  '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
+  '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/admin/roadmap'
     | '/admin/settings'
     | '/api/send-quote-emails'
+    | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/admin/roadmap'
     | '/admin/settings'
     | '/api/send-quote-emails'
+    | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin'
   id:
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/admin/roadmap'
     | '/admin/settings'
     | '/api/send-quote-emails'
+    | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
+  CategorieSlugRoute: typeof CategorieSlugRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
 }
 
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/produit/$slug'
       fullPath: '/produit/$slug'
       preLoaderRoute: typeof ProduitSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categorie/$slug': {
+      id: '/categorie/$slug'
+      path: '/categorie/$slug'
+      fullPath: '/categorie/$slug'
+      preLoaderRoute: typeof CategorieSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/send-quote-emails': {
@@ -419,6 +439,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
+  CategorieSlugRoute: CategorieSlugRoute,
   ProduitSlugRoute: ProduitSlugRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, X, Save, Mail, Phone, Building2, Tag, Archive, ArchiveRestore } from "lucide-react";
+import { Search, X, Save, Mail, Phone, Building2, Tag, Archive, ArchiveRestore, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,6 +190,53 @@ function AdminClientsPage() {
     if (selected?.id === c.id) setSelected({ ...c, archived_at: next });
   };
 
+  const exportCsv = () => {
+    const headers = [
+      "name",
+      "email",
+      "company",
+      "phone",
+      "tags",
+      "quotes_count",
+      "total_revenue_ttc",
+      "last_contact",
+      "archived_at",
+      "notes",
+      "created_at",
+    ];
+    const escape = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = filtered.map((c) => {
+      const s = statsByEmail.get(c.email) || { count: 0, revenue: 0, lastContact: null };
+      return [
+        c.name ?? "",
+        c.email,
+        c.company ?? "",
+        c.phone ?? "",
+        (c.tags || []).join("|"),
+        s.count,
+        s.revenue.toFixed(2),
+        s.lastContact ?? "",
+        c.archived_at ?? "",
+        (c.notes ?? "").replace(/\r?\n/g, " "),
+        c.created_at,
+      ].map(escape).join(",");
+    });
+    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `clients-${view}-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const selectedHistory = useMemo(() => {
     if (!selected) return [];
     const k = selected.email.toLowerCase();
@@ -233,6 +280,16 @@ function AdminClientsPage() {
             </button>
           ))}
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
+        >
+          <Download className="size-4" />
+          {t("clients.export")}
+        </Button>
       </div>
 
       {loading ? (

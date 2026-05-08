@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, X, Save, Mail, Phone, Building2, Tag } from "lucide-react";
+import { Search, X, Save, Mail, Phone, Building2, Tag, Archive, ArchiveRestore } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ type Client = {
   tags: string[];
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 };
 
 type QuoteRow = {
@@ -62,6 +63,7 @@ function AdminClientsPage() {
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"active" | "archived" | "all">("active");
   const [selected, setSelected] = useState<Client | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editTags, setEditTags] = useState<string[]>([]);
@@ -110,8 +112,13 @@ function AdminClientsPage() {
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return clients;
-    return clients.filter((c) => {
+    const scoped = clients.filter((c) => {
+      if (view === "active") return !c.archived_at;
+      if (view === "archived") return !!c.archived_at;
+      return true;
+    });
+    if (!s) return scoped;
+    return scoped.filter((c) => {
       const hay = [
         c.name,
         c.email,
@@ -124,7 +131,7 @@ function AdminClientsPage() {
         .toLowerCase();
       return hay.includes(s);
     });
-  }, [clients, search]);
+  }, [clients, search, view]);
 
   const openClient = (c: Client) => {
     setSelected(c);
@@ -167,6 +174,22 @@ function AdminClientsPage() {
     setSelected({ ...selected, notes: editNotes || null, tags: editTags });
   };
 
+  const toggleArchive = async (c: Client) => {
+    const archiving = !c.archived_at;
+    const next = archiving ? new Date().toISOString() : null;
+    const { error } = await supabase
+      .from("clients")
+      .update({ archived_at: next })
+      .eq("id", c.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(archiving ? t("clients.archive") : t("clients.unarchive"));
+    setClients((prev) => prev.map((x) => (x.id === c.id ? { ...x, archived_at: next } : x)));
+    if (selected?.id === c.id) setSelected({ ...c, archived_at: next });
+  };
+
   const selectedHistory = useMemo(() => {
     if (!selected) return [];
     const k = selected.email.toLowerCase();
@@ -183,14 +206,33 @@ function AdminClientsPage() {
         <p className="text-sm text-muted-foreground">{t("clients.sub")}</p>
       </div>
 
-      <div className="mb-4 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("clients.search")}
-          className="pl-9"
-        />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("clients.search")}
+            className="pl-9"
+          />
+        </div>
+        <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+          {(["active", "archived", "all"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              className={
+                "px-3 py-1.5 transition-colors " +
+                (view === v
+                  ? "bg-foreground text-background"
+                  : "bg-background hover:bg-muted/50 text-muted-foreground")
+              }
+            >
+              {t(`clients.filter.${v}` as never)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -224,9 +266,21 @@ function AdminClientsPage() {
                   <tr
                     key={c.id}
                     onClick={() => openClient(c)}
-                    className="border-t border-border cursor-pointer hover:bg-muted/30"
+                    className={
+                      "border-t border-border cursor-pointer hover:bg-muted/30 " +
+                      (c.archived_at ? "opacity-60" : "")
+                    }
                   >
-                    <td className="px-3 py-2 font-medium">{c.name || "—"}</td>
+                    <td className="px-3 py-2 font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{c.name || "—"}</span>
+                        {c.archived_at && (
+                          <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                            {t("clients.archivedBadge")}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-3 py-2 text-muted-foreground">{c.email}</td>
                     <td className="px-3 py-2 text-muted-foreground">{c.company || "—"}</td>
                     <td className="px-3 py-2">
@@ -257,7 +311,14 @@ function AdminClientsPage() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>{selected.name || selected.email}</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <span>{selected.name || selected.email}</span>
+                  {selected.archived_at && (
+                    <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                      {t("clients.archivedBadge")}
+                    </span>
+                  )}
+                </DialogTitle>
                 <DialogDescription>{t("clients.fiche")}</DialogDescription>
               </DialogHeader>
 
@@ -336,7 +397,24 @@ function AdminClientsPage() {
                   />
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-between items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => toggleArchive(selected)}
+                  >
+                    {selected.archived_at ? (
+                      <>
+                        <ArchiveRestore className="size-4" />
+                        {t("clients.unarchive")}
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="size-4" />
+                        {t("clients.archive")}
+                      </>
+                    )}
+                  </Button>
                   <Button onClick={save} disabled={saving}>
                     <Save className="size-4" />
                     {saving ? t("common.saving") : t("common.save")}

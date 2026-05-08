@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { useI18n } from "@/lib/i18n";
+import { canonicalLink } from "@/lib/seo";
 
 export const Route = createFileRoute("/cgl")({
   component: CGLPage,
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/cgl")({
           "Conditions générales de location de mobilier et d'objets événementiels Setup Paris.",
       },
     ],
+    links: [canonicalLink("/cgl")],
   }),
 });
 

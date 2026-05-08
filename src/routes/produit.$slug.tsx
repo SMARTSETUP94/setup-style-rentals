@@ -115,8 +115,7 @@ export const Route = createFileRoute("/produit/$slug")({
     }
     const title = `${m.name_fr} — Setup Paris`;
     const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D, livraison et reprise incluses.`;
-    const siteUrl = "https://setup-style-rentals.lovable.app";
-    const productUrl = `${siteUrl}/produit/${m.slug}`;
+    const productUrl = canonicalUrl(`/produit/${m.slug}`);
     const meta: Array<Record<string, string>> = [
       { title },
       { name: "description", content: description },
@@ -161,6 +160,7 @@ export const Route = createFileRoute("/produit/$slug")({
     if (m.image_url) jsonLd.image = m.image_url;
     return {
       meta,
+      links: [{ rel: "canonical", href: productUrl }],
       scripts: [
         {
           type: "application/ld+json",

@@ -5,6 +5,12 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { canonicalLink, ogImageMeta, SITE_URL, hreflangLinks } from "@/lib/seo";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -21,6 +27,9 @@ interface Category {
   color: string;
   image_url: string | null;
   sort_order: number;
+  description_long_fr: string | null;
+  description_long_en: string | null;
+  faq: Array<{ q_fr?: string; q_en?: string; a_fr?: string; a_en?: string }> | null;
 }
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;

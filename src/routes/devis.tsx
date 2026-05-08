@@ -13,7 +13,7 @@ import { ProductImage } from "@/components/site/ProductImage";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { canonicalLink } from "@/lib/seo";
+import { canonicalLink, hreflangLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/devis")({
   head: () => ({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/devis")({
       { title: "Mon devis — Setup Paris" },
       { name: "description", content: "Constituez votre devis et envoyez votre demande à notre équipe commerciale." },
     ],
-    links: [canonicalLink("/devis")],
+    links: [canonicalLink("/devis"), ...hreflangLinks("/devis")],
   }),
   component: QuotePage,
 });

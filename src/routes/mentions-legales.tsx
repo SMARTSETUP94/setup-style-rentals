@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { useI18n } from "@/lib/i18n";
-import { canonicalLink } from "@/lib/seo";
+import { canonicalLink, hreflangLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/mentions-legales")({
   component: LegalPage,
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/mentions-legales")({
           "Mentions légales et conditions générales de Smart Restructuring (Setup Paris).",
       },
     ],
-    links: [canonicalLink("/mentions-legales")],
+    links: [canonicalLink("/mentions-legales"), ...hreflangLinks("/mentions-legales")],
   }),
 });
 

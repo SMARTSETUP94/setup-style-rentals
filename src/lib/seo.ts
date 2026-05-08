@@ -45,3 +45,17 @@ export function ogImageMeta(
     { name: "twitter:image", content: url },
   ];
 }
+
+/**
+ * Build hreflang alternate links for a given route path.
+ * Uses `?lang=fr|en` query so Google can index both language variants
+ * of the same canonical page. `x-default` points to the FR (default) URL.
+ */
+export function hreflangLinks(path: string = "/") {
+  const base = canonicalUrl(path);
+  return [
+    { rel: "alternate", hrefLang: "fr", href: `${base}?lang=fr` },
+    { rel: "alternate", hrefLang: "en", href: `${base}?lang=en` },
+    { rel: "alternate", hrefLang: "x-default", href: base },
+  ] as const;
+}

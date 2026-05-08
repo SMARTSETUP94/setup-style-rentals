@@ -11,7 +11,7 @@ import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, 
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
-import { canonicalUrl, SITE_URL } from "@/lib/seo";
+import { canonicalUrl, SITE_URL, hreflangLinks } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -176,7 +176,10 @@ export const Route = createFileRoute("/produit/$slug")({
     };
     return {
       meta,
-      links: [{ rel: "canonical", href: productUrl }],
+      links: [
+        { rel: "canonical", href: productUrl },
+        ...hreflangLinks(`/produit/${m.slug}`),
+      ],
       scripts: [
         {
           type: "application/ld+json",

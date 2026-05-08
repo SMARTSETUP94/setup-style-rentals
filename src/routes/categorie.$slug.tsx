@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
-import { canonicalLink, ogImageMeta, SITE_URL } from "@/lib/seo";
+import { canonicalLink, ogImageMeta, SITE_URL, hreflangLinks } from "@/lib/seo";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -58,7 +58,7 @@ export const Route = createFileRoute("/categorie/$slug")({
           { alt: `Catégorie ${nameFr} — Setup Paris` },
         ),
       ],
-      links: [canonicalLink(`/categorie/${params.slug}`)],
+      links: [canonicalLink(`/categorie/${params.slug}`), ...hreflangLinks(`/categorie/${params.slug}`)],
     };
   },
   component: CategoryPage,

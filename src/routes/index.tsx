@@ -74,8 +74,10 @@ function HomePage() {
         {/* Background image */}
         <img
           src={HERO_IMAGE}
-          alt=""
-          aria-hidden="true"
+          alt="Installation événementielle Setup Paris — rideau bleu Yonex Player Support"
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Dark gradient overlay for legibility */}
@@ -325,6 +327,7 @@ function PresentationVideo({ lang }: { lang: "fr" | "en" }) {
         loop
         muted
         playsInline
+        preload="metadata"
         poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
         className="w-full h-full object-cover"
       >

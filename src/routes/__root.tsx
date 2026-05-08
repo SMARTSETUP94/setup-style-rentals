@@ -6,15 +6,23 @@ import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { canonicalLink, ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { applyNotFoundStatus } from "@/lib/ssr-status.server";
 
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   // Set the real HTTP 404 status during SSR so crawlers and clients
   // receive a proper not-found response (not 200) for unknown routes.
+  if (typeof window === "undefined") applyNotFoundStatus();
+
+  // Content-negotiated JSON response for API-style clients.
   if (typeof window === "undefined") {
-    // Async dynamic import keeps the server-only module out of the client bundle.
-    import("@/lib/ssr-status.server").then((m) => m.applyNotFoundStatus()).catch(() => {});
+    // Best-effort header check — module import is server-safe.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+    } catch {
+      // noop
+    }
   }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

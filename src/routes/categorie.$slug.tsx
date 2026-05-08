@@ -72,9 +72,7 @@ export const Route = createFileRoute("/categorie/$slug")({
   },
   component: CategoryPage,
   notFoundComponent: () => {
-    if (typeof window === "undefined") {
-      void import("@/lib/ssr-status.server").then((m) => m.applyNotFoundStatus());
-    }
+    void import("@/lib/ssr-status").then((m) => m.applyNotFoundStatus());
     return (
       <div className="container-x pt-32 pb-16 text-center">
         <h1 className="font-display text-3xl mb-4">Catégorie introuvable</h1>

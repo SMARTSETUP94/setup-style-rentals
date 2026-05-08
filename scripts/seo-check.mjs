@@ -16,6 +16,7 @@
  */
 
 const BASE = (process.argv[2] ?? "https://catalogue.setup.paris").replace(/\/+$/, "");
+const SITEMAP_URL = `${BASE}/sitemap.xml`;
 
 // Public routes to verify. Dynamic routes use a representative slug — adjust
 // the slugs below if these no longer exist in the catalogue.
@@ -96,7 +97,61 @@ let failed = 0;
 let passed = 0;
 console.log(`SEO check against ${BASE}\n`);
 
-for (const path of ROUTES) {
+// ---------------------------------------------------------------------------
+// Coverage step — diff sitemap.xml against the ROUTES we plan to test.
+// Goal: make sure we don't ship a new public URL without adding it to this
+// script, and that we don't keep stale routes after they're removed from
+// the sitemap.
+// ---------------------------------------------------------------------------
+console.log(`Fetching sitemap: ${SITEMAP_URL}`);
+let sitemapPaths = [];
+try {
+  const res = await fetch(SITEMAP_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const xml = await res.text();
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
+  sitemapPaths = [
+    ...new Set(
+      locs.map((u) => {
+        try {
+          return new URL(u).pathname.replace(/\/+$/, "") || "/";
+        } catch {
+          return u;
+        }
+      }),
+    ),
+  ];
+  console.log(`  found ${sitemapPaths.length} unique URLs in sitemap`);
+} catch (err) {
+  console.log(`  ✗ failed to fetch sitemap: ${err.message}`);
+  failed++;
+}
+
+const tested = new Set(ROUTES.map((p) => p.replace(/\/+$/, "") || "/"));
+const inSitemap = new Set(sitemapPaths);
+
+const missingFromScript = [...inSitemap].filter((p) => !tested.has(p));
+const staleInScript = [...tested].filter((p) => !inSitemap.has(p));
+
+if (missingFromScript.length) {
+  console.log(`\n  ✗ ${missingFromScript.length} sitemap URL(s) not covered by this script:`);
+  for (const p of missingFromScript) console.log(`      ${p}`);
+  failed++;
+} else if (sitemapPaths.length) {
+  console.log(`  ✓ every sitemap URL is covered by this script`);
+  passed++;
+}
+if (staleInScript.length) {
+  console.log(`  ⚠ ${staleInScript.length} script route(s) not present in sitemap (stale or dynamic):`);
+  for (const p of staleInScript) console.log(`      ${p}`);
+}
+console.log("");
+
+// Run head-tag checks against the union of declared ROUTES and sitemap URLs
+// so dynamic pages added on the server are validated automatically.
+const allRoutes = [...new Set([...ROUTES, ...sitemapPaths])];
+
+for (const path of allRoutes) {
   for (const lang of LANGS) {
     const { url, errors } = await checkRoute(path, lang);
     if (errors.length === 0) {

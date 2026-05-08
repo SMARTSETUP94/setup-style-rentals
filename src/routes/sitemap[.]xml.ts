@@ -20,16 +20,10 @@ export const Route = createFileRoute("/sitemap.xml")({
             "",
         );
 
-        const [productsRes, categoriesRes] = await Promise.all([
-          supabase
-            .from("products")
-            .select("slug, updated_at")
-            .eq("is_active", true),
-          supabase
-            .from("categories")
-            .select("slug, updated_at")
-            .eq("is_active", true),
-        ]);
+        const productsRes = await supabase
+          .from("products")
+          .select("slug, updated_at")
+          .eq("is_active", true);
 
         const today = new Date().toISOString().slice(0, 10);
 
@@ -42,13 +36,6 @@ export const Route = createFileRoute("/sitemap.xml")({
           { loc: "/mentions-legales", lastmod: today, priority: "0.3", changefreq: "yearly" },
         ];
 
-        const categoryUrls = (categoriesRes.data ?? []).map((c) => ({
-          loc: `/catalogue?categorie=${encodeURIComponent(c.slug)}`,
-          lastmod: c.updated_at?.slice(0, 10) ?? today,
-          priority: "0.7",
-          changefreq: "weekly",
-        }));
-
         const productUrls = (productsRes.data ?? []).map((p) => ({
           loc: `/produit/${encodeURIComponent(p.slug)}`,
           lastmod: p.updated_at?.slice(0, 10) ?? today,
@@ -56,7 +43,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           changefreq: "weekly",
         }));
 
-        const all = [...staticUrls, ...categoryUrls, ...productUrls];
+        const all = [...staticUrls, ...productUrls];
 
         const xml =
           `<?xml version="1.0" encoding="UTF-8"?>\n` +

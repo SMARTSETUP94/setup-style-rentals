@@ -18,6 +18,9 @@ export type Database = {
         Row: {
           color: string
           created_at: string
+          description_long_en: string | null
+          description_long_fr: string | null
+          faq: Json
           icon: string | null
           id: string
           image_url: string | null
@@ -31,6 +34,9 @@ export type Database = {
         Insert: {
           color?: string
           created_at?: string
+          description_long_en?: string | null
+          description_long_fr?: string | null
+          faq?: Json
           icon?: string | null
           id?: string
           image_url?: string | null
@@ -44,6 +50,9 @@ export type Database = {
         Update: {
           color?: string
           created_at?: string
+          description_long_en?: string | null
+          description_long_fr?: string | null
+          faq?: Json
           icon?: string | null
           id?: string
           image_url?: string | null
@@ -388,6 +397,13 @@ export type Database = {
       get_available_stock: {
         Args: { _end_date: string; _product_id: string; _start_date: string }
         Returns: number
+      }
+      get_available_stock_bulk: {
+        Args: { _end_date: string; _product_ids: string[]; _start_date: string }
+        Returns: {
+          available: number
+          product_id: string
+        }[]
       }
       has_role: {
         Args: {

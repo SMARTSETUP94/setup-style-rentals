@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,12 @@ type Category = {
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
+  description_long_fr: string | null;
+  description_long_en: string | null;
+  faq: FaqItem[] | null;
 };
+
+type FaqItem = { q_fr?: string; q_en?: string; a_fr?: string; a_en?: string };
 
 const empty: Partial<Category> = {
   slug: "",
@@ -42,6 +48,9 @@ const empty: Partial<Category> = {
   image_url: "",
   is_active: true,
   sort_order: 0,
+  description_long_fr: "",
+  description_long_en: "",
+  faq: [],
 };
 
 function slugify(input: string): string {
@@ -114,6 +123,9 @@ function AdminCategoriesPage() {
       image_url: editing.image_url || null,
       is_active: editing.is_active ?? true,
       sort_order: Number(editing.sort_order) || 0,
+      description_long_fr: editing.description_long_fr || null,
+      description_long_en: editing.description_long_en || null,
+      faq: (editing.faq ?? []).filter((f) => (f.q_fr || f.q_en) && (f.a_fr || f.a_en)),
     };
     const res = editing.id
       ? await supabase.from("categories").update(payload).eq("id", editing.id)
@@ -264,6 +276,104 @@ function AdminCategoriesPage() {
                   onCheckedChange={(v) => setEditing({ ...editing, is_active: v })}
                 />
                 <Label>{t("cats.field.activeLabel")}</Label>
+              </div>
+
+              <div className="col-span-2 grid grid-cols-2 gap-4 pt-4 border-t border-border">
+                <div>
+                  <Label>Description longue (FR)</Label>
+                  <Textarea
+                    rows={5}
+                    value={editing.description_long_fr || ""}
+                    onChange={(e) => setEditing({ ...editing, description_long_fr: e.target.value })}
+                    className="mt-1.5"
+                    placeholder="Texte SEO affiché en haut de la page catégorie."
+                  />
+                </div>
+                <div>
+                  <Label>Long description (EN)</Label>
+                  <Textarea
+                    rows={5}
+                    value={editing.description_long_en || ""}
+                    onChange={(e) => setEditing({ ...editing, description_long_en: e.target.value })}
+                    className="mt-1.5"
+                    placeholder="SEO content shown at the top of the category page."
+                  />
+                </div>
+              </div>
+
+              <div className="col-span-2 pt-4 border-t border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>FAQ</Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditing({ ...editing, faq: [...(editing.faq ?? []), { q_fr: "", q_en: "", a_fr: "", a_en: "" }] })}
+                  >
+                    <Plus className="size-3.5" /> Ajouter une question
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {(editing.faq ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Aucune question. Ajoutez-en pour enrichir le SEO.</p>
+                  ) : (
+                    (editing.faq ?? []).map((f, i) => (
+                      <div key={i} className="border border-border rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted-foreground">Q{i + 1}</span>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setEditing({ ...editing, faq: (editing.faq ?? []).filter((_, j) => j !== i) })}
+                          >
+                            <Trash2 className="size-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Question (FR)"
+                            value={f.q_fr || ""}
+                            onChange={(e) => {
+                              const next = [...(editing.faq ?? [])];
+                              next[i] = { ...next[i], q_fr: e.target.value };
+                              setEditing({ ...editing, faq: next });
+                            }}
+                          />
+                          <Input
+                            placeholder="Question (EN)"
+                            value={f.q_en || ""}
+                            onChange={(e) => {
+                              const next = [...(editing.faq ?? [])];
+                              next[i] = { ...next[i], q_en: e.target.value };
+                              setEditing({ ...editing, faq: next });
+                            }}
+                          />
+                          <Textarea
+                            rows={2}
+                            placeholder="Réponse (FR)"
+                            value={f.a_fr || ""}
+                            onChange={(e) => {
+                              const next = [...(editing.faq ?? [])];
+                              next[i] = { ...next[i], a_fr: e.target.value };
+                              setEditing({ ...editing, faq: next });
+                            }}
+                          />
+                          <Textarea
+                            rows={2}
+                            placeholder="Answer (EN)"
+                            value={f.a_en || ""}
+                            onChange={(e) => {
+                              const next = [...(editing.faq ?? [])];
+                              next[i] = { ...next[i], a_en: e.target.value };
+                              setEditing({ ...editing, faq: next });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -27,6 +27,8 @@ interface Props {
   fromLabel: string;
   perDayLabel: string;
   className?: string;
+  unavailable?: boolean;
+  unavailableLabel?: string;
 }
 
 /**
@@ -42,6 +44,8 @@ export function ProductCard({
   fromLabel,
   perDayLabel,
   className,
+  unavailable = false,
+  unavailableLabel,
 }: Props) {
   const categoryLabel = category ? pickLang(category, "name", lang) : product.category_slug;
 
@@ -52,8 +56,10 @@ export function ProductCard({
       className={cn(
         "group block bg-card rounded-xl overflow-hidden border border-border transition-all duration-300",
         "hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-18px_rgb(0_0_0_/_0.18)]",
+        unavailable && "opacity-60 grayscale",
         className,
       )}
+      aria-disabled={unavailable || undefined}
     >
       <div className="relative aspect-[4/3] bg-secondary overflow-hidden">
         <ProductImage
@@ -65,6 +71,11 @@ export function ProductCard({
         <span className="absolute top-3 left-3 inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full bg-background/90 backdrop-blur-sm text-foreground border border-white/40 shadow-sm">
           {categoryLabel}
         </span>
+        {unavailable && unavailableLabel ? (
+          <span className="absolute top-3 right-3 inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full bg-destructive text-destructive-foreground shadow-sm">
+            {unavailableLabel}
+          </span>
+        ) : null}
       </div>
       <div className="p-4">
         <h3 className="font-medium text-base leading-snug text-foreground line-clamp-2">

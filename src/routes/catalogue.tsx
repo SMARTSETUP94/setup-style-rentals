@@ -2,12 +2,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
+import { fr as dateFr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { cn } from "@/lib/utils";
 import { canonicalLink, ogImageMeta, hreflangLinks } from "@/lib/seo";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,6 +36,10 @@ const searchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   category: fallback(z.string(), "").default(""),
   sort: fallback(z.enum(["featured", "priceAsc", "priceDesc", "name"]), "featured").default("featured"),
+  start: fallback(z.string(), "").default(""),
+  end: fallback(z.string(), "").default(""),
+  pmin: fallback(z.coerce.number().nonnegative().optional(), undefined).default(undefined),
+  pmax: fallback(z.coerce.number().nonnegative().optional(), undefined).default(undefined),
 });
 
 export const Route = createFileRoute("/catalogue")({
@@ -57,6 +67,8 @@ function CataloguePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [availability, setAvailability] = useState<Record<string, number>>({});
+  const [checkingAvail, setCheckingAvail] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -69,6 +81,38 @@ function CataloguePage() {
     });
   }, []);
 
+  // Compute price bounds from products
+  const priceBounds = useMemo(() => {
+    if (products.length === 0) return { min: 0, max: 1000 };
+    const prices = products.map((p) => Number(p.price_day) || 0);
+    const min = Math.floor(Math.min(...prices));
+    const max = Math.ceil(Math.max(...prices));
+    return { min, max: Math.max(max, min + 1) };
+  }, [products]);
+
+  // Bulk availability check when dates change
+  useEffect(() => {
+    if (!search.start || !search.end || products.length === 0) {
+      setAvailability({});
+      return;
+    }
+    setCheckingAvail(true);
+    supabase
+      .rpc("get_available_stock_bulk", {
+        _product_ids: products.map((p) => p.id),
+        _start_date: search.start,
+        _end_date: search.end,
+      })
+      .then(({ data }) => {
+        const map: Record<string, number> = {};
+        ((data as Array<{ product_id: string; available: number }>) ?? []).forEach((r) => {
+          map[r.product_id] = r.available;
+        });
+        setAvailability(map);
+        setCheckingAvail(false);
+      });
+  }, [search.start, search.end, products]);
+
   const filtered = useMemo(() => {
     let list = [...products];
     if (search.category) list = list.filter((p) => p.category_slug === search.category);
@@ -78,6 +122,8 @@ function CataloguePage() {
         p.name_fr.toLowerCase().includes(q) || p.name_en.toLowerCase().includes(q),
       );
     }
+    if (typeof search.pmin === "number") list = list.filter((p) => Number(p.price_day) >= search.pmin!);
+    if (typeof search.pmax === "number") list = list.filter((p) => Number(p.price_day) <= search.pmax!);
     switch (search.sort) {
       case "priceAsc": list.sort((a, b) => a.price_day - b.price_day); break;
       case "priceDesc": list.sort((a, b) => b.price_day - a.price_day); break;
@@ -90,6 +136,14 @@ function CataloguePage() {
   type SearchType = z.infer<typeof searchSchema>;
   const setSearch = (patch: Partial<SearchType>) =>
     navigate({ search: (prev: SearchType) => ({ ...prev, ...patch }) });
+
+  const startDate = search.start ? new Date(search.start) : undefined;
+  const endDate = search.end ? new Date(search.end) : undefined;
+  const dateLocale = lang === "fr" ? dateFr : undefined;
+  const datesActive = !!search.start && !!search.end;
+  const priceActive = typeof search.pmin === "number" || typeof search.pmax === "number";
+  const currentPmin = typeof search.pmin === "number" ? search.pmin : priceBounds.min;
+  const currentPmax = typeof search.pmax === "number" ? search.pmax : priceBounds.max;
 
   return (
     <div className="pt-24 md:pt-28">
@@ -161,8 +215,85 @@ function CataloguePage() {
           </select>
         </div>
 
+        {/* Secondary filters: dates + price */}
+        <div className="mt-3 flex flex-col md:flex-row gap-3 md:items-end pb-4 border-b border-border">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground">{t("catalog.startDate")}</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("justify-start font-normal min-w-[160px]", !startDate && "text-muted-foreground")}>
+                    <CalendarIcon className="size-4 mr-2" />
+                    {startDate ? format(startDate, "PPP", { locale: dateLocale }) : t("product.pickDate")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(d) => setSearch({ start: d ? format(d, "yyyy-MM-dd") : "" })}
+                    disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] uppercase tracking-wider text-muted-foreground">{t("catalog.endDate")}</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("justify-start font-normal min-w-[160px]", !endDate && "text-muted-foreground")}>
+                    <CalendarIcon className="size-4 mr-2" />
+                    {endDate ? format(endDate, "PPP", { locale: dateLocale }) : t("product.pickDate")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(d) => setSearch({ end: d ? format(d, "yyyy-MM-dd") : "" })}
+                    disabled={(d) => (startDate ? d < startDate : d < new Date(new Date().setHours(0, 0, 0, 0)))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            {datesActive && (
+              <Button variant="ghost" size="sm" onClick={() => setSearch({ start: "", end: "" })}>
+                <X className="size-3.5 mr-1" /> {t("catalog.clearDates")}
+              </Button>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 flex-1 max-w-sm md:ml-auto">
+            <label className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              {t("catalog.priceRange")} : {currentPmin}€ – {currentPmax}€
+            </label>
+            <Slider
+              min={priceBounds.min}
+              max={priceBounds.max}
+              step={5}
+              value={[currentPmin, currentPmax]}
+              onValueChange={(v) => setSearch({ pmin: v[0] === priceBounds.min ? undefined : v[0], pmax: v[1] === priceBounds.max ? undefined : v[1] })}
+              className="mt-2"
+            />
+            {priceActive && (
+              <button
+                type="button"
+                onClick={() => setSearch({ pmin: undefined, pmax: undefined })}
+                className="text-[11px] text-muted-foreground hover:text-foreground self-start mt-1"
+              >
+                {t("product.clear")}
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="mt-4 text-xs text-muted-foreground">
           {filtered.length} {filtered.length > 1 ? t("catalog.results") : t("catalog.result")}
+          {checkingAvail && <span className="ml-2 italic">· {t("catalog.checkingAvailability")}</span>}
         </div>
       </div>
 
@@ -186,6 +317,8 @@ function CataloguePage() {
                 lang={lang}
                 fromLabel={t("catalog.from")}
                 perDayLabel={t("catalog.perDay")}
+                unavailable={datesActive && availability[p.id] !== undefined && availability[p.id] <= 0}
+                unavailableLabel={t("catalog.unavailable")}
               />
             ))}
           </div>

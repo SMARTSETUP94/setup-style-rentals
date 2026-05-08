@@ -5,6 +5,12 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { canonicalLink, ogImageMeta, SITE_URL, hreflangLinks } from "@/lib/seo";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -21,6 +27,9 @@ interface Category {
   color: string;
   image_url: string | null;
   sort_order: number;
+  description_long_fr: string | null;
+  description_long_en: string | null;
+  faq: Array<{ q_fr?: string; q_en?: string; a_fr?: string; a_en?: string }> | null;
 }
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;
@@ -39,7 +48,7 @@ export const Route = createFileRoute("/categorie/$slug")({
       .eq("is_active", true)
       .maybeSingle();
     if (error || !data) throw notFound();
-    return { category: data as Category };
+    return { category: data as unknown as Category };
   },
   head: ({ loaderData, params }) => {
     const cat = loaderData?.category;
@@ -118,12 +127,43 @@ function CategoryPage() {
     [products, name, lang],
   );
 
+  type FaqEntry = { q_fr?: string; q_en?: string; a_fr?: string; a_en?: string };
+  const faqList: FaqEntry[] = ((category.faq ?? []) as FaqEntry[]).filter((f) => {
+    const q = lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en;
+    return !!q;
+  });
+  const longDesc = lang === "en"
+    ? category.description_long_en || category.description_long_fr
+    : category.description_long_fr || category.description_long_en;
+
+  const faqJsonLd = useMemo(() => {
+    if (faqList.length === 0) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqList.map((f: FaqEntry) => ({
+        "@type": "Question",
+        name: lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: lang === "en" ? f.a_en || f.a_fr : f.a_fr || f.a_en,
+        },
+      })),
+    };
+  }, [faqList, lang]);
+
   return (
     <div className="pt-24 md:pt-28">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
+      {faqJsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      ) : null}
       <div className="container-x">
         <Breadcrumb className="mb-3">
           <BreadcrumbList>
@@ -144,6 +184,11 @@ function CategoryPage() {
         <h1 className="mt-3 font-display font-semibold text-[clamp(2.5rem,5vw,4rem)] leading-tight tracking-tight">
           {name}
         </h1>
+        {longDesc ? (
+          <div className="mt-4 max-w-2xl text-base text-muted-foreground whitespace-pre-line leading-relaxed">
+            {longDesc}
+          </div>
+        ) : null}
         <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
           {products.length} {products.length > 1 ? t("catalog.results") : t("catalog.result")}
         </p>
@@ -173,6 +218,26 @@ function CategoryPage() {
           </div>
         )}
       </div>
+
+      {faqList.length > 0 ? (
+        <section className="container-x pb-20">
+          <h2 className="font-display text-2xl md:text-3xl font-semibold tracking-tight mb-6">
+            {t("catalog.faq")}
+          </h2>
+          <Accordion type="single" collapsible className="max-w-3xl">
+            {faqList.map((f: FaqEntry, i: number) => (
+              <AccordionItem key={i} value={`item-${i}`}>
+                <AccordionTrigger className="text-left">
+                  {lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en}
+                </AccordionTrigger>
+                <AccordionContent className="whitespace-pre-line text-muted-foreground">
+                  {lang === "en" ? f.a_en || f.a_fr : f.a_fr || f.a_en}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </section>
+      ) : null}
     </div>
   );
 }

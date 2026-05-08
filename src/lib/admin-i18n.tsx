@@ -37,6 +37,14 @@ const DICT: Dict = {
   "clients.saved": { fr: "Client mis à jour", en: "Client updated" },
   "clients.saveError": { fr: "Erreur lors de la mise à jour", en: "Update failed" },
   "clients.openQuote": { fr: "Voir", en: "View" },
+ "clients.archive": { fr: "Archiver", en: "Archive" },
+ "clients.unarchive": { fr: "Désarchiver", en: "Unarchive" },
+ "clients.archived": { fr: "Archivé", en: "Archived" },
+ "clients.archivedBadge": { fr: "Archivé", en: "Archived" },
+ "clients.filter.active": { fr: "Actifs", en: "Active" },
+ "clients.filter.archived": { fr: "Archivés", en: "Archived" },
+ "clients.filter.all": { fr: "Tous", en: "All" },
+ "clients.archivedAt": { fr: "Archivé le {date}", en: "Archived on {date}" },
 
   // Calendar
   "cal.title": { fr: "Calendrier des événements", en: "Events calendar" },

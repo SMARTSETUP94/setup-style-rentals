@@ -270,8 +270,21 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Priority: ?lang= query > localStorage > browser language > default 'fr'
+    const params = new URLSearchParams(window.location.search);
+    const qsLang = params.get("lang");
+    if (qsLang === "fr" || qsLang === "en") {
+      setLangState(qsLang);
+      localStorage.setItem(STORAGE_KEY, qsLang);
+      return;
+    }
     const stored = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (stored === "fr" || stored === "en") setLangState(stored);
+    if (stored === "fr" || stored === "en") {
+      setLangState(stored);
+      return;
+    }
+    const nav = (navigator.language || "fr").toLowerCase();
+    if (nav.startsWith("en")) setLangState("en");
   }, []);
 
   // Keep <html lang> in sync with the current language for a11y/SEO.

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,12 @@ type Category = {
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
+  description_long_fr: string | null;
+  description_long_en: string | null;
+  faq: FaqItem[] | null;
 };
+
+type FaqItem = { q_fr?: string; q_en?: string; a_fr?: string; a_en?: string };
 
 const empty: Partial<Category> = {
   slug: "",
@@ -42,6 +48,9 @@ const empty: Partial<Category> = {
   image_url: "",
   is_active: true,
   sort_order: 0,
+  description_long_fr: "",
+  description_long_en: "",
+  faq: [],
 };
 
 function slugify(input: string): string {
@@ -114,6 +123,9 @@ function AdminCategoriesPage() {
       image_url: editing.image_url || null,
       is_active: editing.is_active ?? true,
       sort_order: Number(editing.sort_order) || 0,
+      description_long_fr: editing.description_long_fr || null,
+      description_long_en: editing.description_long_en || null,
+      faq: (editing.faq ?? []).filter((f) => (f.q_fr || f.q_en) && (f.a_fr || f.a_en)),
     };
     const res = editing.id
       ? await supabase.from("categories").update(payload).eq("id", editing.id)

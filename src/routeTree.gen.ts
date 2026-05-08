@@ -25,6 +25,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminDevisRouteImport } from './routes/admin.devis'
+import { Route as AdminClientsRouteImport } from './routes/admin.clients'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
@@ -109,6 +110,11 @@ const AdminDevisRoute = AdminDevisRouteImport.update({
   path: '/devis',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminClientsRoute = AdminClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
     | '/admin/roadmap'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
     | '/admin/roadmap'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
     | '/admin/roadmap'
@@ -381,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDevisRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/clients': {
+      id: '/admin/clients'
+      path: '/clients'
+      fullPath: '/admin/clients'
+      preLoaderRoute: typeof AdminClientsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -409,6 +428,7 @@ interface AdminRouteChildren {
   AdminAuthRoute: typeof AdminAuthRoute
   AdminCalendrierRoute: typeof AdminCalendrierRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminClientsRoute: typeof AdminClientsRoute
   AdminDevisRoute: typeof AdminDevisRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminRoadmapRoute: typeof AdminRoadmapRoute
@@ -420,6 +440,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthRoute: AdminAuthRoute,
   AdminCalendrierRoute: AdminCalendrierRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminClientsRoute: AdminClientsRoute,
   AdminDevisRoute: AdminDevisRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminRoadmapRoute: AdminRoadmapRoute,
@@ -445,12 +466,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

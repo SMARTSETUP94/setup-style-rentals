@@ -111,6 +111,17 @@ const DICT: Dict = {
   "catalog.results": { fr: "résultats", en: "results" },
   "catalog.result": { fr: "résultat", en: "result" },
 
+  // Catalog availability + price filter
+  "catalog.dates": { fr: "Disponibilité", en: "Availability" },
+  "catalog.startDate": { fr: "Date de début", en: "Start date" },
+  "catalog.endDate": { fr: "Date de fin", en: "End date" },
+  "catalog.clearDates": { fr: "Effacer les dates", en: "Clear dates" },
+  "catalog.priceRange": { fr: "Prix / jour", en: "Price / day" },
+  "catalog.unavailable": { fr: "Indisponible", en: "Unavailable" },
+  "catalog.checkingAvailability": { fr: "Vérification de la disponibilité…", en: "Checking availability…" },
+  "catalog.faq": { fr: "Questions fréquentes", en: "Frequently asked questions" },
+  "catalog.aboutCategory": { fr: "À propos", en: "About" },
+
   // Product page extras
   "product.pickDate": { fr: "Choisir une date", en: "Pick a date" },
   "product.customize": { fr: "Personnalisation", en: "Customization" },

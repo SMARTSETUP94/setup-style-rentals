@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, MousePointerClick, Truck, Wand2, Zap, Ruler, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
@@ -136,21 +136,7 @@ function HomePage() {
               : "Discover the platform in 51 seconds."}
           </p>
         </div>
-        <div className="mt-10 mx-auto max-w-[1200px] rounded-2xl overflow-hidden shadow-premium border border-border bg-black aspect-video">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
-            className="w-full h-full object-cover"
-          >
-            <source
-              src="https://setup-paris-configurators.netlify.app/setup-paris-presentation.mp4"
-              type="video/mp4"
-            />
-          </video>
-        </div>
+        <PresentationVideo lang={lang} />
       </RevealSection>
 
       <RevealSection className="container-x py-20 md:py-28">

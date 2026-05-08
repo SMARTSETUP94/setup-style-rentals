@@ -10,6 +10,25 @@ import { canonicalLink, ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/se
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
+  // Set the real HTTP 404 status during SSR so crawlers and clients
+  // receive a proper not-found response (not 200) for unknown routes.
+  if (typeof window === "undefined") {
+    try {
+      // Dynamic require keeps the server-only import out of client bundles.
+      const mod = require("@tanstack/react-start/server") as {
+        setResponseStatus?: (status: number) => void;
+        setResponseHeader?: (name: string, value: string) => void;
+        getRequestHeader?: (name: string) => string | undefined;
+      };
+      mod.setResponseStatus?.(404);
+      const accept = mod.getRequestHeader?.("accept") ?? "";
+      if (accept.includes("application/json") && !accept.includes("text/html")) {
+        mod.setResponseHeader?.("content-type", "application/json; charset=utf-8");
+      }
+    } catch {
+      // ignore — utilities are only available inside a server request context
+    }
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">

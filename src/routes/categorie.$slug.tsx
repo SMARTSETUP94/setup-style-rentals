@@ -48,7 +48,7 @@ export const Route = createFileRoute("/categorie/$slug")({
       .eq("is_active", true)
       .maybeSingle();
     if (error || !data) throw notFound();
-    return { category: data as Category };
+    return { category: data as unknown as Category };
   },
   head: ({ loaderData, params }) => {
     const cat = loaderData?.category;

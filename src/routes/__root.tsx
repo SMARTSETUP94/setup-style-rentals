@@ -14,16 +14,6 @@ function NotFoundComponent() {
   // Set the real HTTP 404 status during SSR so crawlers and clients
   // receive a proper not-found response (not 200) for unknown routes.
   if (typeof window === "undefined") applyNotFoundStatus();
-
-  // Content-negotiated JSON response for API-style clients.
-  if (typeof window === "undefined") {
-    // Best-effort header check — module import is server-safe.
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-    } catch {
-      // noop
-    }
-  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">

@@ -45,6 +45,7 @@ const DICT: Dict = {
  "clients.filter.archived": { fr: "Archivés", en: "Archived" },
  "clients.filter.all": { fr: "Tous", en: "All" },
  "clients.archivedAt": { fr: "Archivé le {date}", en: "Archived on {date}" },
+ "clients.export": { fr: "Exporter CSV", en: "Export CSV" },
 
   // Calendar
   "cal.title": { fr: "Calendrier des événements", en: "Events calendar" },

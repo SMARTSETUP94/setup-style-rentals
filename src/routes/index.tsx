@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
 import { ClientsBand } from "@/components/site/ClientsBand";
+import { canonicalLink } from "@/lib/seo";
 
 interface Category {
   id: string;
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Setup Paris — Location d'objets événementiels" },
       { property: "og:description", content: "Personnalisez, configurez, louez." },
     ],
+    links: [canonicalLink("/")],
   }),
   component: HomePage,
 });

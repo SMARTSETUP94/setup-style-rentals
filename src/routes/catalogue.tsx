@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { cn } from "@/lib/utils";
+import { canonicalLink } from "@/lib/seo";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/catalogue")({
       { property: "og:title", content: "Catalogue — Setup Paris" },
       { property: "og:description", content: "Plus de 50 objets événementiels disponibles à la location." },
     ],
+    links: [canonicalLink("/catalogue")],
   }),
   component: CataloguePage,
 });

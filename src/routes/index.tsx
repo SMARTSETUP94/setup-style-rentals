@@ -327,6 +327,7 @@ function PresentationVideo({ lang }: { lang: "fr" | "en" }) {
         loop
         muted
         playsInline
+        preload="metadata"
         poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
         className="w-full h-full object-cover"
       >

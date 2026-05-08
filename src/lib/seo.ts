@@ -48,14 +48,20 @@ export function ogImageMeta(
 
 /**
  * Build hreflang alternate links for a given route path.
- * Uses `?lang=fr|en` query so Google can index both language variants
- * of the same canonical page. `x-default` points to the FR (default) URL.
+ *
+ * IMPORTANT: hreflang must reference the same indexable, canonical URL —
+ * never a `?lang=…` variant. The `?lang` query is a client-side language
+ * toggle and is excluded from indexing (see robots.txt + sitemap).
+ *
+ * Until dedicated localized routes (`/fr/...`, `/en/...`) exist, the page
+ * serves both languages at the same URL. We therefore emit FR and x-default
+ * pointing to the clean canonical URL, and omit EN to avoid declaring a
+ * non-existent alternate URL.
  */
 export function hreflangLinks(path: string = "/") {
   const base = canonicalUrl(path);
   return [
-    { rel: "alternate", hrefLang: "fr", href: `${base}?lang=fr` },
-    { rel: "alternate", hrefLang: "en", href: `${base}?lang=en` },
+    { rel: "alternate", hrefLang: "fr", href: base },
     { rel: "alternate", hrefLang: "x-default", href: base },
   ] as const;
 }

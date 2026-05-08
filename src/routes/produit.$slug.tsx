@@ -11,7 +11,7 @@ import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, 
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
-import { canonicalUrl } from "@/lib/seo";
+import { canonicalUrl, SITE_URL } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -159,6 +159,21 @@ export const Route = createFileRoute("/produit/$slug")({
       },
     };
     if (m.image_url) jsonLd.image = m.image_url;
+    const breadcrumbsLd = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: `${SITE_URL}/` },
+        { "@type": "ListItem", position: 2, name: "Catalogue", item: `${SITE_URL}/catalogue` },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: m.category_slug,
+          item: `${SITE_URL}/catalogue?categorie=${encodeURIComponent(m.category_slug)}`,
+        },
+        { "@type": "ListItem", position: 4, name: m.name_fr, item: productUrl },
+      ],
+    };
     return {
       meta,
       links: [{ rel: "canonical", href: productUrl }],
@@ -166,6 +181,10 @@ export const Route = createFileRoute("/produit/$slug")({
         {
           type: "application/ld+json",
           children: JSON.stringify(jsonLd),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(breadcrumbsLd),
         },
       ],
     };

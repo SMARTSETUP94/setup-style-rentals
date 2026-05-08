@@ -74,8 +74,7 @@ export const Route = createFileRoute("/sitemap.xml")({
                 `    <lastmod>${u.lastmod}</lastmod>\n` +
                 `    <changefreq>${u.changefreq}</changefreq>\n` +
                 `    <priority>${u.priority}</priority>\n` +
-                `    <xhtml:link rel="alternate" hreflang="fr" href="${canonical}?lang=fr"/>\n` +
-                `    <xhtml:link rel="alternate" hreflang="en" href="${canonical}?lang=en"/>\n` +
+                `    <xhtml:link rel="alternate" hreflang="fr" href="${canonical}"/>\n` +
                 `    <xhtml:link rel="alternate" hreflang="x-default" href="${canonical}"/>\n` +
                 `  </url>`
               );

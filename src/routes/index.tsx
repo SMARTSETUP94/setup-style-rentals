@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
 import { ClientsBand } from "@/components/site/ClientsBand";
-import { canonicalLink } from "@/lib/seo";
+import { canonicalLink, ogImageMeta } from "@/lib/seo";
 
 interface Category {
   id: string;
@@ -36,6 +36,10 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Personnalisez, configurez, louez. Catalogue d'objets événementiels avec configurateur 3D : jeux, structures, signalétique, décoration, mobilier." },
       { property: "og:title", content: "Setup Paris — Location d'objets événementiels" },
       { property: "og:description", content: "Personnalisez, configurez, louez." },
+      ...ogImageMeta(
+        "https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg",
+        { alt: "Setup Paris — Location d'objets événementiels personnalisables" },
+      ),
     ],
     links: [canonicalLink("/")],
   }),

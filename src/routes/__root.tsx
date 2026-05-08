@@ -5,7 +5,7 @@ import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
-import { canonicalLink } from "@/lib/seo";
+import { canonicalLink, ogImageMeta } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
 
@@ -45,6 +45,9 @@ export const Route = createRootRoute({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Setup Paris — Location d'objets événementiels" },
       { name: "twitter:description", content: "Personnalisez, configurez, louez. Setup Paris : location d'objets événementiels avec configurateur 3D pour Paris et l'Île-de-France." },
+      { property: "og:site_name", content: "Setup Paris" },
+      { property: "og:locale", content: "fr_FR" },
+      ...ogImageMeta(),
     ],
     links: [
       { rel: "stylesheet", href: appCss },

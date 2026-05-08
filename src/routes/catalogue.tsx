@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { cn } from "@/lib/utils";
-import { canonicalLink } from "@/lib/seo";
+import { canonicalLink, ogImageMeta } from "@/lib/seo";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -40,6 +40,10 @@ export const Route = createFileRoute("/catalogue")({
       { name: "description", content: "Découvrez notre catalogue de location : jeux, structures, signalétique, décoration et mobilier événementiel." },
       { property: "og:title", content: "Catalogue — Setup Paris" },
       { property: "og:description", content: "Plus de 50 objets événementiels disponibles à la location." },
+      ...ogImageMeta(
+        "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&h=630&q=80",
+        { alt: "Catalogue Setup Paris — jeux, structures, signalétique, décoration, mobilier" },
+      ),
     ],
     links: [canonicalLink("/catalogue")],
   }),

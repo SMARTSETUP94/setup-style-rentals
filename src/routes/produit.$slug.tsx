@@ -11,6 +11,7 @@ import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, 
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
+import { canonicalUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

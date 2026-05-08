@@ -5,7 +5,7 @@ import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
-import { canonicalLink, ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { canonicalLink, ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE, hreflangLinks } from "@/lib/seo";
 import { applyNotFoundStatus } from "@/lib/ssr-status.server";
 
 import appCss from "../styles.css?url";
@@ -59,6 +59,7 @@ export const Route = createRootRoute({
     links: [
       { rel: "stylesheet", href: appCss },
       canonicalLink("/"),
+      ...hreflangLinks("/"),
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

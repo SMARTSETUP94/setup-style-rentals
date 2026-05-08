@@ -25,6 +25,11 @@ export const Route = createFileRoute("/sitemap.xml")({
           .select("slug, updated_at")
           .eq("is_active", true);
 
+        const categoriesRes = await supabase
+          .from("categories")
+          .select("slug, updated_at")
+          .eq("is_active", true);
+
         const today = new Date().toISOString().slice(0, 10);
 
         // Static, indexable pages.
@@ -43,7 +48,14 @@ export const Route = createFileRoute("/sitemap.xml")({
           changefreq: "weekly",
         }));
 
-        const all = [...staticUrls, ...productUrls];
+        const categoryUrls = (categoriesRes.data ?? []).map((c) => ({
+          loc: `/categorie/${encodeURIComponent(c.slug)}`,
+          lastmod: c.updated_at?.slice(0, 10) ?? today,
+          priority: "0.85",
+          changefreq: "weekly",
+        }));
+
+        const all = [...staticUrls, ...categoryUrls, ...productUrls];
 
         const xml =
           `<?xml version="1.0" encoding="UTF-8"?>\n` +

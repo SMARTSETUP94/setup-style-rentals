@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SITE_URL } from "@/lib/seo";
 
 /**
  * /robots.txt — allows all crawlers and points to the dynamic sitemap.
@@ -6,16 +7,13 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const url = new URL(request.url);
-        const origin = `${url.protocol}//${url.host}`;
-
+      GET: async () => {
         const body =
           `User-agent: *\n` +
           `Allow: /\n` +
           `Disallow: /admin\n` +
           `Disallow: /admin/\n\n` +
-          `Sitemap: ${origin}/sitemap.xml\n`;
+          `Sitemap: ${SITE_URL}/sitemap.xml\n`;
 
         return new Response(body, {
           status: 200,

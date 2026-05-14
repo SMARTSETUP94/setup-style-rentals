@@ -1,0 +1,18 @@
+# Setup Paris
+
+> Location d'objets événementiels personnalisables avec configurateur 3D à Paris et en Île-de-France.
+
+Setup Paris propose la location de mobilier et d'objets événementiels (cornhole, blackjack, bowling, plinko, stand rideau, etc.) entièrement personnalisables via un configurateur 3D intégré. Devis en ligne, livraison et installation à Paris et en Île-de-France.
+
+## Pages
+
+- [Accueil](/): Présentation et univers Setup Paris.
+- [Catalogue](/catalogue): Tous les produits disponibles à la location.
+- [Devis](/devis): Demander un devis personnalisé.
+- [Mentions légales](/mentions-legales): Informations légales.
+- [CGL](/cgl): Conditions générales de location.
+
+## Optional
+
+- [Catégorie exemple](/categorie/signaletique): Une catégorie du catalogue.
+- [Produit exemple](/produit/stand-rideau): Une fiche produit avec configurateur 3D.

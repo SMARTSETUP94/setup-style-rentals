@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { SITE_URL } from "@/lib/seo";
 
 /**
  * Dynamic sitemap.xml — lists static pages, all active categories and all
@@ -9,10 +10,7 @@ import type { Database } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const url = new URL(request.url);
-        const origin = `${url.protocol}//${url.host}`;
-
+      GET: async () => {
         const supabase = createClient<Database>(
           process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
           process.env.SUPABASE_PUBLISHABLE_KEY ??
@@ -67,7 +65,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           `        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n` +
           all
             .map((u) => {
-              const canonical = `${origin}${u.loc}`;
+              const canonical = `${SITE_URL}${u.loc}`;
               return (
                 `  <url>\n` +
                 `    <loc>${canonical}</loc>\n` +

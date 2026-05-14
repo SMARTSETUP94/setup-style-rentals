@@ -42,6 +42,7 @@ export const Route = createRootRoute({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Setup Paris — Location d'objets événementiels" },
       { name: "description", content: "Personnalisez, configurez, louez. Setup Paris : location d'objets événementiels avec configurateur 3D pour Paris et l'Île-de-France." },
+      { name: "google-site-verification", content: "SRR1JbAaW9XyWOF63UE8OveN56lQid_ucBvhY4N8N2Q" },
       { name: "author", content: "Setup Paris" },
       { property: "og:title", content: "Setup Paris — Location d'objets événementiels" },
       { property: "og:description", content: "Personnalisez, configurez, louez. Setup Paris : location d'objets événementiels avec configurateur 3D pour Paris et l'Île-de-France." },

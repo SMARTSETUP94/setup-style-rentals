@@ -41,7 +41,11 @@ export const Route = createFileRoute("/")({
         { alt: "Setup Paris — Location d'objets événementiels personnalisables" },
       ),
     ],
-    links: [canonicalLink("/"), ...hreflangLinks("/")],
+    links: [
+      canonicalLink("/"),
+      ...hreflangLinks("/"),
+      { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
+    ],
   }),
   component: HomePage,
 });
@@ -78,6 +82,8 @@ function HomePage() {
           fetchPriority="high"
           loading="eager"
           decoding="async"
+          width={1920}
+          height={900}
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Dark gradient overlay for legibility */}

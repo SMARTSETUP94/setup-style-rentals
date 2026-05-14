@@ -813,7 +813,7 @@ function ProductPage() {
               type="button"
               onClick={handleResetConfigurator}
               className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
-              aria-label={t("product.configResetToast")}
+              aria-label={t("product.resetConfigTitle")}
             >
               <RotateCcw className="size-4" />
             </button>

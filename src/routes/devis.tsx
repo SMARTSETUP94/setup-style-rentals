@@ -392,9 +392,9 @@ function QuotePage() {
                         </div>
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <div className="flex items-center border border-border rounded-md">
-                            <button onClick={() => update(item.productId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
-                            <div className="w-10 text-center text-sm">{item.quantity}</div>
-                            <button onClick={() => update(item.productId, { quantity: item.quantity + 1 })} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
+                            <button aria-label={t("product.qtyDecrease")} onClick={() => update(item.productId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
+                            <div className="w-10 text-center text-sm" aria-live="polite">{item.quantity}</div>
+                            <button aria-label={t("product.qtyIncrease")} onClick={() => update(item.productId, { quantity: item.quantity + 1 })} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
                           </div>
                           <div className="text-right">
                             {lt.qtyRate + lt.durationRate > 0 && (

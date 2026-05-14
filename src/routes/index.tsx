@@ -41,7 +41,11 @@ export const Route = createFileRoute("/")({
         { alt: "Setup Paris — Location d'objets événementiels personnalisables" },
       ),
     ],
-    links: [canonicalLink("/"), ...hreflangLinks("/")],
+    links: [
+      canonicalLink("/"),
+      ...hreflangLinks("/"),
+      { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
+    ],
   }),
   component: HomePage,
 });

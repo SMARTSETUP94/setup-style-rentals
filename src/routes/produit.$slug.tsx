@@ -1,3 +1,4 @@
+import { matchConfigToOptions, recapPairs, type ConfigChoices } from "@/lib/config-match";
 import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -218,6 +219,8 @@ function ProductPage() {
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
   /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
+  /** Categories the visitor picked/cleared by hand — never overridden by the 3D preselection. */
+  const manualCatIdsRef = useRef<Set<string>>(new Set());
   /** Uploaded client logo (when an option containing "logo" with a price > 0 is selected). */
   const [clientLogo, setClientLogo] = useState<{ url: string; filename: string } | null>(null);
 
@@ -592,8 +595,27 @@ function ProductPage() {
       iframeOpenedAtRef.current = Date.now();
       return;
     }
-    setAutoSelectedCatIds(new Set());
   }, [is3DMode]);
+
+  // Preselect DB options matching the 3D configuration (unique match only,
+  // never over a manual choice). Prices stay those of the DB options.
+  useEffect(() => {
+    if ((!configuratorData && !configuratorRecap) || optionCategories.length === 0) return;
+    const matches = matchConfigToOptions(
+      { ...recapPairs(configuratorRecap), ...((configuratorData ?? {}) as Record<string, unknown>) },
+      optionCategories,
+      productOptions,
+      (product?.configurator_options ?? {}) as ConfigChoices,
+    );
+    const ids = Object.keys(matches).filter((c) => !manualCatIdsRef.current.has(c));
+    if (ids.length === 0) return;
+    setSelectedOptionIds((prev) => {
+      const next = { ...prev };
+      for (const c of ids) next[c] = matches[c];
+      return next;
+    });
+    setAutoSelectedCatIds((prev) => new Set([...prev, ...ids]));
+  }, [configuratorData, configuratorRecap, optionCategories, productOptions, product?.configurator_options]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still
   // pick them — the 3D recap is informational and attached as a comment).
@@ -1052,6 +1074,12 @@ function ProductPage() {
               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {is3DMode ? t("product.optionsStillRequired") : t("product.customize")}
               </div>
+              {autoSelectedCatIds.size > 0 && (
+                <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5 -mt-2">
+                  <Wand2 className="size-3.5 text-gold/80" />
+                  {t("product.optionsFrom3D")}
+                </p>
+              )}
               {optionCategories.map((cat) => {
                 const opts = productOptions
                   .filter((o) => o.category_id === cat.id)
@@ -1070,6 +1098,7 @@ function ProductPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            manualCatIdsRef.current.add(cat.id);
                             setSelectedOptionIds((prev) => {
                               const next = { ...prev };
                               delete next[cat.id];
@@ -1097,6 +1126,7 @@ function ProductPage() {
                             key={o.id}
                             type="button"
                             onClick={() => {
+                              manualCatIdsRef.current.add(cat.id);
                               setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }));
                               setAutoSelectedCatIds((prev) => {
                                 if (!prev.has(cat.id)) return prev;

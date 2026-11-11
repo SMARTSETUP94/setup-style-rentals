@@ -49,7 +49,7 @@ const DICT: Dict = {
 
   // Calendar
   "cal.title": { fr: "Calendrier des événements", en: "Events calendar" },
-  "cal.sub": { fr: "Devis confirmés et livrés positionnés sur leurs dates d'événement.", en: "Confirmed and delivered quotes placed on their event dates." },
+  "cal.sub": { fr: "Demandes placées sur les dates de location de leurs lignes (repli : date d'événement) ; sur mesure à la livraison souhaitée (pastille orange).", en: "Requests placed on their lines' rental dates (fallback: event date); custom pieces on the requested delivery date (orange dot)." },
   "cal.prev": { fr: "Mois précédent", en: "Previous month" },
   "cal.next": { fr: "Mois suivant", en: "Next month" },
   "cal.today": { fr: "Aujourd'hui", en: "Today" },
@@ -61,6 +61,9 @@ const DICT: Dict = {
   "cal.view.list": { fr: "Liste", en: "List" },
   "cal.search": { fr: "Rechercher un client…", en: "Search a client…" },
   "cal.filters.status": { fr: "Statuts", en: "Statuses" },
+  "cal.kind.rental": { fr: "Dates de location", en: "Rental dates" },
+  "cal.kind.event": { fr: "Date d'événement", en: "Event date" },
+  "cal.kind.custom": { fr: "Sur mesure — livraison souhaitée", en: "Custom — requested delivery" },
   "cal.conflict": { fr: "Conflit de stock", en: "Stock conflict" },
   "cal.conflictDetail": { fr: "Sur-réservation", en: "Overbooked" },
   "cal.noResults": { fr: "Aucun devis ne correspond aux filtres.", en: "No quote matches the filters." },

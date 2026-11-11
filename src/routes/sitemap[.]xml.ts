@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { SITE_URL } from "@/lib/seo";
+import { SUR_MESURE_PIECES } from "@/lib/sur-mesure";
 
 /**
  * Dynamic sitemap.xml — lists static pages, all active categories and all
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         const staticUrls: Array<{ loc: string; lastmod?: string; priority: string; changefreq: string }> = [
           { loc: "/", priority: "1.0", changefreq: "weekly" },
           { loc: "/catalogue", priority: "0.9", changefreq: "weekly" },
+          { loc: "/sur-mesure", priority: "0.85", changefreq: "monthly" },
+          ...SUR_MESURE_PIECES.map((p) => ({ loc: `/sur-mesure/${encodeURIComponent(p.k)}`, priority: "0.6", changefreq: "monthly" })),
           { loc: "/contact", priority: "0.6", changefreq: "yearly" },
           { loc: "/cgl", priority: "0.3", changefreq: "yearly" },
           { loc: "/mentions-legales", priority: "0.3", changefreq: "yearly" },

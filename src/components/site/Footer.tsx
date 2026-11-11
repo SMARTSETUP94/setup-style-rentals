@@ -46,6 +46,7 @@ export function Footer() {
           <ul className="space-y-3 text-sm">
             <li><Link to="/" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.home")}</Link></li>
             <li><Link to="/catalogue" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.catalog")}</Link></li>
+            <li><Link to="/sur-mesure" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.custom")}</Link></li>
             <li><Link to="/devis" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.quote")}</Link></li>
             <li><Link to="/contact" className="text-background/80 hover:text-gold transition-colors duration-300">{t("nav.contact")}</Link></li>
             <li><Link to="/cgl" className="text-background/80 hover:text-gold transition-colors duration-300">{t("footer.cgl")}</Link></li>

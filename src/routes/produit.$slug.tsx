@@ -273,7 +273,7 @@ function ProductPage() {
     setLoading(true);
     supabase
       .from("products")
-      .select(configuratorOriginRef.current ?? window.location.origin)
+      .select("*")
       .eq("slug", slug)
       .eq("is_active", true)
       .maybeSingle()
@@ -282,10 +282,10 @@ function ProductPage() {
         setProduct(prod);
         if (prod) {
           const [{ data: cat }, { data: cats }] = await Promise.all([
-            supabase.from("categories").select(configuratorOriginRef.current ?? window.location.origin).eq("slug", prod.category_slug).maybeSingle(),
+            supabase.from("categories").select("*").eq("slug", prod.category_slug).maybeSingle(),
             supabase
               .from("product_option_categories")
-              .select(configuratorOriginRef.current ?? window.location.origin)
+              .select("*")
               .eq("product_id", prod.id)
               .order("sort_order"),
           ]);
@@ -296,7 +296,7 @@ function ProductPage() {
           if (catList.length > 0) {
             const { data: opts } = await supabase
               .from("product_options")
-              .select(configuratorOriginRef.current ?? window.location.origin)
+              .select("*")
               .in("category_id", catList.map((c) => c.id))
               .eq("is_active", true)
               .order("sort_order");

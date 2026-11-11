@@ -2,17 +2,20 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { zodValidator } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, Link2, X } from "lucide-react";
+import { toast } from "sonner";
+import { useCustomPublicPricing, priceLines } from "@/lib/custom-pricing";
+import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
 import { canonicalLink, canonicalUrl, hreflangLinks } from "@/lib/seo";
-import { getPiece, SurMesureConfigMessage, SUR_MESURE_FAMILIES } from "@/lib/sur-mesure";
+import { getPiece, SurMesureConfigMessage, SUR_MESURE_FAMILIES, decodeConfigParam, configLink } from "@/lib/sur-mesure";
 
 const ALLOWED_TYPES = new Set(["sur-mesure-ready", "sur-mesure-config", "sur-mesure-save"]);
 const CONFIGURATOR_TEL = "+33601416111";
 
 export const Route = createFileRoute("/sur-mesure/$piece")({
-  validateSearch: zodValidator(z.object({ line: z.string().max(64).optional() })),
+  validateSearch: zodValidator(z.object({ line: z.string().max(64).optional(), c: z.string().max(6000).optional() })),
   loader: ({ params }) => {
     const piece = getPiece(params.piece);
     if (!piece) throw notFound();
@@ -51,8 +54,9 @@ export const Route = createFileRoute("/sur-mesure/$piece")({
 const TXT = {
   fr: {
     back: "Tous les modèles sur mesure",
-    price: "Prix sur devis sous 48 h ouvrées",
     close: "Fermer",
+    copyLink: "Copier le lien de cette configuration",
+    copied: "Lien copié",
     frameTitle: "Configurateur 3D sur mesure",
     added: "Pièce ajoutée à votre demande",
     updated: "Pièce mise à jour dans votre demande",
@@ -62,8 +66,9 @@ const TXT = {
   },
   en: {
     back: "All custom-made pieces",
-    price: "Price quoted within two business days",
     close: "Close",
+    copyLink: "Copy link to this configuration",
+    copied: "Link copied",
     frameTitle: "Custom-made 3D configurator",
     added: "Piece added to your request",
     updated: "Piece updated in your request",
@@ -75,9 +80,27 @@ const TXT = {
 
 function PiecePage() {
   const { piece } = Route.useLoaderData();
-  const { line } = Route.useSearch();
+  const { line, c } = Route.useSearch();
   const { lang } = useI18n();
   const tx = TXT[lang];
+  const prices = useCustomPublicPricing();
+  const lines = priceLines(prices[piece.k], lang);
+  const sharedConfigRef = useRef<Record<string, unknown> | null>(decodeConfigParam(c, piece.k));
+  const [lastConfig, setLastConfig] = useState<Record<string, unknown> | null>(sharedConfigRef.current);
+  useEffect(() => {
+    trackSiteEvent("custom_view", piece.k);
+  }, [piece.k]);
+  const copyLink = async () => {
+    const url = configLink(piece.k, lastConfig ?? undefined, window.location.origin);
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(tx.copied);
+    } catch {
+      window.prompt(tx.copyLink, url);
+    }
+  };
+
   const navigate = useNavigate();
   const { items, add, update } = useCart();
   const frameRef = useRef<HTMLIFrameElement | null>(null);
@@ -102,9 +125,10 @@ function PiecePage() {
         const editing = editLineRef.current
           ? itemsRef.current.find((i) => i.lineId === editLineRef.current && i.kind === "custom")
           : undefined;
-        if (editing?.customConfig) {
+        const restore = editing?.customConfig ?? sharedConfigRef.current;
+        if (restore) {
           // Sandboxed iframe has an opaque origin → "*" is required; content is non-sensitive.
-          win.postMessage({ type: "restore-config", configuration: editing.customConfig }, "*");
+          win.postMessage({ type: "restore-config", configuration: restore }, "*");
         }
         return;
       }
@@ -115,6 +139,7 @@ function PiecePage() {
         return;
       }
       const m = parsed.data;
+      if (m.piece === piece.k) setLastConfig(m.configuration);
       if (m.action !== "save") return;
       const p = getPiece(m.piece);
       if (!p) return;
@@ -145,33 +170,52 @@ function PiecePage() {
       } else {
         add(fields);
         setBanner("added");
+        trackSiteEvent("custom_save", p.k);
       }
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [add, update]);
+  }, [add, update, piece.k]);
 
   return (
     <div className="pt-24 md:pt-28 pb-16">
       {/* Immersive configurator */}
       <div className="fixed inset-0 z-[60] bg-background md:top-24">
-        <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)]">
+        <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)] flex flex-col">
+          <div className="shrink-0 border-b border-border bg-background px-4 py-2 pr-36 md:pr-[22rem] text-xs sm:text-sm">
+            {lines.map((l) => (
+              <div key={l} className="font-medium">{l}</div>
+            ))}
+          </div>
           <iframe
             ref={frameRef}
             src={src}
             title={`${tx.frameTitle} — ${lang === "fr" ? piece.nom : piece.name_en}`}
             sandbox="allow-scripts allow-downloads"
-            className="block w-full h-full border-0"
+            className="block w-full flex-1 min-h-0 border-0"
           />
+          <div className="absolute top-[max(0.25rem,env(safe-area-inset-top))] right-4 z-10 flex items-center gap-2">
+          {lastConfig && (
+            <button
+              type="button"
+              onClick={copyLink}
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
+              aria-label={tx.copyLink}
+            >
+              <Link2 className="size-4" />
+              <span className="hidden md:inline">{tx.copyLink}</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate({ to: "/sur-mesure" })}
-            className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
             aria-label={tx.close}
           >
             <X className="size-4" />
             <span className="hidden sm:inline">{tx.close}</span>
           </button>
+          </div>
           {banner && (
             <div
               role="status"
@@ -202,7 +246,9 @@ function PiecePage() {
           {lang === "fr" ? piece.nom : piece.name_en} {tx.suffix}
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">{lang === "fr" ? piece.desc : piece.desc_en}</p>
-        <p className="mt-3 text-sm font-medium">{tx.price}</p>
+        {lines.map((l) => (
+          <p key={l} className="mt-3 text-sm font-medium">{l}</p>
+        ))}
       </div>
     </div>
   );

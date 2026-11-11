@@ -22,6 +22,13 @@
       "when": 1794396271789,
       "tag": "0002_s2_sur_mesure",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794401005653,
+      "tag": "0003_s3_custom_pricing_site_events",
+      "breakpoints": true
     }
   ]
 }

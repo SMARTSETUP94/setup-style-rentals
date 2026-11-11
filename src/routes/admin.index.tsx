@@ -131,6 +131,8 @@ function AdminDashboardPage() {
         <p className="text-sm text-muted-foreground mt-1 capitalize">{monthLabel}</p>
       </div>
 
+      <ConversionBlock />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           icon={<FileText className="size-5" />}
@@ -261,6 +263,49 @@ function StatCard({
         <span className="text-muted-foreground">
           {previousLabel} ({previousValue})
         </span>
+      </div>
+    </div>
+  );
+}
+
+const EVENT_NAMES = ["product_view", "cart_add", "quote_submit", "custom_view", "custom_save", "contact_submit"] as const;
+const EVENT_LABELS: Record<(typeof EVENT_NAMES)[number], { fr: string; en: string }> = {
+  product_view: { fr: "Vues fiche produit", en: "Product views" },
+  cart_add: { fr: "Ajouts au panier", en: "Cart adds" },
+  quote_submit: { fr: "Demandes envoyées", en: "Requests sent" },
+  custom_view: { fr: "Vues sur mesure", en: "Custom-made views" },
+  custom_save: { fr: "Pièces sur mesure ajoutées", en: "Custom pieces added" },
+  contact_submit: { fr: "Messages de contact", en: "Contact messages" },
+};
+
+function ConversionBlock() {
+  const { lang } = useAdminI18n();
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    void Promise.all(
+      EVENT_NAMES.map(async (n) => {
+        const { count } = await supabase.from("site_events").select("id", { count: "exact", head: true }).eq("name", n).gte("created_at", since);
+        return [n, count ?? 0] as const;
+      }),
+    ).then((pairs) => setCounts(Object.fromEntries(pairs)));
+  }, []);
+  const adds = counts?.cart_add ?? 0;
+  const rate = adds > 0 ? ((counts?.quote_submit ?? 0) / adds) * 100 : null;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="text-sm font-semibold">{lang === "fr" ? "30 derniers jours" : "Last 30 days"}</div>
+      <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
+        {EVENT_NAMES.map((n) => (
+          <div key={n}>
+            <div className="text-[11px] text-muted-foreground">{EVENT_LABELS[n][lang]}</div>
+            <div className="text-xl font-semibold">{counts ? counts[n] : "…"}</div>
+          </div>
+        ))}
+        <div>
+          <div className="text-[11px] text-muted-foreground">{lang === "fr" ? "Taux envoi / ajout panier" : "Sent / cart-add rate"}</div>
+          <div className="text-xl font-semibold">{rate == null ? "—" : `${rate.toFixed(1)} %`}</div>
+        </div>
       </div>
     </div>
   );

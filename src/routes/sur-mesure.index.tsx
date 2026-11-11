@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ConciergeBell, Boxes, Signpost, Armchair, type LucideIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { useCustomPublicPricing, priceLines } from "@/lib/custom-pricing";
 import { canonicalLink, hreflangLinks, canonicalUrl } from "@/lib/seo";
 import { SUR_MESURE_FAMILIES, SUR_MESURE_PIECES, type SurMesureFamily } from "@/lib/sur-mesure";
 
@@ -86,6 +87,7 @@ const TXT = {
 function SurMesurePage() {
   const { lang } = useI18n();
   const tx = TXT[lang];
+  const prices = useCustomPublicPricing();
   return (
     <div className="pt-24 md:pt-28 pb-16">
       <div className="container-x">
@@ -139,7 +141,7 @@ function SurMesurePage() {
                       key={p.k}
                       to="/sur-mesure/$piece"
                       params={{ piece: p.k }}
-                      search={{ line: undefined }}
+                      search={{ line: undefined, c: undefined }}
                       className="group rounded-2xl border border-border bg-card p-5 hover:border-foreground/30 hover:shadow-soft transition-all"
                     >
                       <span className="inline-flex items-center justify-center size-10 rounded-full bg-gold/15 text-gold">
@@ -147,6 +149,9 @@ function SurMesurePage() {
                       </span>
                       <div className="mt-3 font-semibold">{lang === "fr" ? p.nom : p.name_en}</div>
                       <p className="mt-1 text-sm text-muted-foreground">{lang === "fr" ? p.desc : p.desc_en}</p>
+                      {priceLines(prices[p.k], lang).map((l) => (
+                        <p key={l} className="mt-2 text-xs font-medium text-foreground">{l}</p>
+                      ))}
                       <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-accent">
                         {tx.configure} <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                       </span>

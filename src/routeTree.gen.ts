@@ -26,6 +26,7 @@ import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
 import { Route as ApiTrackRouteImport } from './routes/api.track'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
 import { Route as ApiContactRouteImport } from './routes/api.contact'
+import { Route as AdminSurMesureRouteImport } from './routes/admin.sur-mesure'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -121,6 +122,11 @@ const ApiContactRoute = ApiContactRouteImport.update({
   path: '/api/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSurMesureRoute = AdminSurMesureRouteImport.update({
+  id: '/sur-mesure',
+  path: '/sur-mesure',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/sur-mesure': typeof AdminSurMesureRoute
   '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/api/track': typeof ApiTrackRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/sur-mesure': typeof AdminSurMesureRoute
   '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/api/track': typeof ApiTrackRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/sur-mesure': typeof AdminSurMesureRoute
   '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/api/track': typeof ApiTrackRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/roadmap'
     | '/admin/settings'
+    | '/admin/sur-mesure'
     | '/api/contact'
     | '/api/send-quote-emails'
     | '/api/track'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/roadmap'
     | '/admin/settings'
+    | '/admin/sur-mesure'
     | '/api/contact'
     | '/api/send-quote-emails'
     | '/api/track'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/roadmap'
     | '/admin/settings'
+    | '/admin/sur-mesure'
     | '/api/contact'
     | '/api/send-quote-emails'
     | '/api/track'
@@ -478,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/sur-mesure': {
+      id: '/admin/sur-mesure'
+      path: '/sur-mesure'
+      fullPath: '/admin/sur-mesure'
+      preLoaderRoute: typeof AdminSurMesureRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -553,6 +572,7 @@ interface AdminRouteChildren {
   AdminProductsRoute: typeof AdminProductsRoute
   AdminRoadmapRoute: typeof AdminRoadmapRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSurMesureRoute: typeof AdminSurMesureRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -565,6 +585,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminProductsRoute: AdminProductsRoute,
   AdminRoadmapRoute: AdminRoadmapRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminSurMesureRoute: AdminSurMesureRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

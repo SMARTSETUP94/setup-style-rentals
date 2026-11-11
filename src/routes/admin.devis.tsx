@@ -3,7 +3,7 @@ import { configLink } from "@/lib/sur-mesure";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Eye, Save, Copy } from "lucide-react";
+import { Trash2, Eye, Save, Copy, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

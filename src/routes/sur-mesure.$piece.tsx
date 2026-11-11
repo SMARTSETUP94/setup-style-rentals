@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
 import { Check, Link2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useCustomPublicPricing, priceLines } from "@/lib/custom-pricing";
+import { useCustomPublicPricing, priceLines, rangeLine, studyLine, type PublicRange } from "@/lib/custom-pricing";
 import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
@@ -84,7 +84,39 @@ function PiecePage() {
   const { lang } = useI18n();
   const tx = TXT[lang];
   const prices = useCustomPublicPricing();
-  const lines = priceLines(prices[piece.k], lang);
+  const rangeOn = prices[piece.k]?.range_enabled === true;
+  const [estimate, setEstimate] = useState<{ range: PublicRange | null; study: boolean } | null>(null);
+  const estimateRef = useRef(estimate);
+  estimateRef.current = estimate;
+  const rangeOnRef = useRef(rangeOn);
+  rangeOnRef.current = rangeOn;
+  const debounceRef = useRef<number | undefined>(undefined);
+  const reqSeq = useRef(0);
+  const requestEstimate = (configuration: Record<string, unknown>, quantity: number) => {
+    if (!rangeOnRef.current) return;
+    window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(async () => {
+      const seq = ++reqSeq.current;
+      try {
+        const res = await fetch("/api/sur-mesure/estimate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ piece: piece.k, configuration, quantity: Math.min(50, Math.max(1, quantity || 1)) }),
+        });
+        if (seq !== reqSeq.current || !res.ok) return;
+        const d = (await res.json()) as { enabled?: boolean; low?: number; high?: number; study?: boolean };
+        if (!d.enabled) return setEstimate(null);
+        if (d.study) return setEstimate({ range: null, study: true });
+        if (typeof d.low === "number" && typeof d.high === "number") setEstimate({ range: { low: d.low, high: d.high }, study: false });
+      } catch {
+        /* keep current text */
+      }
+    }, 800);
+  };
+  useEffect(() => () => window.clearTimeout(debounceRef.current), []);
+  const lines = rangeOn && estimate
+    ? [estimate.study ? studyLine(lang) : rangeLine(estimate.range!, lang)]
+    : priceLines(prices[piece.k], lang);
   const sharedConfigRef = useRef<Record<string, unknown> | null>(decodeConfigParam(c, piece.k));
   const [lastConfig, setLastConfig] = useState<Record<string, unknown> | null>(sharedConfigRef.current);
   useEffect(() => {
@@ -151,7 +183,10 @@ function PiecePage() {
         return;
       }
       const m = parsed.data;
-      if (m.piece === piece.k) setLastConfig(m.configuration);
+      if (m.piece === piece.k) {
+        setLastConfig(m.configuration);
+        requestEstimate(m.configuration, m.quantity);
+      }
       if (m.action !== "save") return;
       const p = getPiece(m.piece);
       if (!p) return;
@@ -174,6 +209,7 @@ function PiecePage() {
         customAlerts: m.alerts,
         customWeightKg: m.weight_kg,
         customThumbnail: m.thumbnail,
+        customRange: rangeOnRef.current && estimateRef.current?.range ? estimateRef.current.range : null,
       };
       const editId = editLineRef.current;
       if (editId && itemsRef.current.some((i) => i.lineId === editId)) {

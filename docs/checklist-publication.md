@@ -24,3 +24,4 @@ CREATE POLICY "Public can submit valid quote requests" ON public.quote_requests 
   AND (message IS NULL OR char_length(message) <= 5000) AND (event_location IS NULL OR char_length(event_location) <= 500));
 ```
 6. Retour arrière du code : commit de référence avant travaux c321ea72 (restaurer via l'historique des versions).
+7. Tests automatiques avant chaque publication : `bun test scripts/tests scripts/price-range.test.ts` (prix, validation de /api/quotes/submit, calendrier, présélection 3D) — tout doit passer.

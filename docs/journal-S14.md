@@ -1,0 +1,12 @@
+# S14 — Correctif configurateur, non-régression location, améliorations
+- A. sur-mesure.html patché par script (empreintes vérifiées) : md5 615c77179d28c2042166fd0e89d8c2f2. À 390 px (/sur-mesure/comptoir) la référence est en bas de la vue 3D, visible, sans débordement. tmp_transfer conservée.
+- B. Les configurateurs Netlify n'envoient que `product-config` (récap texte) et `configurator-resize`, avec cible « * » ; pas de `*-ready` ni de `*-save`. Origine reçue = https://setup-paris-configurators.netlify.app, acceptée par la liste blanche : aucune correction nécessaire.
+  - stele : message accepté, récap affiché, ajout OK, récap dans /devis (Finition : Blanc / Logo : Sans logo).
+  - pouf : message accepté, récap affiché, ajout OK, récap dans /devis.
+  - lettres-geantes : message accepté, récap affiché, ajout OK, récap dans /devis.
+  - Sans signal de sauvegarde, le bouton Fermer demande confirmation (comportement prévu).
+- C. src/lib/config-match.ts : présélection des options de la fiche depuis la configuration 3D ou, à défaut, le récap texte (« Libellé : Valeur »), insensible casse/accents, correspondance unique seulement, jamais par-dessus un choix manuel ; mention « Options reprises de votre configuration 3D ». Vu sur pouf (Forme, Habillage) et stele (Finition).
+- D. src/lib/calendar-days.ts + admin.calendrier : une pastille par jour couvert par les lignes de location, repli date d'événement, sur mesure à la livraison souhaitée (pastille orange, bordure pointillée) ; conflits par productId et dates de ligne, lignes sur mesure ignorées. Vu en admin : W-00001 sur les 11 et 12/12.
+- E. Validation déplacée dans src/lib/quote-schema.ts ; 22 tests dans scripts/tests (+2 price-range), 24/24 OK. Commande ajoutée à la checklist. Compilation OK.
+- Défauts corrigés : la mention 3D disparaissait à la fermeture du configurateur ; la stèle n'était pas préremplie (« Blanc » ≠ « Blanc (inclus) »).
+- Non vérifié : pastille orange en conditions réelles (pas de demande sur mesure seule avec date de livraison dans la période affichée) ; « Sans logo » ≠ « Aucun » n'est pas prérempli (pas de correspondance) ; rien publié.

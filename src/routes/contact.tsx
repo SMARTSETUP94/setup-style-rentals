@@ -1,3 +1,4 @@
+import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -96,6 +97,7 @@ function ContactPage() {
       });
       if (res.ok) {
         setDone(true);
+        trackSiteEvent("contact_submit");
         setForm(empty);
       } else if (res.status === 429) toast.error(tx.rate);
       else if (res.status === 400) toast.error(tx.invalid);
@@ -174,6 +176,10 @@ function ContactPage() {
                 <Button type="submit" disabled={sending} className="w-full sm:w-auto">
                   {sending ? tx.sending : tx.send}
                 </Button>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "fr" ? "Les informations saisies servent uniquement à traiter votre demande. " : "The information you enter is used solely to process your request. "}
+                  <Link to="/mentions-legales" className="underline hover:text-foreground">{lang === "fr" ? "Mentions légales" : "Legal notice"}</Link>
+                </p>
               </form>
             )}
           </div>

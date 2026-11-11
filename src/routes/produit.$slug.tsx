@@ -1,3 +1,4 @@
+import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
@@ -781,6 +782,7 @@ function ProductPage() {
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
       configuratorData: configuratorData ?? undefined,
     });
+    trackSiteEvent("cart_add", product.slug);
     toast.success(
       hasPendingConfig
         ? t("product.configuredAdded")
@@ -917,6 +919,7 @@ function ProductPage() {
               name={pickLang(product, "name", lang)}
               category_slug={product.category_slug}
               image_url={product.image_url}
+              priority
               className="w-full h-full object-cover"
             />
           </div>
@@ -937,7 +940,7 @@ function ProductPage() {
               {pickLang(product, "description", lang)}
             </p>
           )}
-          {product.dimensions && (
+          {product.dimensions && product.dimensions.trim() !== "" && product.dimensions.trim().toLowerCase() !== "a voir" && product.dimensions.trim().toLowerCase() !== "à voir" && (
             <div className="mt-4 text-sm">
               <span className="text-muted-foreground">Dimensions :</span> <span>{product.dimensions}</span>
             </div>

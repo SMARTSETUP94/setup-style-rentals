@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon, Pencil, Hammer } from "lucide-react";
+import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon, Pencil, Hammer, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
@@ -765,7 +765,7 @@ function logoPathFromUrl(url?: string): string | null {
 interface Confirmation {
   number: string;
   emailClientOk: boolean;
-  lines: Array<{ lineId: string; name: string; quantity: number; days: number; startDate?: string; endDate?: string; net: number; custom?: boolean; ref?: string }>;
+  lines: Array<{ lineId: string; name: string; quantity: number; days: number; startDate?: string; endDate?: string; net: number; custom?: boolean; ref?: string; resumeUrl?: string }>;
   totals: Totals;
   hasRental: boolean;
 }

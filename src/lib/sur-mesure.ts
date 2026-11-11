@@ -86,3 +86,51 @@ export const SurMesureConfigMessage = z.object({
     .nullable(),
 });
 export type SurMesureConfig = z.infer<typeof SurMesureConfigMessage>;
+
+// ---- Shareable resume link (?c=base64url(JSON {piece, configuration})) ----
+export const CONFIG_LINK_MAX = 6000;
+
+function b64urlEncode(s: string): string {
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function b64urlDecode(s: string): string {
+  const b64 = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+  const bin = atob(b64);
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+/** Encoded `c` param, or null if too long. Never contains prices. */
+export function encodeConfigParam(piece: string, configuration: Record<string, unknown>): string | null {
+  try {
+    const c = b64urlEncode(JSON.stringify({ piece, configuration }));
+    return c.length <= CONFIG_LINK_MAX ? c : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Decodes and validates a `c` param for the given piece. */
+export function decodeConfigParam(c: string | undefined, piece: string): Record<string, unknown> | null {
+  if (!c || c.length > CONFIG_LINK_MAX || !/^[A-Za-z0-9_-]+$/.test(c)) return null;
+  try {
+    const v = JSON.parse(b64urlDecode(c)) as unknown;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    const o = v as { piece?: unknown; configuration?: unknown };
+    if (o.piece !== piece) return null;
+    const conf = o.configuration;
+    if (!conf || typeof conf !== "object" || Array.isArray(conf)) return null;
+    return conf as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/** Absolute or relative resume URL for a configuration. */
+export function configLink(piece: string, configuration: Record<string, unknown> | undefined, base = ""): string | null {
+  if (!configuration) return null;
+  const c = encodeConfigParam(piece, configuration);
+  return c ? `${base}/sur-mesure/${encodeURIComponent(piece)}?c=${c}` : null;
+}

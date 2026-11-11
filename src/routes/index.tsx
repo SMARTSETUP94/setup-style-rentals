@@ -202,6 +202,9 @@ function HomePage() {
                 src={categoryImage(cat.slug)}
                 alt={pickLang(cat, "name", lang)}
                 loading="lazy"
+                decoding="async"
+                width={600}
+                height={256}
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.display = "none";
                 }}

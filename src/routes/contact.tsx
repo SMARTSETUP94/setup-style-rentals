@@ -1,5 +1,5 @@
 import { trackSiteEvent } from "@/lib/track";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Check, Mail, MapPin, Phone } from "lucide-react";

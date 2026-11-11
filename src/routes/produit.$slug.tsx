@@ -202,6 +202,10 @@ function ProductPage() {
   const { t, lang } = useI18n();
   const { add } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
+  const viewedSlug = product?.slug;
+  useEffect(() => {
+    if (viewedSlug) trackSiteEvent("product_view", viewedSlug);
+  }, [viewedSlug]);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);

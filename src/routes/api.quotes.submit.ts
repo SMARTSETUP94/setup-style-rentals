@@ -277,9 +277,9 @@ function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string
     <div style="font-size:13px;line-height:1.7;margin-top:8px;">
       ${p.custom_delivery_date ? `Date de livraison souhaitée : <strong>${escapeHtml(fmtDate(p.custom_delivery_date))}</strong><br/>` : ""}
       ${p.custom_after_event ? `Après l'événement : <strong>${escapeHtml(AFTER_EVENT_FR[p.custom_after_event] ?? p.custom_after_event)}</strong><br/>` : ""}
-      Échantillons / nuancier demandés : <strong>${p.wants_samples ? "Oui" : "Non"}</strong>
+      ${p.wants_samples ? `Échantillons / nuancier demandés : <strong>Oui</strong>` : ""}
     </div>
-    <p style="font-size:13px;color:#a07c00;font-weight:600;">Prix et délai de fabrication confirmés sous 48 h ouvrées.</p>`;
+    ${estimates ? `<p style="font-size:13px;color:#a07c00;font-weight:600;">Prix et délai de fabrication confirmés sous 48 h ouvrées.</p>` : ""}`;
 }
 
 function rentalBlock(items: StoredItem[], t: Totals) {
@@ -296,17 +296,17 @@ function itemsTable(items: StoredItem[]) {
     .map((i) => {
       const datesRow =
         i.startDate && i.endDate
-          ? `<tr><td colspan="5" style="padding:2px 8px 6px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">Du ${escapeHtml(fmtDate(i.startDate))} au ${escapeHtml(fmtDate(i.endDate))}</td></tr>`
+          ? `<tr><td colspan="5" style="padding:2px 8px 6px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${i.startDate === i.endDate ? `Le ${escapeHtml(fmtDate(i.startDate))}` : `Du ${escapeHtml(fmtDate(i.startDate))} au ${escapeHtml(fmtDate(i.endDate))}`}</td></tr>`
           : "";
       const optionsRows = i.options
         .map(
           (o) => `
         <tr>
           <td colspan="4" style="padding:4px 8px 4px 24px;border-bottom:1px solid #f5f5f5;color:#666;font-size:13px;">
-            • <strong style="color:#1a1a1a;">${escapeHtml(o.categoryName_fr)}:</strong> ${escapeHtml(o.name_fr)}
+            • <strong style="color:#1a1a1a;">${escapeHtml(o.categoryName_fr)} :</strong> ${escapeHtml(o.name_fr)}
           </td>
           <td style="padding:4px 8px;border-bottom:1px solid #f5f5f5;text-align:right;color:#666;font-size:13px;">
-            ${o.price > 0 ? `+${fmt(o.price)}` : "—"}
+            ${o.price > 0 ? `+${fmt(o.price)}` : "inclus"}
           </td>
         </tr>`,
         )
@@ -374,7 +374,7 @@ function totalsBlock(t: Totals) {
       ${r("Total HT", fmt(t.total_ht))}
       ${r("TVA 20%", fmt(t.vat))}
       <tr><td style="padding:8px 12px;font-weight:700;border-top:2px solid #1a1a1a;">Total TTC</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:2px solid #1a1a1a;">${fmt(t.total_ttc)}</td></tr>
-      ${r("Caution (non incluse)", fmt(t.total_deposit), "font-size:12px;")}
+      ${r("Caution, non incluse dans le total", fmt(t.total_deposit), "font-size:12px;")}
     </table>`;
 }
 
@@ -400,10 +400,17 @@ function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, 
     </div>`;
 }
 
+/** « Bonjour Prénom, » when the first word looks like a first name, else « Bonjour, ». */
+function greeting(name: string): string {
+  const first = name.trim().split(/\s+/)[0] ?? "";
+  return /^\p{L}{2,20}$/u.test(first) ? `Bonjour ${escapeHtml(first)},` : "Bonjour,";
+}
+
 function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
-      <h1 style="font-size:22px;margin:0 0 8px;">Merci ${escapeHtml(p.customer_name)} !</h1>
+      <h1 style="font-size:22px;margin:0 0 8px;">${greeting(p.customer_name)}</h1>
+      <p style="font-size:14px;line-height:1.6;color:#555;margin:0;">Merci pour votre demande.</p>
       <p style="font-size:14px;line-height:1.6;color:#555;">
         Nous avons bien reçu votre demande de devis <strong>${escapeHtml(number)}</strong>. ${items.length ? "Notre équipe revient vers vous sous 24 h ouvrées avec une proposition personnalisée." : ""}
         ${customs.length ? "Pour le sur-mesure : prix et délai de fabrication confirmés sous 48 h ouvrées." : ""}

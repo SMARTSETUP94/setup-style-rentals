@@ -8,7 +8,7 @@ export function splitNonChiffre(list: string[]): { postes: string[]; notes: stri
 export function stripRecapHeader(recap: string): string {
   return recap
     .split(/\r?\n/)
-    .filter((l) => !/^\s*(Référence|Poids estimé)\s*:/i.test(l))
+    .filter((l) => !/^\s*(Référence|Poids estimé|Prix)\s*:/i.test(l))
     .join("\n")
     .trim();
 }

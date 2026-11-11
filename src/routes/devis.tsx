@@ -860,7 +860,9 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
                 {l.custom
                   ? `${t("sm.reference")} : ${l.ref ?? "—"}`
                   : l.startDate && l.endDate
-                  ? `${format(parseISO(l.startDate), "PPP", { locale: dl })} → ${format(parseISO(l.endDate), "PPP", { locale: dl })}`
+                  ? l.startDate === l.endDate
+                    ? `${lang === "fr" ? "Le" : "On"} ${format(parseISO(l.startDate), "PPP", { locale: dl })}`
+                    : `${format(parseISO(l.startDate), "PPP", { locale: dl })} → ${format(parseISO(l.endDate), "PPP", { locale: dl })}`
                   : `${l.days} ${t("cart.col.days")}`}
               </div>
               {l.resumeUrl && (
@@ -869,7 +871,7 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
                 </a>
               )}
             </div>
-            <div className="font-semibold whitespace-nowrap">{l.custom ? t("sm.priceOnQuote") : formatPrice(l.net, lang)}</div>
+            <div className="font-semibold whitespace-nowrap">{l.custom ? (lang === "fr" ? "Sur devis" : "On quote") : formatPrice(l.net, lang)}</div>
           </div>
         ))}
       </div>

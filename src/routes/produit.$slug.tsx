@@ -115,7 +115,7 @@ export const Route = createFileRoute("/produit/$slug")({
       };
     }
     const title = `${m.name_fr} — Setup Paris`;
-    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D, livraison et reprise incluses.`;
+    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D. Livraison, installation et reprise sur devis — Paris et Île-de-France.`;
     const productUrl = canonicalUrl(`/produit/${m.slug}`);
     const meta: Array<Record<string, string>> = [
       { title },
@@ -986,11 +986,9 @@ function ProductPage() {
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
               {t("product.rentalRates")}
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 max-w-[200px]">
               {[
                 { label: t("product.day"), value: product.price_day },
-                { label: t("product.week"), value: product.price_week },
-                { label: t("product.month"), value: product.price_month },
               ].map((p, i) => (
                 <div key={i} className="rounded-lg bg-background border border-border p-4 text-center">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.label}</div>

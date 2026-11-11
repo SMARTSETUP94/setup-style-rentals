@@ -25,3 +25,9 @@
 - Hors ticket, relevé : le tableau de bord admin additionne encore les frais à total_ttc (double comptage) dans ses KPI.
 - Testé : compilation OK ; /api/track 204 (valide et invalide) avec insertion ; RPC publique renvoie [] ; lecture anonyme de custom_pricing refusée.
 - Non vérifié : restore-config et copie du lien avec le vrai configurateur, lien dans le mail réel, affichage admin à l'écran, sendBeacon en production.
+
+## S3-bis
+- admin.index.tsx : KPI sur total_ttc seul ; nouvelle carte « Panier moyen TTC » (demandes avec total_ttc > 0 uniquement) + nombre de demandes avec sur-mesure (has_custom) du mois.
+- Recherche globale : même double comptage trouvé et corrigé dans admin.clients.tsx (CA par client et historique) ; seul reste feesOf() d'admin.devis.tsx, qui soustrait les frais de total_ht (correct).
+- sur-mesure.$piece.tsx : sans `sur-mesure-ready` sous 6 s, message discret sous l'iframe avec lien vers /contact (FR/EN).
+- Compilation OK ; affichage admin et message configurateur non vérifiés à l'écran. Aucune migration, pas de publication.

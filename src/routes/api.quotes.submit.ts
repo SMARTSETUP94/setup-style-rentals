@@ -116,8 +116,23 @@ type Payload = z.infer<typeof PayloadSchema>;
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-const DEFAULT_ADMIN_EMAIL = "smart@setup.paris";
-const DEFAULT_FROM = "Setup Paris <onboarding@resend.dev>";
+const DEFAULT_ADMIN_EMAIL = "devis@setup.paris,smart@setup.paris";
+const DEFAULT_FROM = "Setup Paris <devis@setup.paris>";
+const CLIENT_REPLY_TO = "devis@setup.paris";
+
+/** Short readable status from a Resend error body: failed:<code>:<message> (≤120 chars). */
+function resendFailure(status: number, body: string): string {
+  let msg = body;
+  try {
+    const j = JSON.parse(body) as { message?: unknown; name?: unknown };
+    if (typeof j.message === "string") msg = j.message;
+    else if (typeof j.name === "string") msg = j.name;
+  } catch {
+    /* keep raw text */
+  }
+  msg = msg.replace(/\s+/g, " ").trim() || "unknown";
+  return `failed:${status}:${msg}`.slice(0, 120);
+}
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 
@@ -428,7 +443,7 @@ async function sendEmail(args: { to: string[]; subject: string; html: string; re
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       console.error(`[quotes/submit] Resend failed [${res.status}]: ${body}`);
-      return `failed:${res.status}`;
+      return resendFailure(res.status, body);
     }
     return "sent";
   } catch (err) {
@@ -782,7 +797,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
               to: [p.email],
               subject: `Votre demande de devis ${number} — Setup Paris`,
               html: clientEmail(p, number, storedItems, totals, storedCustoms),
-              replyTo: notifyTo[0],
+              replyTo: CLIENT_REPLY_TO,
             }),
           ]);
           const { error: updErr } = await supabaseAdmin

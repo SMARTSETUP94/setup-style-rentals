@@ -1,7 +1,7 @@
 # Checklist de publication
 1. Variables d'environnement (Paramètres du projet → Secrets) :
-   - RESEND_FROM — expéditeur des mails. Absente : expéditeur de test Resend, mails peu fiables (spam / refus).
-   - QUOTE_NOTIFY_TO — destinataire du mail interne. Absente : aucun mail interne reçu à l'arrivée d'une demande.
+   - RESEND_FROM (facultative) — expéditeur. Absente : « Setup Paris <devis@setup.paris> » (domaine vérifié dans Resend).
+   - QUOTE_NOTIFY_TO (facultative, liste séparée par des virgules) — destinataires internes. Absente : devis@setup.paris et smart@setup.paris.
    - TURNSTILE_SECRET_KEY + VITE_TURNSTILE_SITE_KEY (facultatives, toujours ensemble) — anti-robot. Absentes : seuls honeypot + limite de débit protègent les formulaires.
 2. Migrations déjà appliquées (base commune preview/production) : 0000_quote_submit_server, 0001_s1_fin_hardening, 0002_s2_sur_mesure, 0003_s3_custom_pricing_site_events, 0004_custom_configs_estimates, 0005_s8_public_price_range.
 3. Juste après publication (https://catalogue.setup.paris) :

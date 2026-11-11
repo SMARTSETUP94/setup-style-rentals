@@ -13,8 +13,8 @@ const ContactSchema = z
   })
   .strict();
 
-const DEFAULT_ADMIN_EMAIL = "smart@setup.paris";
-const DEFAULT_FROM = "Setup Paris <onboarding@resend.dev>";
+const DEFAULT_ADMIN_EMAIL = "devis@setup.paris,smart@setup.paris";
+const DEFAULT_FROM = "Setup Paris <devis@setup.paris>";
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 
@@ -96,7 +96,14 @@ export const Route = createFileRoute("/api/contact")({
           });
           if (!res.ok) {
             const body = await res.text().catch(() => "");
-            console.error(`[contact] Resend failed [${res.status}]: ${body}`);
+            let msg = body;
+            try {
+              const j = JSON.parse(body) as { message?: unknown };
+              if (typeof j.message === "string") msg = j.message;
+            } catch {
+              /* raw */
+            }
+            console.error(`[contact] Resend failed [${res.status}]: ${msg.replace(/\s+/g, " ").slice(0, 300)}`);
             return json({ error: "email_failed" }, 502);
           }
           return json({ ok: true });

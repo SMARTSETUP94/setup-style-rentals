@@ -19,7 +19,7 @@ export function matchConfigToOptions(
   const pairs: Array<{ key: string; label: string }> = [];
   for (const [rawKey, v] of Object.entries(data)) {
     if (typeof v !== "string" || !v.trim()) continue;
-    const key = rawKey.replace(/(Finition|Option)$/, "");
+    const key = rawKey.trim().replace(/(Finition|Option)$/, "");
     const list = choices?.[key] ?? [];
     const hit = list.find((c) => c.value === v);
     pairs.push({ key, label: hit ? hit.label : v });
@@ -38,6 +38,20 @@ export function matchConfigToOptions(
       for (const o of opts) if (normLabel(o.name_fr || "") === ln || normLabel(o.name_en || "") === ln) matched.add(o.id);
     }
     if (matched.size === 1) out[cat.id] = [...matched][0];
+  }
+  return out;
+}
+
+/** Parses "Label : Valeur" lines of a plain-text 3D recap into { label: value }
+ *  (used by the hosted configurators that only send a text recap). */
+export function recapPairs(recap: string | null | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of String(recap ?? "").split(/\n/)) {
+    const m = line.match(/^\s*([^:]{2,40}?)\s*:\s*(.+?)\s*$/);
+    if (!m) continue;
+    out[m[1]] = m[2].replace(/^"|"$/g, "");
+    const noParen = m[2].replace(/\s*\([^)]*\)\s*$/, "");
+    if (noParen !== m[2] && !out[`${m[1]} `]) out[`${m[1]} `] = noParen;
   }
   return out;
 }

@@ -1,4 +1,4 @@
-import { matchConfigToOptions, type ConfigChoices } from "@/lib/config-match";
+import { matchConfigToOptions, recapPairs, type ConfigChoices } from "@/lib/config-match";
 import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -600,9 +600,9 @@ function ProductPage() {
   // Preselect DB options matching the 3D configuration (unique match only,
   // never over a manual choice). Prices stay those of the DB options.
   useEffect(() => {
-    if (!configuratorData || optionCategories.length === 0) return;
+    if ((!configuratorData && !configuratorRecap) || optionCategories.length === 0) return;
     const matches = matchConfigToOptions(
-      configuratorData as Record<string, unknown>,
+      { ...recapPairs(configuratorRecap), ...((configuratorData ?? {}) as Record<string, unknown>) },
       optionCategories,
       productOptions,
       (product?.configurator_options ?? {}) as ConfigChoices,
@@ -615,7 +615,7 @@ function ProductPage() {
       return next;
     });
     setAutoSelectedCatIds((prev) => new Set([...prev, ...ids]));
-  }, [configuratorData, optionCategories, productOptions, product?.configurator_options]);
+  }, [configuratorData, configuratorRecap, optionCategories, productOptions, product?.configurator_options]);
 
   // DB-stored paid options always apply (even in 3D mode the client must still
   // pick them — the 3D recap is informational and attached as a comment).

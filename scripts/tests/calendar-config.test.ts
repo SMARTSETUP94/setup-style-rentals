@@ -34,3 +34,12 @@ describe("présélection depuis la 3D", () => {
     expect(matchConfigToOptions({ couleur: "Rouge" }, cats, opts)).toEqual({});
   });
 });
+
+describe("présélection depuis un récap texte", () => {
+  test("« Finition : Placage bois » sélectionne l'option Placage bois", () => {
+    const { recapPairs } = require("@/lib/config-match");
+    const cats = [{ id: "c1", name_fr: "Finition", name_en: "Finish" }];
+    const opts = [{ id: "o1", category_id: "c1", name_fr: "Placage bois", name_en: "Wood veneer" }, { id: "o2", category_id: "c1", name_fr: "Blanc", name_en: "White" }];
+    expect(matchConfigToOptions(recapPairs("Stèle\n300 × 300\n\nFinition : Placage bois\nLogo : Sans logo"), cats, opts)).toEqual({ c1: "o1" });
+  });
+});

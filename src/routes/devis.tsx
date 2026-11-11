@@ -29,6 +29,39 @@ export const Route = createFileRoute("/devis")({
 function QuotePage() {
   const { t, lang } = useI18n();
   const { items, update, remove, clear } = useCart();
+
+  /** Available stock for a product over a date range; null if unknown/error. */
+  const fetchStock = async (productId: string, start: string, end: string): Promise<number | null> => {
+    const { data, error } = await supabase.rpc("get_available_stock", {
+      _product_id: productId,
+      _start_date: start,
+      _end_date: end,
+    });
+    if (error || data == null) return null;
+    const n = Number(data);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const changeDates = async (item: CartItem, start: string, end: string, days: number) => {
+    const stock = await fetchStock(item.productId, start, end);
+    if (stock !== null && item.quantity > stock) {
+      toast.error(t("product.insufficientStock"));
+      return;
+    }
+    update(item.lineId, { startDate: start, endDate: end, days });
+  };
+
+  const increaseQty = async (item: CartItem) => {
+    const next = item.quantity + 1;
+    if (item.startDate && item.endDate) {
+      const stock = await fetchStock(item.productId, item.startDate, item.endDate);
+      if (stock !== null && next > stock) {
+        toast.error(t("product.insufficientStock"));
+        return;
+      }
+    }
+    update(item.lineId, { quantity: next });
+  };
   const [submitting, setSubmitting] = useState(false);
   const [logistics, setLogistics] = useState({ base: 0, perItem: 0, setup: 0, pickup: 0 });
   const [form, setForm] = useState({

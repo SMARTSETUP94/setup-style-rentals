@@ -118,6 +118,7 @@ function tick(){var d;try{d=A.dbg()}catch(e){return}
  for(var i=0;i<ins.length;i++){var n=ins[i],s=n.nextElementSibling;
   if(!s||s.className!=="cm"){s=document.createElement("span");s.className="cm";s.style.cssText="grid-column:1/-1;justify-self:end;font-size:11px;opacity:.65;margin-top:-6px";n.after(s)}
   var t=(Number(n.value)/10).toLocaleString("fr-FR")+" cm";if(s.textContent!==t)s.textContent=t}}
+var stl=document.createElement("style");stl.textContent="@media (max-width:899px){#ref{top:auto!important;bottom:8px!important;max-width:calc(100% - 16px)}}";document.head.appendChild(stl);
 var c=document.getElementById("bCotes");
 if(c){var bt=document.createElement("button");bt.type="button";bt.className=c.className;bt.id="bEch";bt.textContent="Échelle";bt.title="Silhouette de 1,75 m";bt.setAttribute("aria-pressed","true");
  bt.onclick=function(){on=!on;if(on)zoom=true;bt.setAttribute("aria-pressed",String(on));tick()};c.before(bt)}

@@ -79,12 +79,11 @@ export function ChiffragePanel({
   const [showDebit, setShowDebit] = useState(false);
   const [tick, setTick] = useState(0);
   const reqId = useRef(0);
-  const firstQty = useRef(true);
+  // Only follow initialQty when it actually changes (StrictMode-safe: re-running the effect is a no-op).
+  const prevInitialQty = useRef(initialQty);
   useEffect(() => {
-    if (firstQty.current) {
-      firstQty.current = false;
-      return;
-    }
+    if (prevInitialQty.current === initialQty) return;
+    prevInitialQty.current = initialQty;
     setQty(initialQty);
   }, [initialQty]);
 

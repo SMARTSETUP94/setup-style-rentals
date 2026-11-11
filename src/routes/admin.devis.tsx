@@ -427,7 +427,7 @@ function AdminQuotesPage() {
       </ScrollableTable>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
           {selected && (
             <>
               <DialogHeader>

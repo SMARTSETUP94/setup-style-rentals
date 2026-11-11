@@ -1,3 +1,4 @@
+import { quoteDays, rentalUsage, type DayKind } from "@/lib/calendar-days";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, MapPin, AlertTriangle, Search } from "lucide-react";
@@ -22,7 +23,8 @@ type CalendarQuote = {
   id: string;
   customer_name: string;
   company: string | null;
-  event_date: string;
+  event_date: string | null;
+  custom_delivery_date: string | null;
   event_location: string | null;
   delivery_time: string | null;
   pickup_time: string | null;
@@ -53,6 +55,8 @@ const STATUS_BG: Record<string, string> = {
   completed: "bg-purple-50 border-purple-200 text-purple-900 hover:bg-purple-100",
   rejected: "bg-red-50 border-red-200 text-red-900 hover:bg-red-100",
 };
+
+type DayEntry = { q: CalendarQuote; day: string; kind: DayKind };
 
 type ViewMode = "month" | "week" | "list";
 
@@ -95,24 +99,13 @@ function computeConflicts(
   const conflicts = new Map<string, Set<string>>();
   // Only count blocking statuses (confirmed/completed) like the SQL function does.
   const blocking = quotes.filter((q) => q.status === "confirmed" || q.status === "completed");
-  // dateKey -> Map<productId, qty>
+  // dateKey -> Map<productId, qty> (line dates, custom lines ignored)
   const usage = new Map<string, Map<string, number>>();
   for (const q of blocking) {
-    const items = Array.isArray(q.items) ? q.items : [];
-    for (const it of items) {
-      const pid = it?.productId as string | undefined;
-      const start = it?.startDate as string | undefined;
-      const end = it?.endDate as string | undefined;
-      const qty = Number(it?.quantity || 0);
-      if (!pid || !start || !end || !qty) continue;
-      const s = new Date(start);
-      const e = new Date(end);
-      for (let d = new Date(s); d <= e; d = addDays(d, 1)) {
-        const k = ymd(d);
-        const m = usage.get(k) || new Map<string, number>();
-        m.set(pid, (m.get(pid) || 0) + qty);
-        usage.set(k, m);
-      }
+    for (const [k, m] of rentalUsage(q.items)) {
+      const acc = usage.get(k) || new Map<string, number>();
+      for (const [pid, qty] of m) acc.set(pid, (acc.get(pid) || 0) + qty);
+      usage.set(k, acc);
     }
   }
   for (const [day, m] of usage) {
@@ -165,12 +158,10 @@ function AdminCalendarPage() {
         supabase
           .from("quote_requests")
           .select(
-            "id,customer_name,company,event_date,event_location,delivery_time,pickup_time,status,total_ttc,delivery_fee,setup_fee,pickup_fee,items",
+            "id,customer_name,company,event_date,event_location,delivery_time,pickup_time,status,total_ttc,delivery_fee,setup_fee,pickup_fee,items,custom_delivery_date",
           )
-          .not("event_date", "is", null)
-          .gte("event_date", ymd(fetchStart))
-          .lte("event_date", ymd(fetchEnd))
-          .order("event_date", { ascending: true }),
+          .order("created_at", { ascending: false })
+          .limit(2000),
         supabase.from("products").select("id,stock_total"),
       ]);
 
@@ -214,15 +205,19 @@ function AdminCalendarPage() {
   );
 
   const quotesByDay = useMemo(() => {
-    const map = new Map<string, CalendarQuote[]>();
+    const map = new Map<string, DayEntry[]>();
+    const from = ymd(addDays(window.start, -7));
+    const to = ymd(addDays(window.end, 7));
     for (const q of filteredQuotes) {
-      if (!q.event_date) continue;
-      const list = map.get(q.event_date) || [];
-      list.push(q);
-      map.set(q.event_date, list);
+      for (const [day, kind] of quoteDays(q)) {
+        if (day < from || day > to) continue;
+        const list = map.get(day) || [];
+        list.push({ q, day, kind });
+        map.set(day, list);
+      }
     }
     return map;
-  }, [filteredQuotes]);
+  }, [filteredQuotes, window.start, window.end]);
 
   const navLabel =
     view === "week"
@@ -257,11 +252,16 @@ function AdminCalendarPage() {
     );
   }
 
-  const renderQuotePill = (q: CalendarQuote) => {
-    const isConflict = conflicts.has(q.event_date) &&
-      (q.status === "confirmed" || q.status === "completed");
+  const renderQuotePill = ({ q, day, kind }: DayEntry) => {
+    const dayConflicts = conflicts.get(day);
+    const isConflict =
+      !!dayConflicts &&
+      (q.status === "confirmed" || q.status === "completed") &&
+      (Array.isArray(q.items) ? q.items : []).some(
+        (it: any) => it?.kind !== "custom" && dayConflicts.has(it?.productId),
+      );
     return (
-      <Popover key={q.id}>
+      <Popover key={`${q.id}-${day}`}>
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -269,15 +269,16 @@ function AdminCalendarPage() {
               "text-left text-[11px] leading-tight px-1.5 py-1 rounded border truncate transition-colors w-full",
               STATUS_BG[q.status] || "bg-muted border-border text-foreground",
               isConflict && "ring-1 ring-red-500",
+              kind === "custom" && "border-dashed",
             )}
-            title={q.customer_name}
+            title={`${q.customer_name} — ${t(`cal.kind.${kind}`)}`}
           >
             <span className="flex items-center gap-1">
               {isConflict && <AlertTriangle className="size-3 text-red-600 shrink-0" />}
               <span
                 className={cn(
                   "size-1.5 rounded-full shrink-0",
-                  STATUS_DOT[q.status] || "bg-muted-foreground",
+                  kind === "custom" ? "bg-orange-500 ring-1 ring-orange-700" : STATUS_DOT[q.status] || "bg-muted-foreground",
                 )}
               />
               <span className="truncate font-medium">{q.customer_name}</span>
@@ -305,7 +306,7 @@ function AdminCalendarPage() {
               )}
             />
             <span className="text-xs text-muted-foreground">
-              {t(`quotes.status.${q.status}`)}
+              {t(`quotes.status.${q.status}`)} · {t(`cal.kind.${kind}`)}
             </span>
           </div>
           {isConflict && (

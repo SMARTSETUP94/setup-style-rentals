@@ -237,11 +237,8 @@ function AdminCalendarPage() {
   const todayKey = ymd(today);
   const monthIndex = cursor.getMonth();
 
-  const finalTotal = (q: CalendarQuote) =>
-    Number(q.total_ttc) +
-    Number(q.delivery_fee || 0) +
-    Number(q.setup_fee || 0) +
-    Number(q.pickup_fee || 0);
+  // total_ttc already includes delivery/setup/pickup fees.
+  const finalTotal = (q: CalendarQuote) => Number(q.total_ttc) || 0;
 
   const fmtTime = (s: string | null) => (s ? s.slice(0, 5) : null);
 

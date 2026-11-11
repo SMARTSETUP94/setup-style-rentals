@@ -48,11 +48,16 @@ type Quote = {
   logistics_notes: string | null;
 };
 
-const finalTotal = (q: Quote) =>
-  Number(q.total_ttc) +
-  Number(q.delivery_fee || 0) +
-  Number(q.setup_fee || 0) +
-  Number(q.pickup_fee || 0);
+// total_ttc already includes delivery/setup/pickup fees.
+const finalTotal = (q: Quote) => Number(q.total_ttc) || 0;
+const feesOf = (q: Pick<Quote, "delivery_fee" | "setup_fee" | "pickup_fee">) =>
+  Number(q.delivery_fee || 0) + Number(q.setup_fee || 0) + Number(q.pickup_fee || 0);
+const productsNetHt = (q: Quote) => Number(q.total_ht || 0) - feesOf(q);
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+const STORAGE_PUBLIC_PREFIX = `${import.meta.env.VITE_SUPABASE_URL ?? ""}/storage/v1/object/public/`;
+const isTrustedStorageUrl = (url: unknown): url is string =>
+  typeof url === "string" && !!import.meta.env.VITE_SUPABASE_URL && url.startsWith(STORAGE_PUBLIC_PREFIX);
 
 const STATUSES = ["pending", "contacted", "confirmed", "completed", "rejected"] as const;
 const BLOCKING_STATUSES = new Set(["confirmed", "completed"]);
@@ -106,6 +111,29 @@ function AdminQuotesPage() {
   }, []);
 
   const updateStatus = async (id: string, status: string) => {
+    if (status === "confirmed") {
+      const q = quotes.find((x) => x.id === id);
+      const lines = Array.isArray(q?.items) ? (q!.items as any[]) : [];
+      for (const it of lines) {
+        if (!it?.productId || !it?.startDate || !it?.endDate) continue;
+        const { data, error } = await supabase.rpc("get_available_stock", {
+          _product_id: it.productId,
+          _start_date: it.startDate,
+          _end_date: it.endDate,
+        });
+        if (error || data == null) continue;
+        const avail = Number(data);
+        const req = Number(it.quantity) || 0;
+        if (Number.isFinite(avail) && req > avail) {
+          const name = (lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.slug || "";
+          const msg = t("quotes.stockConfirm")
+            .replace("{name}", String(name))
+            .replace("{req}", String(req))
+            .replace("{avail}", String(avail));
+          if (!confirm(msg)) return;
+        }
+      }
+    }
     const { error } = await supabase.from("quote_requests").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(t("quotes.statusUpdated"));
@@ -115,12 +143,26 @@ function AdminQuotesPage() {
 
   const saveLogistics = async () => {
     if (!selected) return;
+    const d = Number(logistics.delivery_fee);
+    const s = Number(logistics.setup_fee);
+    const p = Number(logistics.pickup_fee);
+    if (![d, s, p].every((n) => Number.isFinite(n) && n >= 0)) {
+      toast.error(t("quotes.logistics.invalid"));
+      return;
+    }
     setSavingLogistics(true);
+    const netHt = productsNetHt(selected);
+    const total_ht = round2(netHt + d + s + p);
+    const vat = round2(total_ht * 0.2);
+    const total_ttc = round2(total_ht + vat);
     const payload = {
-      delivery_fee: Number(logistics.delivery_fee) || 0,
-      setup_fee: Number(logistics.setup_fee) || 0,
-      pickup_fee: Number(logistics.pickup_fee) || 0,
+      delivery_fee: d,
+      setup_fee: s,
+      pickup_fee: p,
       logistics_notes: logistics.logistics_notes || null,
+      total_ht,
+      vat,
+      total_ttc,
     };
     const { error } = await supabase.from("quote_requests").update(payload).eq("id", selected.id);
     setSavingLogistics(false);
@@ -184,11 +226,6 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
-                    {(q.delivery_fee || q.setup_fee || q.pickup_fee) ? (
-                      <div className="text-xs text-muted-foreground">
-                        {t("quotes.products")} {formatPrice(q.total_ttc)}
-                      </div>
-                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     <select
@@ -261,26 +298,67 @@ function AdminQuotesPage() {
                 <div>
                   <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.detail.items")}</p>
                   <div className="rounded-lg border border-border divide-y divide-border">
-                    {(selected.items as any[]).map((it, i) => (
-                      <div key={i} className="px-3 py-2 text-sm">
+                    {(Array.isArray(selected.items) ? (selected.items as any[]) : []).map((it, i) => {
+                      const opts: any[] = Array.isArray(it.options) ? it.options : Array.isArray(it.selected_options) ? it.selected_options : [];
+                      return (
+                      <div key={it.line_id ?? i} className="px-3 py-2 text-sm space-y-1">
                         <div className="flex justify-between">
                           <span>
                             {(lang === "en" ? it.name_en : it.name_fr) || it.name_fr || it.name_en || it.slug} × {it.quantity} ({it.days}{lang === "fr" ? "j" : "d"})
                           </span>
                           <span className="font-medium">{formatPrice(it.line_total ?? it.line_net ?? 0)}</span>
                         </div>
-                        {it.logo_url && (
+                        {it.startDate && it.endDate && (
+                          <div className="text-xs text-muted-foreground">
+                            {t("quotes.item.dates")} : {new Date(it.startDate).toLocaleDateString(dateLocale)} → {new Date(it.endDate).toLocaleDateString(dateLocale)}
+                          </div>
+                        )}
+                        <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
+                          {it.price_day != null && <span>{t("quotes.item.perDay")} : {formatPrice(Number(it.price_day))}</span>}
+                          {Number(it.line_discount) > 0 && <span>{t("quotes.item.lineDiscount")} : −{formatPrice(Number(it.line_discount))}</span>}
+                          {it.line_net != null && <span>{t("quotes.item.net")} : {formatPrice(Number(it.line_net))}</span>}
+                        </div>
+                        {opts.length > 0 && (
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">{t("quotes.item.options")} :</div>
+                            <ul className="pl-3 list-disc">
+                              {opts.map((o, j) => (
+                                <li key={j}>
+                                  {String((lang === "en" ? o.categoryName_en : o.categoryName_fr) ?? o.categoryName_fr ?? "")}
+                                  {" — "}
+                                  {String((lang === "en" ? o.name_en : o.name_fr) ?? o.name_fr ?? "")}
+                                  {" : "}
+                                  {formatPrice(Number(o.price) || 0)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {typeof it.configurator_recap === "string" && it.configurator_recap.trim() ? (
+                          <div className="text-xs">
+                            <div className="text-muted-foreground">{t("quotes.item.config")} :</div>
+                            <pre className="whitespace-pre-wrap break-words font-sans bg-muted/40 rounded p-2">{it.configurator_recap}</pre>
+                          </div>
+                        ) : it.configurator_recap_html ? (
+                          <div className="text-xs text-muted-foreground">{t("quotes.item.configHtmlOnly")}</div>
+                        ) : null}
+                        {it.logo_url && (isTrustedStorageUrl(it.logo_url) ? (
                           <a
                             href={it.logo_url}
                             target="_blank"
-                            rel="noreferrer"
-                            className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                            rel="noreferrer noopener"
+                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                           >
-                            📎 {it.logo_filename || "Logo client"}
+                            📎 {String(it.logo_filename || t("quotes.item.logo"))}
                           </a>
-                        )}
+                        ) : (
+                          <div className="text-[11px] text-muted-foreground break-all">
+                            📎 {String(it.logo_url)} ({t("quotes.item.externalLink")})
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="rounded-lg border border-border p-4 space-y-3">
@@ -330,10 +408,11 @@ function AdminQuotesPage() {
                   </div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-4 space-y-1 text-sm">
-                  <Row label={t("quotes.totals.subHt")} value={formatPrice(selected.subtotal_ht)} />
-                  <Row label={t("quotes.totals.ht")} value={formatPrice(selected.total_ht)} />
-                  <Row label={t("quotes.totals.vat")} value={formatPrice(selected.vat)} />
-                  <Row label={t("quotes.totals.productsTtc")} value={formatPrice(selected.total_ttc)} />
+                  <Row label={t("quotes.totals.productsSubHt")} value={formatPrice(selected.subtotal_ht)} />
+                  {(() => {
+                    const disc = round2(Number(selected.subtotal_ht || 0) - productsNetHt(selected));
+                    return disc > 0 ? <Row label={t("quotes.totals.discount")} value={`−${formatPrice(disc)}`} /> : null;
+                  })()}
                   {Number(selected.delivery_fee) > 0 && (
                     <Row label={t("quotes.totals.delivery")} value={formatPrice(selected.delivery_fee)} />
                   )}
@@ -343,8 +422,10 @@ function AdminQuotesPage() {
                   {Number(selected.pickup_fee) > 0 && (
                     <Row label={t("quotes.totals.pickup")} value={formatPrice(selected.pickup_fee)} />
                   )}
-                  <Row label={t("quotes.totals.finalTtc")} value={formatPrice(finalTotal(selected))} bold />
-                  <Row label={t("quotes.totals.deposit")} value={formatPrice(selected.total_deposit)} />
+                  <Row label={t("quotes.totals.ht")} value={formatPrice(selected.total_ht)} />
+                  <Row label={t("quotes.totals.vat")} value={formatPrice(selected.vat)} />
+                  <Row label={t("quotes.totals.ttc")} value={formatPrice(finalTotal(selected))} bold />
+                  <Row label={`${t("quotes.totals.deposit")} (${t("quotes.totals.depositNote")})`} value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>
                   <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.col.status")}</p>

@@ -106,7 +106,7 @@ const DICT: Dict = {
   "cart.vat": { fr: "TVA 20%", en: "VAT 20%" },
   "cart.totalTTC": { fr: "Total TTC", en: "Total incl. tax" },
   "cart.deposits": { fr: "Cautions (remboursables)", en: "Deposits (refundable)" },
-  "cart.delivery": { fr: "Livraison & Reprise", en: "Delivery & Pickup" },
+  "cart.delivery": { fr: "Livraison", en: "Delivery" },
   "cart.deliveryNote": { fr: "Livraison, installation et reprise sur devis — Paris et Île-de-France", en: "Delivery, setup and pickup quoted separately — Paris & Île-de-France" },
   "cart.exportPdf": { fr: "Télécharger l'estimation (PDF)", en: "Download estimate (PDF)" },
   "cart.formTitle": { fr: "Vos coordonnées", en: "Your details" },

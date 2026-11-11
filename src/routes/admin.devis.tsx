@@ -3,7 +3,7 @@ import { configLink } from "@/lib/sur-mesure";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Eye, Save, Copy, ExternalLink } from "lucide-react";
+import { Trash2, Eye, Save, Copy, ExternalLink, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,6 +139,26 @@ function AdminQuotesPage() {
       .some((v) => (v ?? "").toLowerCase().includes(needle));
   });
 
+  const exportCsv = () => {
+    const esc = (v: unknown) => {
+      const str = v == null ? "" : String(v);
+      return /[",;\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const kindLabel = { rental: "location", custom: "sur mesure", mixed: "mixte" } as Record<string, string>;
+    const headers = ["numero", "date", "client", "societe", "email", "telephone", "type", "statut", "total_ht", "total_ttc", "date_evenement", "source"];
+    const rows = visible.map((q) =>
+      [quoteNumber(q), q.created_at.slice(0, 10), q.customer_name, q.company, q.email, q.phone, kindLabel[quoteKind(q)] ?? quoteKind(q), q.status,
+        Number(q.total_ht ?? 0).toFixed(2), Number(q.total_ttc ?? 0).toFixed(2), q.event_date, q.source].map(esc).join(","),
+    );
+    const blob = new Blob(["\uFEFF" + [headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `demandes-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const openDetail = (q: Quote) => {
     setSelected(q);
     setCustomRows([]);
@@ -273,6 +293,9 @@ function AdminQuotesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
+        <Button type="button" variant="outline" onClick={exportCsv} disabled={visible.length === 0}>
+          <Download className="size-4" /> {t("quotes.exportCsv")}
+        </Button>
         <select
           aria-label={t("quotes.col.status")}
           value={statusFilter}

@@ -109,6 +109,7 @@ const DICT: Dict = {
   "quotes.count": { fr: "demande(s)", en: "request(s)" },
   "quotes.col.number": { fr: "N°", en: "No." },
   "quotes.col.emails": { fr: "Mails", en: "Emails" },
+  "quotes.exportCsv": { fr: "Exporter en CSV", en: "Export CSV" },
   "quotes.search": { fr: "Rechercher nom, société, mail ou n°…", en: "Search name, company, email or no.…" },
   "quotes.filter.all": { fr: "Tous les statuts", en: "All statuses" },
   "quotes.emails.admin": { fr: "Mail interne", en: "Internal email" },

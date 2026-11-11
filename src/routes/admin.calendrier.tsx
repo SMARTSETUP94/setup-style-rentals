@@ -151,8 +151,6 @@ function AdminCalendarPage() {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const fetchStart = addDays(window.start, -7);
-      const fetchEnd = addDays(window.end, 7);
 
       const [quotesRes, productsRes] = await Promise.all([
         supabase

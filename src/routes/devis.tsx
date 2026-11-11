@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon } from "lucide-react";
+import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon, Pencil, Hammer } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
-import { useCart, lineTotal, type CartItem } from "@/lib/cart";
+import { useCart, lineTotal, isCustom, type CartItem } from "@/lib/cart";
 import { computeTotals, logisticsFromSettings, type Totals } from "@/lib/pricing";
 import { formatPrice } from "@/lib/format";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
@@ -78,6 +78,9 @@ function QuotePage() {
     event_location: "",
     delivery_time: "",
     pickup_time: "",
+    custom_delivery_date: "",
+    custom_after_event: "",
+    wants_samples: false,
   });
 
   useEffect(() => {
@@ -95,7 +98,11 @@ function QuotePage() {
     })();
   }, []);
 
-  const lineResults = items.map((i) => lineTotal(i));
+  const rentalItems = items.filter((i) => !isCustom(i));
+  const customItems = items.filter((i) => isCustom(i));
+  const hasRental = rentalItems.length > 0;
+  const hasCustom = customItems.length > 0;
+  const lineResults = rentalItems.map((i) => lineTotal(i));
   const computed = computeTotals(lineResults, logistics);
   const totals = {
     gross: computed.subtotal_ht,
@@ -123,12 +130,32 @@ function QuotePage() {
       message: form.message || null,
       event_date: form.event_date || null,
       event_location: form.event_location || null,
-      delivery_time: form.delivery_time ? form.delivery_time.slice(0, 5) : null,
-      pickup_time: form.pickup_time ? form.pickup_time.slice(0, 5) : null,
+      delivery_time: hasRental && form.delivery_time ? form.delivery_time.slice(0, 5) : null,
+      pickup_time: hasRental && form.pickup_time ? form.pickup_time.slice(0, 5) : null,
+      ...(hasCustom
+        ? {
+            custom_delivery_date: form.custom_delivery_date || null,
+            custom_after_event: (["keep", "pickup", "discuss"] as const).find((v) => v === form.custom_after_event) ?? null,
+            wants_samples: form.wants_samples,
+          }
+        : {}),
       lang,
       website: honeypot,
       turnstile_token: TURNSTILE_SITE_KEY ? turnstileToken || null : null,
-      items: items.map((i) => ({
+      items: [
+        ...customItems.map((i) => ({
+          kind: "custom" as const,
+          line_id: i.lineId.slice(0, 64),
+          piece: i.customPiece ?? i.slug,
+          quantity: Math.min(50, Math.max(1, i.quantity)),
+          reference: (i.customRef ?? "").slice(0, 120),
+          configuration: i.customConfig ?? {},
+          recap: (i.configuratorRecap ?? "").slice(0, 5000),
+          alerts: (i.customAlerts ?? []).slice(0, 12),
+          weight_kg: Number(i.customWeightKg) || 0,
+          thumbnail: i.customThumbnail ?? null,
+        })),
+        ...rentalItems.map((i) => ({
         line_id: i.lineId.slice(0, 64),
         productId: i.productId,
         quantity: i.quantity,
@@ -141,6 +168,7 @@ function QuotePage() {
         logo_path: logoPathFromUrl(i.logoUrl),
         logo_filename: i.logoFilename ?? null,
       })),
+      ],
     };
 
     let res: Response;
@@ -181,19 +209,31 @@ function QuotePage() {
     setConfirmation({
       number: typeof body.number === "string" ? body.number : "",
       emailClientOk: !!body.email?.client,
-      lines: items.map((i, idx) => ({
-        lineId: i.lineId,
-        name: pickLang(i, "name", lang),
-        quantity: i.quantity,
-        days: i.days,
-        startDate: i.startDate,
-        endDate: i.endDate,
-        net: lineResults[idx]?.net ?? 0,
-      })),
+      lines: [
+        ...rentalItems.map((i, idx) => ({
+          lineId: i.lineId,
+          name: pickLang(i, "name", lang),
+          quantity: i.quantity,
+          days: i.days,
+          startDate: i.startDate,
+          endDate: i.endDate,
+          net: lineResults[idx]?.net ?? 0,
+        })),
+        ...customItems.map((i) => ({
+          lineId: i.lineId,
+          name: pickLang(i, "name", lang),
+          quantity: i.quantity,
+          days: 1,
+          net: 0,
+          custom: true,
+          ref: i.customRef,
+        })),
+      ],
+      hasRental,
       totals: computed,
     });
     clear();
-    setForm({ customer_name: "", company: "", email: "", phone: "", message: "", event_date: "", event_location: "", delivery_time: "", pickup_time: "" });
+    setForm({ customer_name: "", company: "", email: "", phone: "", message: "", event_date: "", event_location: "", delivery_time: "", pickup_time: "", custom_delivery_date: "", custom_after_event: "", wants_samples: false });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -210,7 +250,20 @@ function QuotePage() {
     doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB"), 196, 20, { align: "right" });
 
     const body: (string | number)[][] = [];
-    items.forEach((i) => {
+    customItems.forEach((i) => {
+      body.push([
+        `${pickLang(i, "name", lang)}${i.customRef ? ` — ${i.customRef}` : ""}`,
+        i.quantity,
+        "—",
+        "—",
+        "—",
+        t("sm.priceOnQuote"),
+      ]);
+      (i.configuratorRecap ?? "").split("\n").forEach((line) => {
+        if (line.trim()) body.push([`   ✦ ${line.trim()}`, "", "", "", "", ""]);
+      });
+    });
+    rentalItems.forEach((i) => {
       const lt = lineTotal(i);
       body.push([
         pickLang(i, "name", lang),
@@ -255,6 +308,11 @@ function QuotePage() {
     const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     doc.setFontSize(10);
     let y = finalY;
+    if (!hasRental) {
+      doc.text(t("sm.teamWillQuote"), 196, y, { align: "right" });
+      doc.save(`estimation-setup-paris-${Date.now()}.pdf`);
+      return;
+    }
     doc.text(`${t("cart.subtotalHT")}: ${formatPrice(totals.gross, lang)}`, 196, y, { align: "right" }); y += 6;
     if (delivery > 0) { doc.text(`${t("cart.delivery")}: ${formatPrice(delivery, lang)}`, 196, y, { align: "right" }); y += 6; }
     if (setupFee > 0) { doc.text(`${t("cart.setup")}: ${formatPrice(setupFee, lang)}`, 196, y, { align: "right" }); y += 6; }
@@ -266,6 +324,7 @@ function QuotePage() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(`${t("cart.deposits")}: ${formatPrice(totals.deposit, lang)}`, 196, y, { align: "right" });
+    if (hasCustom) { y += 6; doc.text(t("sm.plusCustom").replace("{n}", String(customItems.length)), 196, y, { align: "right" }); }
 
     doc.save(`devis-setup-paris-${Date.now()}.pdf`);
   };
@@ -297,8 +356,10 @@ function QuotePage() {
           <div className="mt-8 grid lg:grid-cols-3 gap-6 lg:gap-10 items-start">
             {/* Items + form (left, 2 cols) */}
             <div className="lg:col-span-2 space-y-6">
+              {hasRental && hasCustom && <h2 className="font-display font-semibold text-xl">{t("sm.blockRental")}</h2>}
+              {hasRental && (
               <div className="space-y-4">
-                {items.map((item) => {
+                {rentalItems.map((item) => {
                   const lt = lineTotal(item);
                   return (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
@@ -449,6 +510,60 @@ function QuotePage() {
                   );
                 })}
               </div>
+              )}
+
+              {hasCustom && (
+                <div className="space-y-4">
+                  <h2 className="font-display font-semibold text-xl flex items-center gap-2">
+                    <Hammer className="size-5 text-gold" /> {t("sm.blockCustom")}
+                  </h2>
+                  {customItems.map((item) => (
+                    <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
+                      <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0 flex items-center justify-center">
+                        {item.customThumbnail && item.customThumbnail.startsWith("data:image/jpeg;base64,") ? (
+                          <img src={item.customThumbnail} alt={pickLang(item, "name", lang)} className="w-full h-full object-cover" />
+                        ) : (
+                          <Hammer className="size-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-medium">{pickLang(item, "name", lang)}</div>
+                            {item.customRef && (
+                              <div className="text-xs text-muted-foreground mt-0.5">{t("sm.reference")} : <span className="font-mono">{item.customRef}</span></div>
+                            )}
+                            <Link
+                              to="/sur-mesure/$piece"
+                              params={{ piece: item.customPiece ?? item.slug }}
+                              search={{ line: item.lineId }}
+                              className="mt-1 inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                            >
+                              <Pencil className="size-3" /> {t("sm.edit")}
+                            </Link>
+                          </div>
+                          <button onClick={() => remove(item.lineId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                        {item.configuratorRecap && (
+                          <pre className="mt-2 whitespace-pre-wrap break-words text-[11px] leading-snug text-foreground/80 font-mono rounded-md border border-gold/30 bg-gold/5 p-2">
+                            {item.configuratorRecap}
+                          </pre>
+                        )}
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          <div className="flex items-center border border-border rounded-md">
+                            <button aria-label={t("product.qtyDecrease")} onClick={() => update(item.lineId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
+                            <div className="w-10 text-center text-sm" aria-live="polite">{item.quantity}</div>
+                            <button aria-label={t("product.qtyIncrease")} onClick={() => update(item.lineId, { quantity: Math.min(50, item.quantity + 1) })} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
+                          </div>
+                          <div className="text-right text-xs font-medium text-muted-foreground">{t("sm.priceOnQuote")}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="relative rounded-2xl border border-border p-6 bg-white space-y-3">
                 <div className="font-display font-semibold text-lg mb-2">{t("cart.formTitle")}</div>
@@ -462,11 +577,36 @@ function QuotePage() {
                   <Input label={t("cart.eventDate")} type="date" value={form.event_date} onChange={(v) => setForm({ ...form, event_date: v })} />
                   <Input label={t("cart.eventLocation")} value={form.event_location} onChange={(v) => setForm({ ...form, event_location: v })} maxLength={500} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label={t("cart.deliveryTime")} type="time" value={form.delivery_time} onChange={(v) => setForm({ ...form, delivery_time: v })} />
-                  <Input label={t("cart.pickupTime")} type="time" value={form.pickup_time} onChange={(v) => setForm({ ...form, pickup_time: v })} />
-                </div>
-                <p className="text-[11px] text-muted-foreground -mt-1">{t("cart.timesHint")}</p>
+                {hasRental && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label={t("cart.deliveryTime")} type="time" value={form.delivery_time} onChange={(v) => setForm({ ...form, delivery_time: v })} />
+                      <Input label={t("cart.pickupTime")} type="time" value={form.pickup_time} onChange={(v) => setForm({ ...form, pickup_time: v })} />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground -mt-1">{t("cart.timesHint")}</p>
+                  </>
+                )}
+                {hasCustom && (
+                  <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 space-y-3">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-gold">{t("sm.blockCustom")}</div>
+                    <Input label={t("sm.deliveryDate")} type="date" value={form.custom_delivery_date} onChange={(v) => setForm({ ...form, custom_delivery_date: v })} />
+                    <fieldset>
+                      <legend className="text-xs text-muted-foreground">{t("sm.afterEvent")}</legend>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                        {(["keep", "pickup", "discuss"] as const).map((v) => (
+                          <label key={v} className="inline-flex items-center gap-1.5">
+                            <input type="radio" name="custom_after_event" value={v} checked={form.custom_after_event === v} onChange={() => setForm({ ...form, custom_after_event: v })} />
+                            {t(`sm.after.${v}`)}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <label className="flex items-start gap-2 text-sm">
+                      <input type="checkbox" className="mt-0.5" checked={form.wants_samples} onChange={(e) => setForm({ ...form, wants_samples: e.target.checked })} />
+                      {t("sm.samples")}
+                    </label>
+                  </div>
+                )}
                 <div>
                   <label htmlFor="quote-message" className="text-xs text-muted-foreground">{t("cart.message")}</label>
                   <textarea
@@ -506,6 +646,9 @@ function QuotePage() {
             <div className="lg:sticky lg:top-24">
               <div className="rounded-2xl border border-border p-6 bg-white space-y-2 text-sm">
                 <div className="font-display font-semibold text-lg mb-3">{t("cart.totals")}</div>
+                {!hasRental ? (
+                  <p className="text-sm text-muted-foreground">{t("sm.teamWillQuote")}</p>
+                ) : (<>
                 <Row label={t("cart.subtotalHT")} value={formatPrice(totals.gross, lang)} />
                 {totals.discount > 0 && <Row label={t("product.discount")} value={`-${formatPrice(totals.discount, lang)}`} highlight />}
                 {delivery > 0 && (
@@ -526,6 +669,10 @@ function QuotePage() {
                   <span>{t("cart.deposits")}</span>
                   <span>{formatPrice(totals.deposit, lang)}</span>
                 </div>
+                </>)}
+                {hasRental && hasCustom && (
+                  <div className="text-xs font-medium pt-1">{t("sm.plusCustom").replace("{n}", String(customItems.length))}</div>
+                )}
                 <button
                   type="button"
                   onClick={handleExportPdf}
@@ -592,8 +739,9 @@ function logoPathFromUrl(url?: string): string | null {
 interface Confirmation {
   number: string;
   emailClientOk: boolean;
-  lines: Array<{ lineId: string; name: string; quantity: number; days: number; startDate?: string; endDate?: string; net: number }>;
+  lines: Array<{ lineId: string; name: string; quantity: number; days: number; startDate?: string; endDate?: string; net: number; custom?: boolean; ref?: string }>;
   totals: Totals;
+  hasRental: boolean;
 }
 
 declare global {
@@ -676,15 +824,20 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
             <div>
               <div className="font-medium">{l.name} × {l.quantity}</div>
               <div className="text-xs text-muted-foreground">
-                {l.startDate && l.endDate
+                {l.custom
+                  ? `${t("sm.reference")} : ${l.ref ?? "—"}`
+                  : l.startDate && l.endDate
                   ? `${format(parseISO(l.startDate), "PPP", { locale: dl })} → ${format(parseISO(l.endDate), "PPP", { locale: dl })}`
                   : `${l.days} ${t("cart.col.days")}`}
               </div>
             </div>
-            <div className="font-semibold whitespace-nowrap">{formatPrice(l.net, lang)}</div>
+            <div className="font-semibold whitespace-nowrap">{l.custom ? t("sm.priceOnQuote") : formatPrice(l.net, lang)}</div>
           </div>
         ))}
       </div>
+      {!c.hasRental ? (
+        <p className="mt-4 text-sm text-muted-foreground">{t("sm.teamWillQuote")}</p>
+      ) : (
       <div className="mt-4 space-y-1 text-sm">
         <Row label={t("cart.subtotalHT")} value={formatPrice(tt.subtotal_ht, lang)} />
         {tt.discount_total > 0 && <Row label={t("product.discount")} value={`-${formatPrice(tt.discount_total, lang)}`} highlight />}
@@ -699,6 +852,7 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
         </div>
         <Row label={t("cart.deposits")} value={formatPrice(tt.total_deposit, lang)} />
       </div>
+      )}
       <Link to="/catalogue" className="mt-6 inline-flex items-center gap-2 bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-semibold hover:bg-foreground/90 transition-colors">
         {t("cart.confirm.back")}
       </Link>

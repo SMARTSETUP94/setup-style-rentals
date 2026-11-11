@@ -20,6 +20,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SurMesureIndexRouteImport } from './routes/sur-mesure.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as SurMesurePieceRouteImport } from './routes/sur-mesure.$piece'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
@@ -88,6 +89,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const SurMesurePieceRoute = SurMesurePieceRouteImport.update({
+  id: '/sur-mesure/$piece',
+  path: '/sur-mesure/$piece',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProduitSlugRoute = ProduitSlugRouteImport.update({
   id: '/produit/$slug',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
+  '/sur-mesure/$piece': typeof SurMesurePieceRoute
   '/admin/': typeof AdminIndexRoute
   '/sur-mesure/': typeof SurMesureIndexRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
+  '/sur-mesure/$piece': typeof SurMesurePieceRoute
   '/admin': typeof AdminIndexRoute
   '/sur-mesure': typeof SurMesureIndexRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
+  '/sur-mesure/$piece': typeof SurMesurePieceRoute
   '/admin/': typeof AdminIndexRoute
   '/sur-mesure/': typeof SurMesureIndexRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/api/send-quote-emails'
     | '/categorie/$slug'
     | '/produit/$slug'
+    | '/sur-mesure/$piece'
     | '/admin/'
     | '/sur-mesure/'
     | '/api/quotes/submit'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/api/send-quote-emails'
     | '/categorie/$slug'
     | '/produit/$slug'
+    | '/sur-mesure/$piece'
     | '/admin'
     | '/sur-mesure'
     | '/api/quotes/submit'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/api/send-quote-emails'
     | '/categorie/$slug'
     | '/produit/$slug'
+    | '/sur-mesure/$piece'
     | '/admin/'
     | '/sur-mesure/'
     | '/api/quotes/submit'
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   CategorieSlugRoute: typeof CategorieSlugRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
+  SurMesurePieceRoute: typeof SurMesurePieceRoute
   SurMesureIndexRoute: typeof SurMesureIndexRoute
   ApiQuotesSubmitRoute: typeof ApiQuotesSubmitRoute
 }
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/sur-mesure/$piece': {
+      id: '/sur-mesure/$piece'
+      path: '/sur-mesure/$piece'
+      fullPath: '/sur-mesure/$piece'
+      preLoaderRoute: typeof SurMesurePieceRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/produit/$slug': {
       id: '/produit/$slug'
@@ -544,6 +564,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   CategorieSlugRoute: CategorieSlugRoute,
   ProduitSlugRoute: ProduitSlugRoute,
+  SurMesurePieceRoute: SurMesurePieceRoute,
   SurMesureIndexRoute: SurMesureIndexRoute,
   ApiQuotesSubmitRoute: ApiQuotesSubmitRoute,
 }

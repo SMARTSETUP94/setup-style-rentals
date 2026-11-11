@@ -51,7 +51,18 @@ export interface CartItem {
   logoFilename?: string;
   /** Structured configuration received from the 3D configurator. */
   configuratorData?: Record<string, unknown>;
+  /** Line kind — absent means "rental". */
+  kind?: "rental" | "custom";
+  /** Made-to-measure fields (kind === "custom"). */
+  customRef?: string;
+  customPiece?: string;
+  customConfig?: Record<string, unknown>;
+  customAlerts?: string[];
+  customWeightKg?: number;
+  customThumbnail?: string | null;
 }
+
+export const isCustom = (i: Pick<CartItem, "kind">) => i.kind === "custom";
 
 export type NewCartItem = Omit<CartItem, "lineId"> & { lineId?: string };
 
@@ -81,9 +92,21 @@ export function parseStoredCart(raw: string | null): CartItem[] {
     if (typeof r.productId !== "string" || !r.productId) continue;
     const q = Number(r.quantity);
     if (!Number.isFinite(q) || q < 1) continue;
+    const custom = r.kind === "custom";
+    if (custom && (typeof r.customPiece !== "string" || !r.customPiece)) continue;
     out.push({
       ...(r as unknown as CartItem),
-      quantity: Math.floor(q),
+      kind: custom ? "custom" : (r.kind === "rental" ? "rental" : undefined),
+      ...(custom
+        ? {
+            price_day: 0,
+            deposit: 0,
+            days: 1,
+            customAlerts: Array.isArray(r.customAlerts) ? (r.customAlerts as unknown[]).filter((a): a is string => typeof a === "string") : [],
+            customThumbnail: typeof r.customThumbnail === "string" ? r.customThumbnail : null,
+          }
+        : {}),
+      quantity: custom ? Math.min(50, Math.floor(q)) : Math.floor(q),
       lineId: typeof r.lineId === "string" && r.lineId ? r.lineId : newLineId(),
     });
   }
@@ -124,7 +147,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
-      // storage full or blocked — keep in-memory cart
+      // Quota exceeded: retry without the (heavy) custom thumbnails.
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(items.map((i) => (i.customThumbnail ? { ...i, customThumbnail: null } : i))),
+        );
+      } catch {
+        // storage blocked — keep in-memory cart
+      }
     }
   }, [items, hydrated]);
 
@@ -139,13 +170,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const add = (item: NewCartItem) => {
     setItems((prev) => {
+      // Custom-made lines never merge.
+      if (item.kind === "custom") return [...prev, { ...item, lineId: item.lineId || newLineId() }];
       const key = lineKey(item);
       const existing = prev.find(
-        (i) => i.productId === item.productId && lineKey(i) === key,
+        (i) => !isCustom(i) && i.productId === item.productId && lineKey(i) === key,
       );
       if (existing) {
         return prev.map((i) =>
-          i.productId === item.productId && lineKey(i) === key
+          !isCustom(i) && i.productId === item.productId && lineKey(i) === key
             ? {
                 ...i,
                 quantity: i.quantity + item.quantity,

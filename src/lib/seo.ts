@@ -65,3 +65,20 @@ export function hreflangLinks(path: string = "/") {
     { rel: "alternate", hrefLang: "x-default", href: base },
   ] as const;
 }
+
+/** Schema.org Service for custom-made pages (no price on purpose). */
+export function serviceJsonLd(name: string, description: string, url: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    serviceType: "Fabrication de mobilier événementiel sur mesure",
+    name,
+    description,
+    url,
+    provider: { "@type": "Organization", name: "Setup Paris", url: SITE_URL },
+    areaServed: [
+      { "@type": "City", name: "Paris" },
+      { "@type": "AdministrativeArea", name: "Île-de-France" },
+    ],
+  };
+}

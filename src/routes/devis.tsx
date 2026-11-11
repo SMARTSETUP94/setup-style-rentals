@@ -1,3 +1,4 @@
+import { rangeShort } from "@/lib/custom-pricing";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon, Pencil, Hammer, Link2 } from "lucide-react";
@@ -537,6 +538,9 @@ function QuotePage() {
                             <div className="font-medium">{pickLang(item, "name", lang)}</div>
                             {item.customRef && (
                               <div className="text-xs text-muted-foreground mt-0.5">{t("sm.reference")} : <span className="font-mono">{item.customRef}</span></div>
+                            )}
+                            {item.kind === "custom" && item.customRange && (
+                              <div className="text-xs text-muted-foreground mt-0.5">{rangeShort(item.customRange, lang)}</div>
                             )}
                             <Link
                               to="/sur-mesure/$piece"

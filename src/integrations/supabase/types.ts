@@ -181,30 +181,60 @@ export type Database = {
       custom_pricing: {
         Row: {
           enabled: boolean
+          floor_ht: number
           from_price_ht: number
           lead_time_days: number | null
           piece: string
+          range_enabled: boolean
+          range_high_pct: number
+          range_low_pct: number
           updated_at: string | null
           validated_at: string | null
           validated_by: string | null
         }
         Insert: {
           enabled?: boolean
+          floor_ht?: number
           from_price_ht?: number
           lead_time_days?: number | null
           piece: string
+          range_enabled?: boolean
+          range_high_pct?: number
+          range_low_pct?: number
           updated_at?: string | null
           validated_at?: string | null
           validated_by?: string | null
         }
         Update: {
           enabled?: boolean
+          floor_ht?: number
           from_price_ht?: number
           lead_time_days?: number | null
           piece?: string
+          range_enabled?: boolean
+          range_high_pct?: number
+          range_low_pct?: number
           updated_at?: string | null
           validated_at?: string | null
           validated_by?: string | null
+        }
+        Relationships: []
+      }
+      estimate_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          ip_hash?: string
         }
         Relationships: []
       }
@@ -580,21 +610,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tmp_transfer: {
-        Row: {
-          data: string
-          part: number
-        }
-        Insert: {
-          data: string
-          part: number
-        }
-        Update: {
-          data?: string
-          part?: number
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -635,9 +650,11 @@ export type Database = {
       get_custom_public_pricing: {
         Args: never
         Returns: {
+          enabled: boolean
           from_price_ht: number
           lead_time_days: number
           piece: string
+          range_enabled: boolean
         }[]
       }
       has_role: {

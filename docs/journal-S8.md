@@ -1,0 +1,13 @@
+# Journal S8
+- Fait : migration additive 0005 (custom_pricing.range_enabled / range_low_pct / range_high_pct / floor_ht ; get_custom_public_pricing renvoie enabled + range_enabled, jamais les %, prix masqués si seul range_enabled ; table estimate_attempts, accès service seul).
+- Fait : POST /api/sur-mesure/estimate (zod strict, 40/10 min par IP hachée → 429, moteur importé côté serveur, réponse { enabled, low, high, per, study } seulement). Arrondis dans src/lib/price-range.ts + test scripts/price-range.test.ts (bun test : 2/2).
+- Fait : bandeau « Budget indicatif » / « étude » sur /sur-mesure/$piece (anti-rebond 800 ms), customRange mémorisé à l'ajout et affiché sur /devis (non envoyé au serveur) ; colonnes Fourchette / − % / + % / Plancher HT + avertissement juridique dans /admin/sur-mesure.
+- Fait : JSON-LD Service (Setup Paris, Paris + Île-de-France, sans prix) sur /sur-mesure et les 24 pièces ; titres uniques par pièce ; 24 URLs /sur-mesure/* au sitemap. docs/checklist-publication.md créé.
+- B.1 : W-00003 « TEST CLAUDE 2 — à supprimer » (comptoir, largeur 1800) → 200 {ok, number, email}, mails admin/client « sent ». custom_configs : unit 1605,68 / total 1605,68 / breakdown rempli / estimate_by=auto. Code : bloc « Estimation interne automatique » seulement dans adminEmail ; absent du mail client (customBlock sans estimations) et de la réponse JSON.
+- B.2 : quantité 3 et hypothèse « chute » modifiées → recalcul (4 227,05 → 4 531,27 €) ; enregistré, estimate_by=smart@setup.paris en base ; Copier pour le devis, CSV chiffrage, CSV débit et CSV de la liste téléchargés et lus.
+- B.3 : /admin/chiffrage?config_id=… restaure CPT-1800 ; largeur 3D 2200 → panneau 4 531,27 → 5 271,18 €.
+- B.4 : 390 px — /admin/chiffrage sans débordement ; détail /admin/devis débordait (450 px) → corrigé (0 débordement).
+- B.5 : fourchette stèle activée depuis l'admin : 850–1 050, puis 850–1 100 (H 1200), 900–1 150 (H 1400), « étude » à H 1800 ; réponses limitées aux champs autorisés ; désactivée ensuite (base : 0/24 fourchette, 0/24 prix). 429 vérifié au 41e appel.
+- Défauts corrigés : fenêtre de détail admin trop large à 390 px ; quantité enregistrée remise à la quantité de la ligne à la réouverture du panneau ; bouton d'ouverture d'une demande sans nom accessible.
+- Non vérifié : contenu réel des mails reçus (seulement le code et les statuts) ; fourchette sur téléphone ; site publié. W-00003 conservée.
+- Compilation OK.

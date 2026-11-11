@@ -24,7 +24,7 @@ export function useCustomPublicPricing() {
 }
 
 export function priceLines(p: PublicPrice | undefined, lang: "fr" | "en"): string[] {
-  if (!p) return [lang === "fr" ? "Prix sur devis sous 48 h ouvrées" : "Price quoted within two business days"];
+  if (!p) return [lang === "fr" ? "Prix et délai de fabrication confirmés sous 48 h ouvrées" : "Price and production time confirmed within two business days"];
   const amount = new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-GB", { maximumFractionDigits: 0 }).format(p.from_price_ht);
   const out = [
     lang === "fr"

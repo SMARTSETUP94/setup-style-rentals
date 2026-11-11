@@ -117,7 +117,7 @@ export const Route = createFileRoute("/produit/$slug")({
       };
     }
     const title = `${m.name_fr} — Setup Paris`;
-    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D. Livraison, installation et reprise sur devis — Paris et Île-de-France.`;
+    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.`;
     const productUrl = canonicalUrl(`/produit/${m.slug}`);
     const meta: Array<Record<string, string>> = [
       { title },

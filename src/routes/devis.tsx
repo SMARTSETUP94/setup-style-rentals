@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Trash2, FileDown, ShoppingBag, Plus, Minus, Wand2, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal, type CartItem } from "@/lib/cart";
+import { computeTotals, logisticsFromSettings, type Totals } from "@/lib/pricing";
 import { formatPrice } from "@/lib/format";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { ProductImage } from "@/components/site/ProductImage";
@@ -64,6 +64,9 @@ function QuotePage() {
     update(item.lineId, { quantity: next });
   };
   const [submitting, setSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const { token: turnstileToken, containerRef: turnstileRef, reset: resetTurnstile } = useTurnstile(TURNSTILE_SITE_KEY);
   const [logistics, setLogistics] = useState({ base: 0, perItem: 0, setup: 0, pickup: 0 });
   const [form, setForm] = useState({
     customer_name: "",
@@ -88,113 +91,110 @@ function QuotePage() {
           "logistics_setup_fee",
           "logistics_pickup_fee",
         ]);
-      const map: Record<string, number> = {};
-      (data ?? []).forEach((r: any) => {
-        map[r.key] = Number(r.value_fr) || 0;
-      });
-      setLogistics({
-        base: map["logistics_base_fee"] ?? 0,
-        perItem: map["logistics_per_item_fee"] ?? 0,
-        setup: map["logistics_setup_fee"] ?? 0,
-        pickup: map["logistics_pickup_fee"] ?? 0,
-      });
+      setLogistics(logisticsFromSettings((data ?? []) as Array<{ key: string; value_fr: string | null }>));
     })();
   }, []);
 
-  const totals = items.reduce(
-    (acc, item) => {
-      const lt = lineTotal(item);
-      acc.gross += lt.gross;
-      acc.discount += lt.discount;
-      acc.net += lt.net;
-      acc.deposit += lt.deposit;
-      return acc;
-    },
-    { gross: 0, discount: 0, net: 0, deposit: 0 },
-  );
-  const delivery = items.length > 0 ? logistics.base + items.length * logistics.perItem : 0;
-  const setupFee = items.length > 0 ? logistics.setup : 0;
-  const pickupFee = items.length > 0 ? logistics.pickup : 0;
-  const netWithDelivery = totals.net + delivery + setupFee + pickupFee;
-  const vat = netWithDelivery * 0.2;
-  const ttc = netWithDelivery + vat;
+  const lineResults = items.map((i) => lineTotal(i));
+  const computed = computeTotals(lineResults, logistics);
+  const totals = {
+    gross: computed.subtotal_ht,
+    discount: computed.discount_total,
+    net: computed.total_ht - computed.delivery_fee - computed.setup_fee - computed.pickup_fee,
+    deposit: computed.total_deposit,
+  };
+  const delivery = computed.delivery_fee;
+  const setupFee = computed.setup_fee;
+  const pickupFee = computed.pickup_fee;
+  const netWithDelivery = computed.total_ht;
+  const vat = computed.vat;
+  const ttc = computed.total_ttc;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || submitting) return;
     setSubmitting(true);
 
     const payload = {
-      ...form,
+      customer_name: form.customer_name,
+      company: form.company || null,
+      email: form.email,
+      phone: form.phone || null,
+      message: form.message || null,
       event_date: form.event_date || null,
-      delivery_time: form.delivery_time || null,
-      pickup_time: form.pickup_time || null,
-      items: items.map((i) => {
-        const lt = lineTotal(i);
-        return {
-          productId: i.productId,
-          line_id: i.lineId,
-          option_ids: (i.selectedOptions ?? []).map((o) => o.optionId),
-          configurator_data: (i.configuratorData ?? null) as Json | null,
-          slug: i.slug,
-          name_fr: i.name_fr,
-          name_en: i.name_en,
-          quantity: i.quantity,
-          days: i.days,
-          price_day: i.price_day,
-          deposit: i.deposit,
-          startDate: i.startDate ?? null,
-          endDate: i.endDate ?? null,
-          line_gross: lt.gross,
-          line_discount: lt.discount,
-          line_net: lt.net,
-          line_deposit: lt.deposit,
-          options: (i.selectedOptions ?? []).map((o) => ({
-            categoryName_fr: o.categoryName_fr,
-            categoryName_en: o.categoryName_en,
-            name_fr: o.name_fr,
-            name_en: o.name_en,
-            price: o.price,
-            line_total: o.price * i.quantity,
-          })),
-          options_per_unit_per_day: lt.optionsPerUnit,
-          options_total: lt.optionsTotal,
-          configurator_recap: i.configuratorRecap ?? null,
-          configurator_recap_html: i.configuratorRecapHtml ?? null,
-          logo_url: i.logoUrl ?? null,
-          logo_filename: i.logoFilename ?? null,
-        };
-      }),
-      subtotal_ht: totals.gross,
-      total_ht: netWithDelivery,
-      delivery_fee: delivery,
-      setup_fee: setupFee,
-      pickup_fee: pickupFee,
-      vat,
-      total_ttc: ttc,
-      total_deposit: totals.deposit,
-      status: "pending",
+      event_location: form.event_location || null,
+      delivery_time: form.delivery_time ? form.delivery_time.slice(0, 5) : null,
+      pickup_time: form.pickup_time ? form.pickup_time.slice(0, 5) : null,
+      lang,
+      website: honeypot,
+      turnstile_token: TURNSTILE_SITE_KEY ? turnstileToken || null : null,
+      items: items.map((i) => ({
+        line_id: i.lineId.slice(0, 64),
+        productId: i.productId,
+        quantity: i.quantity,
+        startDate: i.startDate ?? null,
+        endDate: i.endDate ?? null,
+        days: Math.min(365, Math.max(1, Math.round(i.days || 1))),
+        option_ids: (i.selectedOptions ?? []).map((o) => o.optionId).filter((id) => UUID_RE.test(id)),
+        configurator_recap: i.configuratorRecap ? i.configuratorRecap.slice(0, 5000) : null,
+        configurator_data: i.configuratorData ?? null,
+        logo_path: logoPathFromUrl(i.logoUrl),
+        logo_filename: i.logoFilename ?? null,
+      })),
     };
 
-    const { error } = await supabase.from("quote_requests").insert(payload);
-    if (error) {
-      console.error(error);
+    let res: Response;
+    let body: any = {};
+    try {
+      res = await fetch("/api/quotes/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      body = await res.json().catch(() => ({}));
+    } catch (err) {
+      console.error(err);
       setSubmitting(false);
       toast.error(t("cart.error"));
       return;
     }
-
-    // Fire-and-forget email notifications (don't block UX on email failure)
-    fetch("/api/send-quote-emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).catch((err) => console.error("Email notification failed:", err));
-
     setSubmitting(false);
-    toast.success(t("cart.sent"));
+    resetTurnstile();
+
+    if (res.status === 409 && body?.error === "stock" && Array.isArray(body.lines)) {
+      const parts = (body.lines as Array<{ line_id: string; available: number }>).map((l) => {
+        const it = items.find((x) => x.lineId.slice(0, 64) === l.line_id);
+        return `${it ? pickLang(it, "name", lang) : "?"} (${l.available} ${t("cart.available")})`;
+      });
+      toast.error(`${t("cart.stockError")} ${[...new Set(parts)].join(", ")}`);
+      return;
+    }
+    if (res.status === 429) {
+      toast.error(t("cart.rateLimited"));
+      return;
+    }
+    if (!res.ok || !body?.ok) {
+      toast.error(t("cart.error"));
+      return;
+    }
+
+    setConfirmation({
+      number: typeof body.number === "string" ? body.number : "",
+      emailClientOk: !!body.email?.client,
+      lines: items.map((i, idx) => ({
+        lineId: i.lineId,
+        name: pickLang(i, "name", lang),
+        quantity: i.quantity,
+        days: i.days,
+        startDate: i.startDate,
+        endDate: i.endDate,
+        net: lineResults[idx]?.net ?? 0,
+      })),
+      totals: computed,
+    });
     clear();
     setForm({ customer_name: "", company: "", email: "", phone: "", message: "", event_date: "", event_location: "", delivery_time: "", pickup_time: "" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleExportPdf = async () => {
@@ -278,7 +278,9 @@ function QuotePage() {
           {t("cart.title")}
         </h1>
 
-        {items.length === 0 ? (
+        {confirmation ? (
+          <ConfirmationScreen c={confirmation} />
+        ) : items.length === 0 ? (
           <div className="mt-10 text-center py-14 border border-dashed border-border rounded-2xl">
             <ShoppingBag className="size-12 text-muted-foreground mx-auto" />
             <p className="mt-4 text-muted-foreground">{t("cart.empty")}</p>
@@ -443,7 +445,7 @@ function QuotePage() {
                 })}
               </div>
 
-              <form onSubmit={handleSubmit} className="rounded-2xl border border-border p-6 bg-white space-y-3">
+              <form onSubmit={handleSubmit} className="relative rounded-2xl border border-border p-6 bg-white space-y-3">
                 <div className="font-display font-semibold text-lg mb-2">{t("cart.formTitle")}</div>
                 <Input label={t("cart.name")} required value={form.customer_name} onChange={(v) => setForm({ ...form, customer_name: v })} maxLength={200} />
                 <Input label={t("cart.company")} value={form.company} onChange={(v) => setForm({ ...form, company: v })} maxLength={200} />
@@ -471,6 +473,20 @@ function QuotePage() {
                     className="mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent resize-none"
                   />
                 </div>
+                <div aria-hidden="true" className="absolute -left-[10000px] top-auto w-px h-px overflow-hidden">
+                  <label>
+                    Website
+                    <input
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                  </label>
+                </div>
+                {TURNSTILE_SITE_KEY && <div ref={turnstileRef} className="min-h-[65px]" />}
                 <button
                   type="submit"
                   disabled={submitting}
@@ -547,6 +563,140 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
       />
+    </div>
+  );
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TURNSTILE_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) || "";
+
+/** Extracts the storage path (after `/quote-uploads/`) from a public logo URL. */
+function logoPathFromUrl(url?: string): string | null {
+  if (!url) return null;
+  const marker = "/quote-uploads/";
+  const idx = url.indexOf(marker);
+  if (idx < 0) return null;
+  try {
+    const path = decodeURIComponent(url.slice(idx + marker.length).split(/[?#]/)[0]!);
+    return path.startsWith("client-logos/") && !path.includes("..") && path.length <= 300 ? path : null;
+  } catch {
+    return null;
+  }
+}
+
+interface Confirmation {
+  number: string;
+  emailClientOk: boolean;
+  lines: Array<{ lineId: string; name: string; quantity: number; days: number; startDate?: string; endDate?: string; net: number }>;
+  totals: Totals;
+}
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (el: HTMLElement, opts: { sitekey: string; callback: (t: string) => void; "expired-callback"?: () => void; "error-callback"?: () => void }) => string;
+      reset: (id?: string) => void;
+    };
+  }
+}
+
+/** Loads Cloudflare Turnstile only when a site key is configured. */
+function useTurnstile(siteKey: string) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const widgetId = useRef<string | null>(null);
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (!siteKey) return;
+    let cancelled = false;
+    const render = () => {
+      if (cancelled || !containerRef.current || !window.turnstile || widgetId.current) return;
+      widgetId.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        callback: (t) => setToken(t),
+        "expired-callback": () => setToken(""),
+        "error-callback": () => setToken(""),
+      });
+    };
+    if (window.turnstile) render();
+    else {
+      const id = "cf-turnstile-script";
+      let script = document.getElementById(id) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement("script");
+        script.id = id;
+        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", render);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [siteKey]);
+
+  const reset = useCallback(() => {
+    if (window.turnstile && widgetId.current) window.turnstile.reset(widgetId.current);
+    setToken("");
+  }, []);
+
+  return { token, containerRef, reset };
+}
+
+function ConfirmationScreen({ c }: { c: Confirmation }) {
+  const { t, lang } = useI18n();
+  const dl = lang === "fr" ? dfFr : dfEn;
+  const tt = c.totals;
+  return (
+    <div className="mt-8 max-w-2xl rounded-2xl border border-border bg-white p-6 md:p-8">
+      <h2 className="font-display font-semibold text-2xl">{t("cart.confirm.title")}</h2>
+      {c.number && (
+        <div className="mt-3 text-sm">
+          <span className="text-muted-foreground">{t("cart.confirm.number")} : </span>
+          <span className="font-mono font-semibold text-lg">{c.number}</span>
+        </div>
+      )}
+      <p className="mt-3 text-sm">{t("cart.confirm.reply")}</p>
+      {!c.emailClientOk && (
+        <div role="alert" className="mt-4 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          {t("cart.confirm.emailFailed")}
+        </div>
+      )}
+      <div className="mt-6 text-xs uppercase tracking-wider text-muted-foreground">{t("cart.confirm.summary")}</div>
+      <div className="mt-2 divide-y divide-border rounded-lg border border-border">
+        {c.lines.map((l) => (
+          <div key={l.lineId} className="flex justify-between gap-3 p-3 text-sm">
+            <div>
+              <div className="font-medium">{l.name} × {l.quantity}</div>
+              <div className="text-xs text-muted-foreground">
+                {l.startDate && l.endDate
+                  ? `${format(parseISO(l.startDate), "PPP", { locale: dl })} → ${format(parseISO(l.endDate), "PPP", { locale: dl })}`
+                  : `${l.days} ${t("cart.col.days")}`}
+              </div>
+            </div>
+            <div className="font-semibold whitespace-nowrap">{formatPrice(l.net, lang)}</div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 space-y-1 text-sm">
+        <Row label={t("cart.subtotalHT")} value={formatPrice(tt.subtotal_ht, lang)} />
+        {tt.discount_total > 0 && <Row label={t("product.discount")} value={`-${formatPrice(tt.discount_total, lang)}`} highlight />}
+        {tt.delivery_fee > 0 && <Row label={t("cart.delivery")} value={formatPrice(tt.delivery_fee, lang)} />}
+        {tt.setup_fee > 0 && <Row label={t("cart.setup")} value={formatPrice(tt.setup_fee, lang)} />}
+        {tt.pickup_fee > 0 && <Row label={t("cart.pickup")} value={formatPrice(tt.pickup_fee, lang)} />}
+        <Row label={t("cart.totalHT")} value={formatPrice(tt.total_ht, lang)} />
+        <Row label={t("cart.vat")} value={formatPrice(tt.vat, lang)} />
+        <div className="border-t border-border pt-2 flex justify-between font-semibold">
+          <span>{t("cart.totalTTC")}</span>
+          <span>{formatPrice(tt.total_ttc, lang)}</span>
+        </div>
+        <Row label={t("cart.deposits")} value={formatPrice(tt.total_deposit, lang)} />
+      </div>
+      <Link to="/catalogue" className="mt-6 inline-flex items-center gap-2 bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-semibold hover:bg-foreground/90 transition-colors">
+        {t("cart.confirm.back")}
+      </Link>
     </div>
   );
 }

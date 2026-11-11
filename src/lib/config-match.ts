@@ -19,7 +19,7 @@ export function matchConfigToOptions(
   const pairs: Array<{ key: string; label: string }> = [];
   for (const [rawKey, v] of Object.entries(data)) {
     if (typeof v !== "string" || !v.trim()) continue;
-    const key = rawKey.trim().replace(/(Finition|Option)$/, "");
+    const key = rawKey.trim().replace(/^(.+?)(Finition|Option)$/, "$1");
     const list = choices?.[key] ?? [];
     const hit = list.find((c) => c.value === v);
     pairs.push({ key, label: hit ? hit.label : v });

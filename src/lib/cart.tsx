@@ -60,6 +60,8 @@ export interface CartItem {
   customAlerts?: string[];
   customWeightKg?: number;
   customThumbnail?: string | null;
+  /** Indicative public range shown at add time — display only, never a price. */
+  customRange?: { low: number; high: number } | null;
 }
 
 export const isCustom = (i: Pick<CartItem, "kind">) => i.kind === "custom";
@@ -104,6 +106,10 @@ export function parseStoredCart(raw: string | null): CartItem[] {
             days: 1,
             customAlerts: Array.isArray(r.customAlerts) ? (r.customAlerts as unknown[]).filter((a): a is string => typeof a === "string") : [],
             customThumbnail: typeof r.customThumbnail === "string" ? r.customThumbnail : null,
+            customRange:
+              r.customRange && typeof r.customRange === "object" && Number.isFinite((r.customRange as { low?: unknown }).low) && Number.isFinite((r.customRange as { high?: unknown }).high)
+                ? { low: Number((r.customRange as { low: number }).low), high: Number((r.customRange as { high: number }).high) }
+                : null,
           }
         : {}),
       quantity: custom ? Math.min(50, Math.floor(q)) : Math.floor(q),

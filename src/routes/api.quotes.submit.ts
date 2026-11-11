@@ -212,7 +212,29 @@ const AFTER_EVENT_FR: Record<string, string> = {
   discuss: "À discuter",
 };
 
-function customBlock(p: Payload, customs: StoredCustom[]) {
+type InternalEstimate =
+  | { ok: true; unite_ht: number; total_ht: number; incomplet: boolean; lignes: Array<{ poste: string; detail: string; montant: number }>; non_chiffre: string[] }
+  | { ok: false };
+
+const eur = (n: number) => `${n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+/** INTERNAL ONLY — rendered in the admin mail, never in the client mail or any response. */
+function estimateBlock(e: InternalEstimate | undefined) {
+  if (!e) return "";
+  if (!e.ok || e.incomplet) {
+    return `<div style="margin-top:8px;font-size:12px;color:#7a5b00;background:#f4f4f5;padding:8px;border-radius:6px;">Chiffrage automatique partiel ou indisponible</div>`;
+  }
+  const rows = e.lignes
+    .map((l) => `<tr><td style="padding:2px 6px 2px 0;">${escapeHtml(l.poste)}</td><td style="padding:2px 6px;color:#666;">${escapeHtml(l.detail)}</td><td style="padding:2px 0;text-align:right;white-space:nowrap;">${eur(l.montant)}</td></tr>`)
+    .join("");
+  return `<div style="margin-top:8px;font-size:12px;background:#f4f4f5;padding:8px;border-radius:6px;">
+    <strong>Estimation interne automatique : ${eur(e.unite_ht)} HT l'unité, ${eur(e.total_ht)} HT au total — temps non validés par l'atelier, hors postes non chiffrés</strong>
+    <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">${rows}</table>
+    ${e.non_chiffre.length ? `<div style="margin-top:6px;">Postes non chiffrés :<ul style="margin:2px 0 0 18px;padding:0;">${e.non_chiffre.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul></div>` : ""}
+  </div>`;
+}
+
+function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string, InternalEstimate>) {
   if (!customs.length) return "";
   const rows = customs
     .map(
@@ -223,6 +245,7 @@ function customBlock(p: Payload, customs: StoredCustom[]) {
         ${c.configurator_recap ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(c.configurator_recap)}</pre>` : ""}
         ${c.resume_url ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(c.resume_url)}" style="color:#1d4ed8;">Reprendre / partager cette configuration</a></div>` : ""}
         ${c.custom_alerts.length ? `<div style="margin-top:8px;font-size:12px;"><strong>Points à vérifier par le bureau d'études :</strong><ul style="margin:4px 0 0 18px;padding:0;">${c.custom_alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>` : ""}
+        ${estimates ? estimateBlock(estimates.get(c.custom_config_id)) : ""}
       </div>`,
     )
     .join("");
@@ -333,7 +356,7 @@ function totalsBlock(t: Totals) {
     </table>`;
 }
 
-function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
+function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[], estimates: Map<string, InternalEstimate>) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:20px;margin:0 0 16px;">Nouvelle demande de devis ${escapeHtml(number)}</h1>
@@ -348,7 +371,7 @@ function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, 
       </div>
       ${p.message ? `<div style="margin-top:16px;padding:12px;background:#fffbe6;border-left:3px solid #f0c000;font-size:14px;white-space:pre-wrap;">${escapeHtml(p.message)}</div>` : ""}
       ${rentalBlock(items, t)}
-      ${customBlock(p, customs)}
+      ${customBlock(p, customs, estimates)}
       <p style="margin-top:24px;font-size:12px;color:#999;">Connectez-vous à l'admin pour répondre à cette demande.</p>
     </div>`;
 }
@@ -697,6 +720,43 @@ export const Route = createFileRoute("/api/quotes/submit")({
             if (ccErr) console.error("[quotes/submit] custom_configs insert failed", ccErr);
           }
 
+          // 8c. Internal automatic estimate (server only; failures never block the request)
+          const estimates = new Map<string, InternalEstimate>();
+          if (customItems.length) {
+            try {
+              const { chiffrer } = await import("@/server/chiffrage.server.js");
+              for (const [idx, c] of customItems.entries()) {
+                const sc = storedCustoms[idx]!;
+                try {
+                  const r = chiffrer(c.configuration, { quantite: c.quantity });
+                  if (!r.ok) {
+                    estimates.set(sc.custom_config_id, { ok: false });
+                    continue;
+                  }
+                  estimates.set(sc.custom_config_id, r);
+                  const { error: eErr } = await supabaseAdmin
+                    .from("custom_configs")
+                    .update({
+                      estimate_unit_ht: r.unite_ht,
+                      estimate_total_ht: r.total_ht,
+                      estimate_breakdown: r as never,
+                      estimate_options: { quantite: c.quantity, hyp: {}, t0: r.t0 } as never,
+                      estimate_at: new Date().toISOString(),
+                      estimate_by: "auto",
+                    })
+                    .eq("id", sc.custom_config_id);
+                  if (eErr) console.error("[quotes/submit] estimate save failed", eErr);
+                } catch (e) {
+                  console.error("[quotes/submit] estimate failed", e);
+                  estimates.set(sc.custom_config_id, { ok: false });
+                }
+              }
+            } catch (e) {
+              console.error("[quotes/submit] estimate engine unavailable", e);
+              for (const sc of storedCustoms) estimates.set(sc.custom_config_id, { ok: false });
+            }
+          }
+
           // 9. Emails (awaited, failures recorded but never fatal)
           const notifyTo = (process.env.QUOTE_NOTIFY_TO || DEFAULT_ADMIN_EMAIL)
             .split(",")
@@ -706,7 +766,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
             sendEmail({
               to: notifyTo,
               subject: `${storedCustoms.length ? "[Sur mesure] " : ""}Nouvelle demande de devis ${number} — ${p.customer_name.replace(/[\r\n]+/g, " ")}`,
-              html: adminEmail(p, number, storedItems, totals, storedCustoms),
+              html: adminEmail(p, number, storedItems, totals, storedCustoms, estimates),
               replyTo: p.email,
             }),
             sendEmail({

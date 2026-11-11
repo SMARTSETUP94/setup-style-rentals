@@ -32,10 +32,12 @@ import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminDevisRouteImport } from './routes/admin.devis'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
+import { Route as AdminChiffrageRouteImport } from './routes/admin.chiffrage'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
 import { Route as ApiQuotesSubmitRouteImport } from './routes/api.quotes.submit'
+import { Route as ApiAdminChiffrageRouteImport } from './routes/api.admin.chiffrage'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -152,6 +154,11 @@ const AdminClientsRoute = AdminClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminChiffrageRoute = AdminChiffrageRouteImport.update({
+  id: '/chiffrage',
+  path: '/chiffrage',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -172,6 +179,11 @@ const ApiQuotesSubmitRoute = ApiQuotesSubmitRouteImport.update({
   path: '/api/quotes/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminChiffrageRoute = ApiAdminChiffrageRouteImport.update({
+  id: '/api/admin/chiffrage',
+  path: '/api/admin/chiffrage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -186,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/chiffrage': typeof AdminChiffrageRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -200,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/sur-mesure/$piece': typeof SurMesurePieceRoute
   '/admin/': typeof AdminIndexRoute
   '/sur-mesure/': typeof SurMesureIndexRoute
+  '/api/admin/chiffrage': typeof ApiAdminChiffrageRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRoutesByTo {
@@ -214,6 +228,7 @@ export interface FileRoutesByTo {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/chiffrage': typeof AdminChiffrageRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -228,6 +243,7 @@ export interface FileRoutesByTo {
   '/sur-mesure/$piece': typeof SurMesurePieceRoute
   '/admin': typeof AdminIndexRoute
   '/sur-mesure': typeof SurMesureIndexRoute
+  '/api/admin/chiffrage': typeof ApiAdminChiffrageRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRoutesById {
@@ -244,6 +260,7 @@ export interface FileRoutesById {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/chiffrage': typeof AdminChiffrageRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -258,6 +275,7 @@ export interface FileRoutesById {
   '/sur-mesure/$piece': typeof SurMesurePieceRoute
   '/admin/': typeof AdminIndexRoute
   '/sur-mesure/': typeof SurMesureIndexRoute
+  '/api/admin/chiffrage': typeof ApiAdminChiffrageRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRouteTypes {
@@ -275,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/chiffrage'
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
@@ -289,6 +308,7 @@ export interface FileRouteTypes {
     | '/sur-mesure/$piece'
     | '/admin/'
     | '/sur-mesure/'
+    | '/api/admin/chiffrage'
     | '/api/quotes/submit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -303,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/chiffrage'
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
@@ -317,6 +338,7 @@ export interface FileRouteTypes {
     | '/sur-mesure/$piece'
     | '/admin'
     | '/sur-mesure'
+    | '/api/admin/chiffrage'
     | '/api/quotes/submit'
   id:
     | '__root__'
@@ -332,6 +354,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/chiffrage'
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
@@ -346,6 +369,7 @@ export interface FileRouteTypes {
     | '/sur-mesure/$piece'
     | '/admin/'
     | '/sur-mesure/'
+    | '/api/admin/chiffrage'
     | '/api/quotes/submit'
   fileRoutesById: FileRoutesById
 }
@@ -366,6 +390,7 @@ export interface RootRouteChildren {
   ProduitSlugRoute: typeof ProduitSlugRoute
   SurMesurePieceRoute: typeof SurMesurePieceRoute
   SurMesureIndexRoute: typeof SurMesureIndexRoute
+  ApiAdminChiffrageRoute: typeof ApiAdminChiffrageRoute
   ApiQuotesSubmitRoute: typeof ApiQuotesSubmitRoute
 }
 
@@ -532,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminClientsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/chiffrage': {
+      id: '/admin/chiffrage'
+      path: '/chiffrage'
+      fullPath: '/admin/chiffrage'
+      preLoaderRoute: typeof AdminChiffrageRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -560,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiQuotesSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/chiffrage': {
+      id: '/api/admin/chiffrage'
+      path: '/api/admin/chiffrage'
+      fullPath: '/api/admin/chiffrage'
+      preLoaderRoute: typeof ApiAdminChiffrageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -567,6 +606,7 @@ interface AdminRouteChildren {
   AdminAuthRoute: typeof AdminAuthRoute
   AdminCalendrierRoute: typeof AdminCalendrierRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminChiffrageRoute: typeof AdminChiffrageRoute
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDevisRoute: typeof AdminDevisRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -580,6 +620,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthRoute: AdminAuthRoute,
   AdminCalendrierRoute: AdminCalendrierRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminChiffrageRoute: AdminChiffrageRoute,
   AdminClientsRoute: AdminClientsRoute,
   AdminDevisRoute: AdminDevisRoute,
   AdminProductsRoute: AdminProductsRoute,
@@ -608,6 +649,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProduitSlugRoute: ProduitSlugRoute,
   SurMesurePieceRoute: SurMesurePieceRoute,
   SurMesureIndexRoute: SurMesureIndexRoute,
+  ApiAdminChiffrageRoute: ApiAdminChiffrageRoute,
   ApiQuotesSubmitRoute: ApiQuotesSubmitRoute,
 }
 export const routeTree = rootRouteImport

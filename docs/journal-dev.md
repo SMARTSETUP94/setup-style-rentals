@@ -56,3 +56,14 @@
 - Délais : 24 h ouvrées (location) et « prix et délai de fabrication confirmés sous 48 h ouvrées » (sur-mesure), alignés sur la confirmation, le mail, le libellé prix des lignes et le message « Demande envoyée » (24h → 24 h ouvrées). Écart restant : la barre du configurateur affiche « Prix sur devis sous 48 h » (fichier non modifiable).
 - /admin/devis : bouton « Exporter en CSV » sur la liste filtrée (12 colonnes demandées).
 - Compilation OK ; /devis à 390 px avec 2 lignes : pas de débordement, notes lisibles. Non vérifié : export CSV et mail réels à l'écran.
+
+## S7
+- Moteur reconstitué par script (clé de service, aucune route temporaire) : base64 22004 car. md5 0ad8f9bd…; fichier `src/server/chiffrage.server.js` md5 a1ccbdef3fec97ca3cf2ebde035c02e5 (52 640 o), exclu de prettier/eslint.
+- Test A.4 (`node scripts/chiffrage-regression.mjs`) : bar 2448.35 OK ; stèle 899 OK ; stèle ×10 537.78 OK ; comptoir 1540 OK.
+- Contrôle de fuite (build client + public/) : moteur absent (« CIF Bois » et « 72.5…suivi » introuvables ; présent seulement dans dist/server). MAIS `public/configurators/sur-mesure.html` (fichier S4, non modifié) contient « Masterflex » et `bouche-pore 19 mm",prix` — libellés matières avec prix:0, aucun prix réel.
+- /api/admin/chiffrage : 401 sans jeton/jeton invalide, 400 entrée invalide, 200 admin (configuration et config_id). Moteur importé uniquement dynamiquement dans les handlers serveur.
+- Migration additive : custom_configs.estimate_* (7 colonnes). Soumission : estimation auto (estimate_by=auto) + bloc interne dans le mail admin seul ; échec non bloquant.
+- Admin : panneau « Chiffrage interne » par ligne sur mesure (/admin/devis), estimation interne dans la liste, page /admin/chiffrage (iframe + panneau, ?config_id, menu).
+- Créés : src/server/chiffrage.server.{js,d.ts}, src/lib/chiffrage-types.ts, src/routes/api.admin.chiffrage.ts, src/routes/admin.chiffrage.tsx, src/components/admin/ChiffragePanel.tsx, scripts/chiffrage-regression.mjs. Modifiés : api.quotes.submit.ts, admin.devis.tsx, admin.tsx, .prettierignore, eslint.config.js.
+- Vu à l'écran (admin connecté) : W-00002 calculé à l'ouverture (2 448,35 €), /admin/chiffrage avec stèle W-00001 restaurée (1 220,23 €).
+- Non vérifié : mail interne réel avec estimation (aucune nouvelle demande envoyée), enregistrement d'une estimation, exports CSV/copie, mise à jour en direct depuis la 3D, affichage téléphone.

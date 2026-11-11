@@ -109,6 +109,13 @@ export type Database = {
           alerts: Json
           config: Json
           created_at: string | null
+          estimate_at: string | null
+          estimate_breakdown: Json | null
+          estimate_by: string | null
+          estimate_note: string | null
+          estimate_options: Json | null
+          estimate_total_ht: number | null
+          estimate_unit_ht: number | null
           id: string
           line_id: string | null
           piece: string
@@ -123,6 +130,13 @@ export type Database = {
           alerts?: Json
           config: Json
           created_at?: string | null
+          estimate_at?: string | null
+          estimate_breakdown?: Json | null
+          estimate_by?: string | null
+          estimate_note?: string | null
+          estimate_options?: Json | null
+          estimate_total_ht?: number | null
+          estimate_unit_ht?: number | null
           id?: string
           line_id?: string | null
           piece: string
@@ -137,6 +151,13 @@ export type Database = {
           alerts?: Json
           config?: Json
           created_at?: string | null
+          estimate_at?: string | null
+          estimate_breakdown?: Json | null
+          estimate_by?: string | null
+          estimate_note?: string | null
+          estimate_options?: Json | null
+          estimate_total_ht?: number | null
+          estimate_unit_ht?: number | null
           id?: string
           line_id?: string | null
           piece?: string
@@ -556,6 +577,21 @@ export type Database = {
           created_at?: string
           id?: number
           ip_hash?: string
+        }
+        Relationships: []
+      }
+      tmp_transfer: {
+        Row: {
+          data: string
+          part: number
+        }
+        Insert: {
+          data: string
+          part: number
+        }
+        Update: {
+          data?: string
+          part?: number
         }
         Relationships: []
       }

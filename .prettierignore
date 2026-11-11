@@ -6,3 +6,4 @@ pnpm-lock.yaml
 package-lock.json
 routeTree.gen.ts
 public/configurators/sur-mesure.html
+src/server/chiffrage.server.js

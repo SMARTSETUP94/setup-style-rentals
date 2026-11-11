@@ -1,6 +1,7 @@
 import { SITE_URL } from "@/lib/seo";
 import { configLink } from "@/lib/sur-mesure";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChiffragePanel } from "@/components/admin/ChiffragePanel";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Trash2, Eye, Save, Copy, ExternalLink, Download } from "lucide-react";
@@ -70,6 +71,12 @@ type CustomConfigRow = {
   recap: string | null;
   preview_path: string | null;
   previewUrl?: string | null;
+  estimate_unit_ht: number | null;
+  estimate_total_ht: number | null;
+  estimate_at: string | null;
+  estimate_by: string | null;
+  estimate_note: string | null;
+  estimate_options: unknown;
 };
 
 type QuoteKind = "rental" | "custom" | "mixed";
@@ -130,6 +137,7 @@ function AdminQuotesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [kindFilter, setKindFilter] = useState<string>("all");
   const [customRows, setCustomRows] = useState<CustomConfigRow[]>([]);
+  const [estimateByQuote, setEstimateByQuote] = useState<Record<string, number>>({});
   const visible = quotes.filter((q) => {
     if (statusFilter !== "all" && q.status !== statusFilter) return false;
     if (kindFilter !== "all" && quoteKind(q) !== kindFilter) return false;
@@ -166,7 +174,7 @@ function AdminQuotesPage() {
       void (async () => {
         const { data, error } = await supabase
           .from("custom_configs")
-          .select("id,line_id,ref,piece,config,quantity,weight_kg,alerts,recap,preview_path")
+          .select("id,line_id,ref,piece,config,quantity,weight_kg,alerts,recap,preview_path,estimate_unit_ht,estimate_total_ht,estimate_at,estimate_by,estimate_note,estimate_options")
           .eq("quote_id", q.id)
           .order("created_at");
         if (error) return toast.error(error.message);
@@ -196,6 +204,10 @@ function AdminQuotesPage() {
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     else setQuotes((data as Quote[]) ?? []);
+    const { data: est } = await supabase.from("custom_configs").select("quote_id,estimate_total_ht").not("estimate_total_ht", "is", null);
+    const sums: Record<string, number> = {};
+    for (const r of est ?? []) if (r.quote_id) sums[r.quote_id] = (sums[r.quote_id] ?? 0) + Number(r.estimate_total_ht || 0);
+    setEstimateByQuote(sums);
     setLoading(false);
   };
 
@@ -363,6 +375,11 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
+                    {estimateByQuote[q.id] != null && (
+                      <div className="text-[11px] text-muted-foreground whitespace-nowrap" title="Estimation sur-mesure (interne)">
+                        Estimation sur-mesure : {formatPrice(estimateByQuote[q.id]!)} HT · interne
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <EmailStatusBadge q={q} title={t("quotes.emails.failed")} />
@@ -564,6 +581,25 @@ function AdminQuotesPage() {
                                 >
                                   <Copy className="size-3.5" /> {t("quotes.custom.copy")}
                                 </Button>
+                              )}
+                              {row && (
+                                <Button size="sm" variant="outline" asChild>
+                                  <Link to="/admin/chiffrage" search={{ config_id: row.id }}>
+                                    {lang === "fr" ? "Ouvrir dans le chiffrage" : "Open in pricing"}
+                                  </Link>
+                                </Button>
+                              )}
+                              {row && (
+                                <div className="pt-2">
+                                  <ChiffragePanel
+                                    key={row.id}
+                                    configId={row.id}
+                                    saveId={row.id}
+                                    initialQty={Number(it.quantity) || row.quantity || 1}
+                                    saved={row}
+                                    onSaved={() => { openDetail(selected); void load(); }}
+                                  />
+                                </div>
                               )}
                             </div>
                           </div>

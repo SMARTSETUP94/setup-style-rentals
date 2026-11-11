@@ -61,6 +61,9 @@ export function Navbar() {
           <Link to="/catalogue" className="hover:opacity-70 transition-opacity">
             {t("nav.catalog")}
           </Link>
+          <Link to="/sur-mesure" className="hover:opacity-70 transition-opacity">
+            {t("nav.custom")}
+          </Link>
           <Link to="/contact" className="hover:opacity-70 transition-opacity">
             {t("nav.contact")}
           </Link>
@@ -93,6 +96,7 @@ export function Navbar() {
           <nav className="container-x py-4 flex flex-col gap-3 text-sm font-medium">
             <Link to="/" className="py-2">{t("nav.home")}</Link>
             <Link to="/catalogue" className="py-2">{t("nav.catalog")}</Link>
+            <Link to="/sur-mesure" className="py-2">{t("nav.custom")}</Link>
             <Link to="/contact" className="py-2">{t("nav.contact")}</Link>
             <Link to="/devis" className="py-2 inline-flex items-center gap-2">
               <ShoppingBag className="size-4" />

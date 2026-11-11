@@ -114,6 +114,12 @@ function HomePage() {
               {t("hero.cta")}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
+            <Link
+              to="/sur-mesure"
+              className="inline-flex items-center gap-2 rounded-md px-7 py-4 text-sm font-semibold tracking-wide border border-white/40 text-white hover:bg-white/10 transition-all duration-300"
+            >
+              {t("sm.heroCta")}
+            </Link>
           </div>
         </div>
       </section>
@@ -125,15 +131,24 @@ function HomePage() {
             { i: Truck, label: t("trust.delivery") },
             { i: Wand2, label: t("trust.custom") },
             { i: Zap, label: t("trust.quote") },
-            { i: Ruler, label: t("trust.bespoke") },
-          ].map((b, i) => (
-            <div key={i} className="flex items-center gap-3 text-xs md:text-sm font-medium">
-              <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold">
-                <b.i className="size-4" strokeWidth={2} />
-              </span>
-              <span className="leading-tight">{b.label}</span>
-            </div>
-          ))}
+            { i: Ruler, label: t("trust.bespoke"), href: true },
+          ].map((b, i) => {
+            const inner = (
+              <>
+                <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold">
+                  <b.i className="size-4" strokeWidth={2} />
+                </span>
+                <span className="leading-tight">{b.label}</span>
+              </>
+            );
+            return "href" in b ? (
+              <Link key={i} to="/sur-mesure" className="flex items-center gap-3 text-xs md:text-sm font-medium hover:text-accent underline-offset-4 hover:underline">
+                {inner}
+              </Link>
+            ) : (
+              <div key={i} className="flex items-center gap-3 text-xs md:text-sm font-medium">{inner}</div>
+            );
+          })}
         </div>
       </section>
 
@@ -152,6 +167,22 @@ function HomePage() {
         </div>
         <PresentationVideo lang={lang} />
       </RevealSection>
+
+      <section className="container-x pt-16 md:pt-20">
+        <h2 className="font-display font-semibold text-2xl md:text-3xl tracking-tight">{t("sm.twoWaysTitle")}</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <Link to="/catalogue" className="group rounded-2xl border border-border bg-card p-6 hover:shadow-soft transition-all">
+            <div className="font-semibold text-lg">{t("sm.rentTitle")}</div>
+            <p className="mt-2 text-sm text-muted-foreground">{t("sm.rentText")}</p>
+            <ArrowRight className="mt-4 size-4 text-accent transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          <Link to="/sur-mesure" className="group rounded-2xl border border-gold/40 bg-gold/5 p-6 hover:shadow-soft transition-all">
+            <div className="font-semibold text-lg">{t("sm.makeTitle")}</div>
+            <p className="mt-2 text-sm text-muted-foreground">{t("sm.makeText")}</p>
+            <ArrowRight className="mt-4 size-4 text-accent transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      </section>
 
       <RevealSection className="container-x py-20 md:py-28">
         <SectionHeader num="03" title={t("cats.title")} sub={t("cats.sub")} />

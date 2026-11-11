@@ -11,6 +11,7 @@ import {
   type QuantityDiscountTier,
   type Totals,
 } from "@/lib/pricing";
+import { getPiece, SUR_MESURE_KEYS, THUMB_PREFIX } from "@/lib/sur-mesure";
 
 /* ------------------------------------------------------------------ */
 /* Input validation — the browser sends NO prices, totals, HTML or URL */
@@ -49,6 +50,43 @@ const ItemSchema = z
   .refine((i) => !!i.startDate === !!i.endDate, "both dates required")
   .refine((i) => !i.startDate || !i.endDate || i.endDate >= i.startDate, "endDate before startDate");
 
+const CustomItemSchema = z
+  .object({
+    kind: z.literal("custom"),
+    line_id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),
+    piece: z.enum(SUR_MESURE_KEYS),
+    quantity: z.number().int().min(1).max(50),
+    reference: z.string().trim().min(1).max(120),
+    configuration: z
+      .record(z.string(), z.unknown())
+      .refine((v) => JSON.stringify(v).length <= 20000, "configuration too large"),
+    recap: z.string().max(5000).default(""),
+    alerts: z.array(z.string().max(400)).max(12).default([]),
+    weight_kg: z.number().min(0).max(5000).nullable().optional(),
+    thumbnail: z.string().max(160000).nullable().optional(),
+  })
+  .strict();
+type CustomItem = z.infer<typeof CustomItemSchema>;
+type RentalItem = z.infer<typeof ItemSchema>;
+const isCustomItem = (i: CustomItem | RentalItem): i is CustomItem => (i as CustomItem).kind === "custom";
+
+const MAX_THUMB_BYTES = 120 * 1024;
+/** Decodes a JPEG data URL; returns bytes only if it is a real JPEG under the size cap. */
+function decodeThumbnail(dataUrl: string): Uint8Array | null {
+  if (!dataUrl.startsWith(THUMB_PREFIX)) return null;
+  let bin: string;
+  try {
+    bin = atob(dataUrl.slice(THUMB_PREFIX.length));
+  } catch {
+    return null;
+  }
+  if (bin.length === 0 || bin.length >= MAX_THUMB_BYTES) return null;
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return null;
+  return bytes;
+}
+
 const PayloadSchema = z
   .object({
     customer_name: z.string().trim().min(1).max(200),
@@ -63,7 +101,10 @@ const PayloadSchema = z
     lang: z.enum(["fr", "en"]),
     website: z.string().max(500).optional().nullable(),
     turnstile_token: z.string().max(4096).optional().nullable(),
-    items: z.array(ItemSchema).min(1).max(50),
+    items: z.array(z.union([CustomItemSchema, ItemSchema])).min(1).max(50),
+    custom_delivery_date: dateStr.optional().nullable(),
+    custom_after_event: z.enum(["keep", "pickup", "discuss"]).optional().nullable(),
+    wants_samples: z.boolean().optional(),
   })
   .strict();
 
@@ -140,6 +181,62 @@ interface StoredItem {
   configurator_recap_html: null;
   logo_url: string | null;
   logo_filename: string | null;
+}
+
+interface StoredCustom {
+  kind: "custom";
+  line_id: string;
+  productId: null;
+  slug: string;
+  name_fr: string;
+  name_en: string;
+  quantity: number;
+  custom_ref: string;
+  custom_config_id: string;
+  configurator_recap: string;
+  custom_alerts: string[];
+  custom_weight_kg: number | null;
+  line_net: 0;
+  line_gross: 0;
+  line_discount: 0;
+  line_deposit: 0;
+  price_day: 0;
+  days: 1;
+}
+
+const AFTER_EVENT_FR: Record<string, string> = {
+  keep: "Le client garde la pièce",
+  pickup: "Reprise par Setup Paris",
+  discuss: "À discuter",
+};
+
+function customBlock(p: Payload, customs: StoredCustom[]) {
+  if (!customs.length) return "";
+  const rows = customs
+    .map(
+      (c) => `
+      <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin:8px 0;">
+        <div style="font-weight:600;">${escapeHtml(c.name_fr)} × ${c.quantity}</div>
+        <div style="font-size:12px;color:#666;">Référence : ${escapeHtml(c.custom_ref)}${c.custom_weight_kg != null ? ` — Poids estimé : ${escapeHtml(String(c.custom_weight_kg))} kg` : ""}</div>
+        ${c.configurator_recap ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(c.configurator_recap)}</pre>` : ""}
+        ${c.custom_alerts.length ? `<div style="margin-top:8px;font-size:12px;"><strong>Points à vérifier par le bureau d'études :</strong><ul style="margin:4px 0 0 18px;padding:0;">${c.custom_alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>` : ""}
+      </div>`,
+    )
+    .join("");
+  return `
+    <h2 style="font-size:16px;margin:24px 0 8px;">Fabrication sur mesure</h2>
+    ${rows}
+    <div style="font-size:13px;line-height:1.7;margin-top:8px;">
+      ${p.custom_delivery_date ? `Date de livraison souhaitée : <strong>${escapeHtml(fmtDate(p.custom_delivery_date))}</strong><br/>` : ""}
+      ${p.custom_after_event ? `Après l'événement : <strong>${escapeHtml(AFTER_EVENT_FR[p.custom_after_event] ?? p.custom_after_event)}</strong><br/>` : ""}
+      Échantillons / nuancier demandés : <strong>${p.wants_samples ? "Oui" : "Non"}</strong>
+    </div>
+    <p style="font-size:13px;color:#a07c00;font-weight:600;">Prix et délai de fabrication confirmés sous 48 h ouvrées.</p>`;
+}
+
+function rentalBlock(items: StoredItem[], t: Totals) {
+  if (!items.length) return `<p style="font-size:14px;color:#555;">Votre demande sera chiffrée par notre équipe.</p>`;
+  return `<h2 style="font-size:16px;margin:24px 0 8px;">Location</h2>${itemsTable(items)}${totalsBlock(t)}`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -233,7 +330,7 @@ function totalsBlock(t: Totals) {
     </table>`;
 }
 
-function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals) {
+function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:20px;margin:0 0 16px;">Nouvelle demande de devis ${escapeHtml(number)}</h1>
@@ -247,14 +344,13 @@ function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals) 
         ${p.pickup_time ? `Créneau reprise : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
       </div>
       ${p.message ? `<div style="margin-top:16px;padding:12px;background:#fffbe6;border-left:3px solid #f0c000;font-size:14px;white-space:pre-wrap;">${escapeHtml(p.message)}</div>` : ""}
-      <h2 style="font-size:16px;margin:24px 0 8px;">Produits</h2>
-      ${itemsTable(items)}
-      ${totalsBlock(t)}
+      ${rentalBlock(items, t)}
+      ${customBlock(p, customs)}
       <p style="margin-top:24px;font-size:12px;color:#999;">Connectez-vous à l'admin pour répondre à cette demande.</p>
     </div>`;
 }
 
-function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals) {
+function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:22px;margin:0 0 8px;">Merci ${escapeHtml(p.customer_name)} !</h1>
@@ -271,8 +367,8 @@ function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals)
         ${p.pickup_time ? `Créneau reprise souhaité : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
       </div>` : ""}
       <h2 style="font-size:16px;margin:24px 0 8px;">Récapitulatif de votre demande ${escapeHtml(number)}</h2>
-      ${itemsTable(items)}
-      ${totalsBlock(t)}
+      ${rentalBlock(items, t)}
+      ${customBlock(p, customs)}
       <p style="margin-top:24px;font-size:13px;color:#666;">
         Cette estimation est indicative. Le devis final dépendra des disponibilités et de la logistique.
       </p>
@@ -327,6 +423,20 @@ export const Route = createFileRoute("/api/quotes/submit")({
             return json({ error: "invalid_payload", fields: parsed.error.issues.map((i) => i.path.join(".")) }, 400);
           }
           const p = parsed.data;
+          const rentalItems = p.items.filter((i): i is RentalItem => !isCustomItem(i));
+          const customItems = p.items.filter(isCustomItem);
+          const thumbs = new Map<string, Uint8Array>();
+          const badThumbs: string[] = [];
+          for (const c of customItems) {
+            if (!c.thumbnail) continue;
+            const bytes = decodeThumbnail(c.thumbnail);
+            if (bytes) thumbs.set(c.line_id, bytes);
+            else badThumbs.push(c.line_id);
+          }
+          if (badThumbs.length) return json({ error: "invalid_thumbnail", lines: badThumbs }, 400);
+          if (new Set(customItems.map((c) => c.line_id)).size !== customItems.length) {
+            return json({ error: "invalid_payload", fields: ["items.line_id"] }, 400);
+          }
 
           // 2. Honeypot
           if (p.website && p.website.trim() !== "") return json({ ok: true });
@@ -361,18 +471,20 @@ export const Route = createFileRoute("/api/quotes/submit")({
           }
 
           // 5. Read products, options and logistics from DB
-          const productIds = [...new Set(p.items.map((i) => i.productId))];
-          const { data: products, error: prodErr } = await supabaseAdmin
-            .from("products")
-            .select("id,slug,name_fr,name_en,price_day,deposit,quantity_discounts,duration_discounts,is_active")
-            .in("id", productIds)
-            .eq("is_active", true);
+          const productIds = [...new Set(rentalItems.map((i) => i.productId))];
+          const { data: products, error: prodErr } = productIds.length
+            ? await supabaseAdmin
+                .from("products")
+                .select("id,slug,name_fr,name_en,price_day,deposit,quantity_discounts,duration_discounts,is_active")
+                .in("id", productIds)
+                .eq("is_active", true)
+            : { data: [], error: null };
           if (prodErr) throw prodErr;
           const productMap = new Map((products ?? []).map((pr) => [pr.id, pr]));
-          const unknownLines = p.items.filter((i) => !productMap.has(i.productId)).map((i) => i.line_id);
+          const unknownLines = rentalItems.filter((i) => !productMap.has(i.productId)).map((i) => i.line_id);
           if (unknownLines.length) return json({ error: "unknown_product", lines: unknownLines }, 400);
 
-          const optionIds = [...new Set(p.items.flatMap((i) => i.option_ids))];
+          const optionIds = [...new Set(rentalItems.flatMap((i) => i.option_ids))];
           const optionMap = new Map<string, { id: string; name_fr: string; name_en: string; price: number; product_id: string; cat_fr: string; cat_en: string }>();
           if (optionIds.length) {
             const { data: opts, error: optErr } = await supabaseAdmin
@@ -397,7 +509,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
               });
             }
           }
-          const badOptionLines = p.items
+          const badOptionLines = rentalItems
             .filter((i) => i.option_ids.some((id) => optionMap.get(id)?.product_id !== i.productId))
             .map((i) => i.line_id);
           if (badOptionLines.length) return json({ error: "invalid_option", lines: badOptionLines }, 400);
@@ -412,7 +524,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
           // 6. Compute lines from DB prices
           const storageBase = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || process.env.SUPABASE_URL || "";
           const lineResults: LineResult[] = [];
-          const storedItems: StoredItem[] = p.items.map((i) => {
+          const storedItems: StoredItem[] = rentalItems.map((i) => {
             const pr = productMap.get(i.productId)!;
             const days = i.startDate && i.endDate ? daysBetweenInclusive(i.startDate, i.endDate) : i.days ?? 1;
             const opts = i.option_ids.map((id) => optionMap.get(id)!);
@@ -468,7 +580,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
 
           // 7. Stock check (sum per product + date range)
           const groups = new Map<string, { productId: string; start: string; end: string; qty: number; lines: string[] }>();
-          for (const i of p.items) {
+          for (const i of rentalItems) {
             if (!i.startDate || !i.endDate) continue;
             const k = `${i.productId}|${i.startDate}|${i.endDate}`;
             const g = groups.get(k) ?? { productId: i.productId, start: i.startDate, end: i.endDate, qty: 0, lines: [] };
@@ -486,17 +598,46 @@ export const Route = createFileRoute("/api/quotes/submit")({
             });
             if (error) throw error;
             const available = Number(data) || 0;
-            const overlapQty = p.items
+            const overlapQty = rentalItems
               .filter((i) => i.productId === g.productId && i.startDate && i.endDate && i.startDate <= g.end && i.endDate >= g.start)
               .reduce((s, i) => s + i.quantity, 0);
             if (Math.max(g.qty, overlapQty) > available) g.lines.forEach((line_id) => stockIssues.push({ line_id, available }));
           }
           if (stockIssues.length) return json({ error: "stock", lines: stockIssues }, 409);
 
-          // 8. Insert
+          // 8. Insert (custom lines carry no price and never enter totals)
+          const quoteId = crypto.randomUUID();
+          const storedCustoms: StoredCustom[] = customItems.map((c) => {
+            const piece = getPiece(c.piece)!;
+            return {
+              kind: "custom",
+              line_id: c.line_id,
+              productId: null,
+              slug: piece.k,
+              name_fr: `${piece.nom} sur mesure`,
+              name_en: `${piece.name_en} (custom-made)`,
+              quantity: c.quantity,
+              custom_ref: c.reference,
+              custom_config_id: crypto.randomUUID(),
+              configurator_recap: c.recap,
+              custom_alerts: c.alerts,
+              custom_weight_kg: c.weight_kg ?? null,
+              line_net: 0,
+              line_gross: 0,
+              line_discount: 0,
+              line_deposit: 0,
+              price_day: 0,
+              days: 1,
+            };
+          });
           const { data: inserted, error: insErr } = await supabaseAdmin
             .from("quote_requests")
             .insert({
+              id: quoteId,
+              has_custom: storedCustoms.length > 0,
+              custom_delivery_date: storedCustoms.length ? p.custom_delivery_date || null : null,
+              custom_after_event: storedCustoms.length ? p.custom_after_event || null : null,
+              wants_samples: storedCustoms.length ? !!p.wants_samples : false,
               customer_name: p.customer_name,
               company: p.company || null,
               email: p.email,
@@ -506,7 +647,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
               event_location: p.event_location || null,
               delivery_time: p.delivery_time || null,
               pickup_time: p.pickup_time || null,
-              items: storedItems as unknown as never,
+              items: [...storedItems, ...storedCustoms] as unknown as never,
               subtotal_ht: totals.subtotal_ht,
               discount_total: totals.discount_total,
               total_ht: totals.total_ht,
@@ -524,6 +665,35 @@ export const Route = createFileRoute("/api/quotes/submit")({
           if (insErr || !inserted) throw insErr ?? new Error("insert failed");
           const number = `W-${String(inserted.request_no).padStart(5, "0")}`;
 
+          // 8b. Custom configs + private previews
+          for (const [idx, c] of customItems.entries()) {
+            const sc = storedCustoms[idx]!;
+            let preview_path: string | null = null;
+            const bytes = thumbs.get(c.line_id);
+            if (bytes) {
+              const path = `${inserted.id}/${c.line_id}.jpg`;
+              const { error: upErr } = await supabaseAdmin.storage
+                .from("custom-previews")
+                .upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+              if (upErr) console.error("[quotes/submit] preview upload failed", upErr);
+              else preview_path = path;
+            }
+            const { error: ccErr } = await supabaseAdmin.from("custom_configs").insert({
+              id: sc.custom_config_id,
+              quote_id: inserted.id,
+              line_id: c.line_id,
+              ref: c.reference,
+              piece: c.piece,
+              config: c.configuration as never,
+              quantity: c.quantity,
+              weight_kg: c.weight_kg ?? null,
+              alerts: c.alerts as never,
+              recap: c.recap || null,
+              preview_path,
+            });
+            if (ccErr) console.error("[quotes/submit] custom_configs insert failed", ccErr);
+          }
+
           // 9. Emails (awaited, failures recorded but never fatal)
           const notifyTo = (process.env.QUOTE_NOTIFY_TO || DEFAULT_ADMIN_EMAIL)
             .split(",")
@@ -532,14 +702,14 @@ export const Route = createFileRoute("/api/quotes/submit")({
           const [adminStatus, clientStatus] = await Promise.all([
             sendEmail({
               to: notifyTo,
-              subject: `Nouvelle demande de devis ${number} — ${p.customer_name}`,
-              html: adminEmail(p, number, storedItems, totals),
+              subject: `${storedCustoms.length ? "[Sur mesure] " : ""}Nouvelle demande de devis ${number} — ${p.customer_name.replace(/[\r\n]+/g, " ")}`,
+              html: adminEmail(p, number, storedItems, totals, storedCustoms),
               replyTo: p.email,
             }),
             sendEmail({
               to: [p.email],
               subject: `Votre demande de devis ${number} — Setup Paris`,
-              html: clientEmail(p, number, storedItems, totals),
+              html: clientEmail(p, number, storedItems, totals, storedCustoms),
               replyTo: notifyTo[0],
             }),
           ]);

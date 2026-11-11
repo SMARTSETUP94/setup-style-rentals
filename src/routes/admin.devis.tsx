@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Eye, Save } from "lucide-react";
+import { Trash2, Eye, Save, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,37 @@ type Quote = {
   email_admin_status: string | null;
   email_client_status: string | null;
   source: string | null;
+  has_custom: boolean | null;
+  custom_delivery_date: string | null;
+  custom_after_event: string | null;
+  wants_samples: boolean | null;
+};
+
+type CustomConfigRow = {
+  id: string;
+  line_id: string | null;
+  ref: string;
+  piece: string;
+  config: unknown;
+  quantity: number;
+  weight_kg: number | null;
+  alerts: unknown;
+  recap: string | null;
+  preview_path: string | null;
+  previewUrl?: string | null;
+};
+
+type QuoteKind = "rental" | "custom" | "mixed";
+const quoteKind = (q: Quote): QuoteKind => {
+  const lines = Array.isArray(q.items) ? (q.items as any[]) : [];
+  const custom = lines.some((l) => l?.kind === "custom");
+  const rental = lines.some((l) => l?.kind !== "custom");
+  return custom && rental ? "mixed" : custom ? "custom" : "rental";
+};
+const KIND_COLORS: Record<QuoteKind, string> = {
+  rental: "bg-muted text-muted-foreground border-border",
+  custom: "bg-gold/15 text-foreground border-gold/40",
+  mixed: "bg-accent/10 text-accent border-accent/30",
 };
 
 const quoteNumber = (q: Pick<Quote, "request_no">) =>
@@ -95,8 +126,11 @@ function AdminQuotesPage() {
   const [savingLogistics, setSavingLogistics] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [kindFilter, setKindFilter] = useState<string>("all");
+  const [customRows, setCustomRows] = useState<CustomConfigRow[]>([]);
   const visible = quotes.filter((q) => {
     if (statusFilter !== "all" && q.status !== statusFilter) return false;
+    if (kindFilter !== "all" && quoteKind(q) !== kindFilter) return false;
     const needle = search.trim().toLowerCase();
     if (!needle) return true;
     return [q.customer_name, q.company, q.email, quoteNumber(q), q.request_no != null ? String(q.request_no) : ""]
@@ -105,6 +139,25 @@ function AdminQuotesPage() {
 
   const openDetail = (q: Quote) => {
     setSelected(q);
+    setCustomRows([]);
+    if (quoteKind(q) !== "rental") {
+      void (async () => {
+        const { data, error } = await supabase
+          .from("custom_configs")
+          .select("id,line_id,ref,piece,config,quantity,weight_kg,alerts,recap,preview_path")
+          .eq("quote_id", q.id)
+          .order("created_at");
+        if (error) return toast.error(error.message);
+        const rows: CustomConfigRow[] = await Promise.all(
+          ((data ?? []) as CustomConfigRow[]).map(async (r) => {
+            if (!r.preview_path) return r;
+            const { data: signed } = await supabase.storage.from("custom-previews").createSignedUrl(r.preview_path, 600);
+            return { ...r, previewUrl: signed?.signedUrl ?? null };
+          }),
+        );
+        setCustomRows(rows);
+      })();
+    }
     setLogistics({
       delivery_fee: Number(q.delivery_fee || 0),
       setup_fee: Number(q.setup_fee || 0),
@@ -229,6 +282,17 @@ function AdminQuotesPage() {
             <option key={s} value={s}>{statusLabel(s)}</option>
           ))}
         </select>
+        <select
+          aria-label={t("quotes.filter.allKinds")}
+          value={kindFilter}
+          onChange={(e) => setKindFilter(e.target.value)}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+        >
+          <option value="all">{t("quotes.filter.allKinds")}</option>
+          {(["rental", "custom", "mixed"] as const).map((k) => (
+            <option key={k} value={k}>{t(`quotes.kind.${k}`)}</option>
+          ))}
+        </select>
       </div>
 
       <ScrollableTable minWidth={1000}>
@@ -257,6 +321,9 @@ function AdminQuotesPage() {
                   <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
                     {quoteNumber(q)}
                     {q.source && <span className="block text-[10px] text-muted-foreground">{q.source}</span>}
+                    <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-sans font-medium ${KIND_COLORS[quoteKind(q)]}`}>
+                      {t(`quotes.kind.${quoteKind(q)}`)}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(q.created_at).toLocaleDateString(dateLocale)}
@@ -350,7 +417,7 @@ function AdminQuotesPage() {
                 <div>
                   <p className="text-xs uppercase text-muted-foreground mb-2">{t("quotes.detail.items")}</p>
                   <div className="rounded-lg border border-border divide-y divide-border">
-                    {(Array.isArray(selected.items) ? (selected.items as any[]) : []).map((it, i) => {
+                    {(Array.isArray(selected.items) ? (selected.items as any[]) : []).filter((it) => it?.kind !== "custom").map((it, i) => {
                       const opts: any[] = Array.isArray(it.options) ? it.options : Array.isArray(it.selected_options) ? it.selected_options : [];
                       return (
                       <div key={it.line_id ?? i} className="px-3 py-2 text-sm space-y-1">
@@ -413,6 +480,62 @@ function AdminQuotesPage() {
                     })}
                   </div>
                 </div>
+                {quoteKind(selected) !== "rental" && (
+                  <div className="rounded-lg border border-gold/40 bg-gold/5 p-4 space-y-3">
+                    <p className="text-sm font-semibold">{t("quotes.custom.title")}</p>
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <Field label={t("quotes.custom.deliveryDate")} value={selected.custom_delivery_date ? new Date(selected.custom_delivery_date).toLocaleDateString(dateLocale) : "—"} />
+                      <Field label={t("quotes.custom.afterEvent")} value={selected.custom_after_event ? t(`quotes.custom.after.${selected.custom_after_event}`) : "—"} />
+                      <Field label={t("quotes.custom.samples")} value={selected.wants_samples ? t("common.yes") : t("common.no")} />
+                    </div>
+                    {(() => {
+                      const lines = (Array.isArray(selected.items) ? (selected.items as any[]) : []).filter((it) => it?.kind === "custom");
+                      return lines.map((it, i) => {
+                        const row = customRows.find((r) => r.id === it.custom_config_id || (r.line_id && r.line_id === it.line_id));
+                        const alerts: string[] = Array.isArray(row?.alerts) ? (row!.alerts as string[]) : Array.isArray(it.custom_alerts) ? it.custom_alerts : [];
+                        const recap: string = row?.recap ?? it.configurator_recap ?? "";
+                        return (
+                          <div key={it.line_id ?? i} className="rounded-md border border-border bg-background p-3 text-sm flex gap-3">
+                            {row?.previewUrl ? (
+                              <img src={row.previewUrl} alt={String(it.name_fr ?? "")} className="size-24 rounded object-cover shrink-0 border border-border" />
+                            ) : null}
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="font-medium">{String((lang === "en" ? it.name_en : it.name_fr) ?? it.slug)}</div>
+                              <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
+                                <span>{t("quotes.custom.ref")} : <span className="font-mono">{String(it.custom_ref ?? row?.ref ?? "—")}</span></span>
+                                <span>{t("quotes.custom.qty")} : {it.quantity}</span>
+                                <span>{t("quotes.custom.weight")} : {it.custom_weight_kg != null ? `${it.custom_weight_kg} kg` : "—"}</span>
+                              </div>
+                              {recap && <pre className="whitespace-pre-wrap break-words font-sans text-xs bg-muted/40 rounded p-2">{recap}</pre>}
+                              {alerts.length > 0 && (
+                                <div className="text-xs">
+                                  <div className="text-muted-foreground">{t("quotes.custom.alerts")} :</div>
+                                  <ul className="pl-4 list-disc">{alerts.map((a, j) => <li key={j}>{String(a)}</li>)}</ul>
+                                </div>
+                              )}
+                              {row && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(JSON.stringify(row.config, null, 2));
+                                      toast.success(t("quotes.custom.copied"));
+                                    } catch (e) {
+                                      toast.error(String(e));
+                                    }
+                                  }}
+                                >
+                                  <Copy className="size-3.5" /> {t("quotes.custom.copy")}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
                 <div className="rounded-lg border border-border p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">{t("quotes.logistics.title")}</p>

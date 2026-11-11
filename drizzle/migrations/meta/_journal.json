@@ -15,6 +15,13 @@
       "when": 1794395941280,
       "tag": "0001_s1_fin_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794396271789,
+      "tag": "0002_s2_sur_mesure",
+      "breakpoints": true
     }
   ]
 }

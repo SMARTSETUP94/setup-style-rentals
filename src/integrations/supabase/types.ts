@@ -104,6 +104,59 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_configs: {
+        Row: {
+          alerts: Json
+          config: Json
+          created_at: string | null
+          id: string
+          line_id: string | null
+          piece: string
+          preview_path: string | null
+          quantity: number
+          quote_id: string | null
+          recap: string | null
+          ref: string
+          weight_kg: number | null
+        }
+        Insert: {
+          alerts?: Json
+          config: Json
+          created_at?: string | null
+          id?: string
+          line_id?: string | null
+          piece: string
+          preview_path?: string | null
+          quantity: number
+          quote_id?: string | null
+          recap?: string | null
+          ref: string
+          weight_kg?: number | null
+        }
+        Update: {
+          alerts?: Json
+          config?: Json
+          created_at?: string | null
+          id?: string
+          line_id?: string | null
+          piece?: string
+          preview_path?: string | null
+          quantity?: number
+          quote_id?: string | null
+          recap?: string | null
+          ref?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_configs_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_option_categories: {
         Row: {
           created_at: string
@@ -279,6 +332,8 @@ export type Database = {
         Row: {
           company: string | null
           created_at: string
+          custom_after_event: string | null
+          custom_delivery_date: string | null
           customer_name: string
           delivery_fee: number
           delivery_time: string | null
@@ -288,6 +343,7 @@ export type Database = {
           email_client_status: string | null
           event_date: string | null
           event_location: string | null
+          has_custom: boolean
           id: string
           items: Json
           logistics_notes: string | null
@@ -305,10 +361,13 @@ export type Database = {
           total_ttc: number
           updated_at: string
           vat: number
+          wants_samples: boolean
         }
         Insert: {
           company?: string | null
           created_at?: string
+          custom_after_event?: string | null
+          custom_delivery_date?: string | null
           customer_name: string
           delivery_fee?: number
           delivery_time?: string | null
@@ -318,6 +377,7 @@ export type Database = {
           email_client_status?: string | null
           event_date?: string | null
           event_location?: string | null
+          has_custom?: boolean
           id?: string
           items?: Json
           logistics_notes?: string | null
@@ -335,10 +395,13 @@ export type Database = {
           total_ttc?: number
           updated_at?: string
           vat?: number
+          wants_samples?: boolean
         }
         Update: {
           company?: string | null
           created_at?: string
+          custom_after_event?: string | null
+          custom_delivery_date?: string | null
           customer_name?: string
           delivery_fee?: number
           delivery_time?: string | null
@@ -348,6 +411,7 @@ export type Database = {
           email_client_status?: string | null
           event_date?: string | null
           event_location?: string | null
+          has_custom?: boolean
           id?: string
           items?: Json
           logistics_notes?: string | null
@@ -365,6 +429,7 @@ export type Database = {
           total_ttc?: number
           updated_at?: string
           vat?: number
+          wants_samples?: boolean
         }
         Relationships: []
       }

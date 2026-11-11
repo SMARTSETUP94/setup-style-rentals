@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/lib/seo";
+import { splitNonChiffre, stripRecapHeader } from "@/lib/chiffrage-split";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
@@ -218,19 +219,24 @@ type InternalEstimate =
 
 const eur = (n: number) => `${n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 
+const listBlock = (title: string, items: string[]) =>
+  items.length ? `<div style="margin-top:6px;">${title} :<ul style="margin:2px 0 0 18px;padding:0;">${items.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul></div>` : "";
+
 /** INTERNAL ONLY — rendered in the admin mail, never in the client mail or any response. */
 function estimateBlock(e: InternalEstimate | undefined) {
   if (!e) return "";
   if (!e.ok || e.incomplet) {
     return `<div style="margin-top:8px;font-size:12px;color:#7a5b00;background:#f4f4f5;padding:8px;border-radius:6px;">Chiffrage automatique partiel ou indisponible</div>`;
   }
+  const split = splitNonChiffre(e.non_chiffre);
   const rows = e.lignes
     .map((l) => `<tr><td style="padding:2px 6px 2px 0;">${escapeHtml(l.poste)}</td><td style="padding:2px 6px;color:#666;">${escapeHtml(l.detail)}</td><td style="padding:2px 0;text-align:right;white-space:nowrap;">${eur(l.montant)}</td></tr>`)
     .join("");
   return `<div style="margin-top:8px;font-size:12px;background:#f4f4f5;padding:8px;border-radius:6px;">
     <strong>Estimation interne automatique : ${eur(e.unite_ht)} HT l'unité, ${eur(e.total_ht)} HT au total — temps non validés par l'atelier, hors postes non chiffrés</strong>
     <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">${rows}</table>
-    ${e.non_chiffre.length ? `<div style="margin-top:6px;">Postes non chiffrés :<ul style="margin:2px 0 0 18px;padding:0;">${e.non_chiffre.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul></div>` : ""}
+    ${listBlock("Postes non chiffrés", split.postes)}
+    ${listBlock("À noter", split.notes)}
   </div>`;
 }
 
@@ -242,10 +248,11 @@ function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string
       <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin:8px 0;">
         <div style="font-weight:600;">${escapeHtml(c.name_fr)} × ${c.quantity}</div>
         <div style="font-size:12px;color:#666;">Référence : ${escapeHtml(c.custom_ref)}${c.custom_weight_kg != null ? ` — Poids estimé : ${escapeHtml(String(c.custom_weight_kg))} kg` : ""}</div>
-        ${c.configurator_recap ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(c.configurator_recap)}</pre>` : ""}
+        ${stripRecapHeader(c.configurator_recap || "") ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(stripRecapHeader(c.configurator_recap))}</pre>` : ""}
         ${c.resume_url ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(c.resume_url)}" style="color:#1d4ed8;">Reprendre / partager cette configuration</a></div>` : ""}
         ${c.custom_alerts.length ? `<div style="margin-top:8px;font-size:12px;"><strong>Points à vérifier par le bureau d'études :</strong><ul style="margin:4px 0 0 18px;padding:0;">${c.custom_alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>` : ""}
         ${estimates ? estimateBlock(estimates.get(c.custom_config_id)) : ""}
+        ${estimates ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(`${SITE_URL}/admin/chiffrage?config_id=${encodeURIComponent(c.custom_config_id)}`)}" style="color:#1d4ed8;">Ouvrir dans le chiffrage</a></div>` : ""}
       </div>`,
     )
     .join("");
@@ -356,14 +363,16 @@ function totalsBlock(t: Totals) {
     </table>`;
 }
 
-function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[], estimates: Map<string, InternalEstimate>) {
+export function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[], estimates: Map<string, InternalEstimate>) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
-      <h1 style="font-size:20px;margin:0 0 16px;">Nouvelle demande de devis ${escapeHtml(number)}</h1>
+      <h1 style="font-size:20px;margin:0 0 16px;">Nouvelle demande de devis ${escapeHtml(number)} <span style="font-size:13px;font-weight:600;background:#eef2ff;color:#1d4ed8;padding:2px 8px;border-radius:999px;vertical-align:middle;">${items.length && customs.length ? "Mixte" : customs.length ? "Sur mesure" : "Location"}</span></h1>
       <div style="background:#f9f9f9;padding:16px;border-radius:8px;font-size:14px;line-height:1.6;">
         <strong>${escapeHtml(p.customer_name)}</strong>${p.company ? ` — ${escapeHtml(p.company)}` : ""}<br/>
         Email : <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a><br/>
-        ${p.phone ? `Téléphone : ${escapeHtml(p.phone)}<br/>` : ""}
+        ${p.phone ? `Téléphone : <a href="tel:${escapeHtml(p.phone.replace(/[^\d+]/g, ""))}">${escapeHtml(p.phone)}</a><br/>` : ""}
+        ${customs.length && p.custom_delivery_date ? `Livraison souhaitée : <strong>${escapeHtml(fmtDate(p.custom_delivery_date))}</strong><br/>` : ""}
+        ${customs.length && p.custom_after_event ? `Après l'événement : <strong>${escapeHtml(AFTER_EVENT_FR[p.custom_after_event] ?? p.custom_after_event)}</strong><br/>` : ""}
         ${p.event_date ? `Date événement : ${escapeHtml(fmtDate(p.event_date))}<br/>` : ""}
         ${p.event_location ? `Lieu : ${escapeHtml(p.event_location)}<br/>` : ""}
         ${p.delivery_time ? `Créneau livraison : <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
@@ -372,11 +381,11 @@ function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, 
       ${p.message ? `<div style="margin-top:16px;padding:12px;background:#fffbe6;border-left:3px solid #f0c000;font-size:14px;white-space:pre-wrap;">${escapeHtml(p.message)}</div>` : ""}
       ${rentalBlock(items, t)}
       ${customBlock(p, customs, estimates)}
-      <p style="margin-top:24px;font-size:12px;color:#999;">Connectez-vous à l'admin pour répondre à cette demande.</p>
+      <p style="margin-top:24px;font-size:12px;color:#999;"><a href="${SITE_URL}/admin/devis" style="color:#1d4ed8;">Connectez-vous à l'admin pour répondre à cette demande.</a></p>
     </div>`;
 }
 
-function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
+export function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:22px;margin:0 0 8px;">Merci ${escapeHtml(p.customer_name)} !</h1>

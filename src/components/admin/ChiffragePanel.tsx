@@ -1,3 +1,4 @@
+import { splitNonChiffre } from "@/lib/chiffrage-split";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChevronDown, Copy, Download, RefreshCw, RotateCcw, Save } from "lucide-react";
@@ -203,9 +204,13 @@ export function ChiffragePanel({
           {ok.alertes.length > 0 && (
             <div className="text-xs"><div className="font-medium">À vérifier par le bureau d'études</div><ul className="list-disc pl-5">{ok.alertes.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
           )}
-          {ok.non_chiffre.length > 0 && (
-            <div className="text-xs"><div className="font-medium">Non chiffré</div><ul className="list-disc pl-5">{ok.non_chiffre.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
-          )}
+          {(() => {
+            const sp = splitNonChiffre(ok.non_chiffre);
+            return (<>
+              {sp.postes.length > 0 && (<div className="text-xs"><div className="font-medium">Postes non chiffrés</div><ul className="list-disc pl-5">{sp.postes.map((a, i) => <li key={i}>{a}</li>)}</ul></div>)}
+              {sp.notes.length > 0 && (<div className="text-xs"><div className="font-medium">À noter</div><ul className="list-disc pl-5">{sp.notes.map((a, i) => <li key={i}>{a}</li>)}</ul></div>)}
+            </>);
+          })()}
 
           <div>
             <button type="button" className="flex items-center gap-1 text-xs font-medium" onClick={() => setShowHyp((v) => !v)}>

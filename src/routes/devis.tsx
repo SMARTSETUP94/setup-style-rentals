@@ -11,6 +11,9 @@ import { computeTotals, logisticsFromSettings, type Totals } from "@/lib/pricing
 import { formatPrice } from "@/lib/format";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { ProductImage } from "@/components/site/ProductImage";
+import { configLink } from "@/lib/sur-mesure";
+import { SITE_URL } from "@/lib/seo";
+import { trackSiteEvent } from "@/lib/track";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -206,6 +209,7 @@ function QuotePage() {
       return;
     }
 
+    trackSiteEvent("quote_submit");
     setConfirmation({
       number: typeof body.number === "string" ? body.number : "",
       emailClientOk: !!body.email?.client,
@@ -227,6 +231,7 @@ function QuotePage() {
           net: 0,
           custom: true,
           ref: i.customRef,
+          resumeUrl: configLink(i.customPiece ?? i.slug, i.customConfig, SITE_URL) ?? undefined,
         })),
       ],
       hasRental,
@@ -541,6 +546,23 @@ function QuotePage() {
                             >
                               <Pencil className="size-3" /> {t("sm.edit")}
                             </Link>
+                            {item.customConfig && configLink(item.customPiece ?? item.slug, item.customConfig) && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin)!;
+                                  try {
+                                    await navigator.clipboard.writeText(url);
+                                    toast.success(lang === "fr" ? "Lien copié" : "Link copied");
+                                  } catch {
+                                    window.prompt("", url);
+                                  }
+                                }}
+                                className="mt-1 ml-3 inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                              >
+                                <Link2 className="size-3" /> {lang === "fr" ? "Copier le lien de cette configuration" : "Copy link to this configuration"}
+                              </button>
+                            )}
                           </div>
                           <button onClick={() => remove(item.lineId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
                             <Trash2 className="size-4" />
@@ -639,6 +661,10 @@ function QuotePage() {
                 >
                   {submitting ? "…" : t("cart.submit")}
                 </button>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "fr" ? "Les informations saisies servent uniquement à traiter votre demande. " : "The information you enter is used solely to process your request. "}
+                  <Link to="/mentions-legales" className="underline hover:text-foreground">{lang === "fr" ? "Mentions légales" : "Legal notice"}</Link>
+                </p>
               </form>
             </div>
 
@@ -830,6 +856,11 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
                   ? `${format(parseISO(l.startDate), "PPP", { locale: dl })} → ${format(parseISO(l.endDate), "PPP", { locale: dl })}`
                   : `${l.days} ${t("cart.col.days")}`}
               </div>
+              {l.resumeUrl && (
+                <a href={l.resumeUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-accent underline break-all">
+                  {lang === "fr" ? "Reprendre / partager cette configuration" : "Resume / share this configuration"}
+                </a>
+              )}
             </div>
             <div className="font-semibold whitespace-nowrap">{l.custom ? t("sm.priceOnQuote") : formatPrice(l.net, lang)}</div>
           </div>

@@ -353,7 +353,7 @@ function AdminCalendarPage() {
   // List view: flatten quotes across the visible month
   const listDays = useMemo(() => {
     if (view !== "list") return [];
-    const out: { day: Date; key: string; quotes: CalendarQuote[] }[] = [];
+    const out: { day: Date; key: string; quotes: DayEntry[] }[] = [];
     let d = new Date(window.start);
     while (d <= window.end) {
       const k = ymd(d);

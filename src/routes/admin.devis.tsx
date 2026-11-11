@@ -427,7 +427,7 @@ function AdminQuotesPage() {
       </ScrollableTable>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+        <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 [&>*]:min-w-0">
           {selected && (
             <>
               <DialogHeader>
@@ -436,8 +436,8 @@ function AdminQuotesPage() {
                   {t("quotes.detail.received")} {new Date(selected.created_at).toLocaleString(dateLocale)}
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="space-y-4 mt-2 min-w-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm [&>*]:min-w-0 [&>*]:break-words">
                   <Field label={t("auth.email")} value={selected.email} />
                   <Field label={t("quotes.detail.phone")} value={selected.phone || "—"} />
                   <Field label={t("quotes.detail.company")} value={selected.company || "—"} />

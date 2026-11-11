@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/seo";
+import { configLink } from "@/lib/sur-mesure";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -513,6 +515,17 @@ function AdminQuotesPage() {
                                   <ul className="pl-4 list-disc">{alerts.map((a, j) => <li key={j}>{String(a)}</li>)}</ul>
                                 </div>
                               )}
+                              {(() => {
+                                const url = (typeof it.resume_url === "string" && it.resume_url.startsWith(SITE_URL) ? it.resume_url : null)
+                                  ?? (row ? configLink(row.piece, row.config as Record<string, unknown>, SITE_URL) : null);
+                                return url ? (
+                                  <Button size="sm" variant="outline" asChild>
+                                    <a href={url} target="_blank" rel="noopener noreferrer">
+                                      <ExternalLink className="size-3.5" /> {lang === "fr" ? "Ouvrir la configuration" : "Open configuration"}
+                                    </a>
+                                  </Button>
+                                ) : null;
+                              })()}
                               {row && (
                                 <Button
                                   size="sm"

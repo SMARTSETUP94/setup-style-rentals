@@ -12,7 +12,7 @@ import {
   type QuantityDiscountTier,
   type Totals,
 } from "@/lib/pricing";
-import { getPiece, SUR_MESURE_KEYS, THUMB_PREFIX, configLink } from "@/lib/sur-mesure";
+import { getPiece, THUMB_PREFIX, configLink } from "@/lib/sur-mesure";
 
 /* ------------------------------------------------------------------ */
 /* Input validation — the browser sends NO prices, totals, HTML or URL */

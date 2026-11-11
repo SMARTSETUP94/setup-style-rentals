@@ -411,7 +411,7 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openDetail(q)}>
+                      <Button size="icon" variant="ghost" onClick={() => openDetail(q)} aria-label={`Voir la demande ${quoteNumber(q)}`}>
                         <Eye className="size-4" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => remove(q.id)}>

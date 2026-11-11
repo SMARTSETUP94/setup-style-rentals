@@ -559,21 +559,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tmp_transfer: {
-        Row: {
-          data: string
-          part: number
-        }
-        Insert: {
-          data: string
-          part: number
-        }
-        Update: {
-          data?: string
-          part?: number
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string

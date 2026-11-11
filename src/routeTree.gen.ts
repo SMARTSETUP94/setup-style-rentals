@@ -29,6 +29,7 @@ import { Route as AdminClientsRouteImport } from './routes/admin.clients'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
+import { Route as ApiQuotesSubmitRouteImport } from './routes/api.quotes.submit'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -130,6 +131,11 @@ const AdminAuthRoute = AdminAuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiQuotesSubmitRoute = ApiQuotesSubmitRouteImport.update({
+  id: '/api/quotes/submit',
+  path: '/api/quotes/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin/'
+    | '/api/quotes/submit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin'
+    | '/api/quotes/submit'
   id:
     | '__root__'
     | '/'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin/'
+    | '/api/quotes/submit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -277,6 +289,7 @@ export interface RootRouteChildren {
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   CategorieSlugRoute: typeof CategorieSlugRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
+  ApiQuotesSubmitRoute: typeof ApiQuotesSubmitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuthRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/quotes/submit': {
+      id: '/api/quotes/submit'
+      path: '/api/quotes/submit'
+      fullPath: '/api/quotes/submit'
+      preLoaderRoute: typeof ApiQuotesSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -462,6 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   CategorieSlugRoute: CategorieSlugRoute,
   ProduitSlugRoute: ProduitSlugRoute,
+  ApiQuotesSubmitRoute: ApiQuotesSubmitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

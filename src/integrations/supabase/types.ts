@@ -282,7 +282,10 @@ export type Database = {
           customer_name: string
           delivery_fee: number
           delivery_time: string | null
+          discount_total: number
           email: string
+          email_admin_status: string | null
+          email_client_status: string | null
           event_date: string | null
           event_location: string | null
           id: string
@@ -292,7 +295,9 @@ export type Database = {
           phone: string | null
           pickup_fee: number
           pickup_time: string | null
+          request_no: number
           setup_fee: number
+          source: string
           status: string
           subtotal_ht: number
           total_deposit: number
@@ -307,7 +312,10 @@ export type Database = {
           customer_name: string
           delivery_fee?: number
           delivery_time?: string | null
+          discount_total?: number
           email: string
+          email_admin_status?: string | null
+          email_client_status?: string | null
           event_date?: string | null
           event_location?: string | null
           id?: string
@@ -317,7 +325,9 @@ export type Database = {
           phone?: string | null
           pickup_fee?: number
           pickup_time?: string | null
+          request_no?: number
           setup_fee?: number
+          source?: string
           status?: string
           subtotal_ht?: number
           total_deposit?: number
@@ -332,7 +342,10 @@ export type Database = {
           customer_name?: string
           delivery_fee?: number
           delivery_time?: string | null
+          discount_total?: number
           email?: string
+          email_admin_status?: string | null
+          email_client_status?: string | null
           event_date?: string | null
           event_location?: string | null
           id?: string
@@ -342,7 +355,9 @@ export type Database = {
           phone?: string | null
           pickup_fee?: number
           pickup_time?: string | null
+          request_no?: number
           setup_fee?: number
+          source?: string
           status?: string
           subtotal_ht?: number
           total_deposit?: number
@@ -404,6 +419,24 @@ export type Database = {
           updated_at?: string
           value_en?: string | null
           value_fr?: string | null
+        }
+        Relationships: []
+      }
+      submit_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          ip_hash?: string
         }
         Relationships: []
       }

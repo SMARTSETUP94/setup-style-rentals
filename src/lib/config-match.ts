@@ -35,7 +35,10 @@ export function matchConfigToOptions(
     const matched = new Set<string>();
     for (const p of catPairs) {
       const ln = normLabel(p.label);
-      for (const o of opts) if (normLabel(o.name_fr || "") === ln || normLabel(o.name_en || "") === ln) matched.add(o.id);
+      for (const o of opts) {
+        const names = [o.name_fr, o.name_en].filter(Boolean).flatMap((n) => [normLabel(n), normLabel(n.replace(/\s*\([^)]*\)\s*$/, ""))]);
+        if (names.includes(ln)) matched.add(o.id);
+      }
     }
     if (matched.size === 1) out[cat.id] = [...matched][0];
   }

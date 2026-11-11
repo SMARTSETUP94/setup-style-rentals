@@ -181,15 +181,20 @@ function PiecePage() {
     <div className="pt-24 md:pt-28 pb-16">
       {/* Immersive configurator */}
       <div className="fixed inset-0 z-[60] bg-background md:top-24">
-        <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)]">
+        <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)] flex flex-col">
+          <div className="shrink-0 border-b border-border bg-background px-4 py-2 pr-36 md:pr-[22rem] text-xs sm:text-sm">
+            {lines.map((l) => (
+              <div key={l} className="font-medium">{l}</div>
+            ))}
+          </div>
           <iframe
             ref={frameRef}
             src={src}
             title={`${tx.frameTitle} — ${lang === "fr" ? piece.nom : piece.name_en}`}
             sandbox="allow-scripts allow-downloads"
-            className="block w-full h-full border-0"
+            className="block w-full flex-1 min-h-0 border-0"
           />
-          <div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex items-center gap-2">
+          <div className="absolute top-[max(0.25rem,env(safe-area-inset-top))] right-4 z-10 flex items-center gap-2">
           {lastConfig && (
             <button
               type="button"

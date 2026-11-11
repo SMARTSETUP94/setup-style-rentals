@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { useCart, lineTotal, type CartItem } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
@@ -134,7 +135,7 @@ function QuotePage() {
           productId: i.productId,
           line_id: i.lineId,
           option_ids: (i.selectedOptions ?? []).map((o) => o.optionId),
-          configurator_data: i.configuratorData ?? null,
+          configurator_data: (i.configuratorData ?? null) as Json | null,
           slug: i.slug,
           name_fr: i.name_fr,
           name_en: i.name_en,
@@ -295,7 +296,6 @@ function QuotePage() {
                   // Composite key: same productId can appear multiple times with
                   // different options/dates (cart deduplicates on a composite key).
                   const optsKey = (item.selectedOptions ?? []).map((o) => o.optionId).sort().join("|");
-                  const lineKey = `${item.productId}¦${optsKey}¦${item.startDate ?? ""}¦${item.endDate ?? ""}¦${idx}`;
                   return (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
                       <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0">

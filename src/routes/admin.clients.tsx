@@ -99,11 +99,8 @@ function AdminClientsPage() {
       if (!k) continue;
       const cur = map.get(k) || { count: 0, revenue: 0, lastContact: null };
       cur.count += 1;
-      cur.revenue +=
-        Number(q.total_ttc || 0) +
-        Number(q.delivery_fee || 0) +
-        Number(q.setup_fee || 0) +
-        Number(q.pickup_fee || 0);
+      // total_ttc already includes delivery/setup/pickup fees.
+      cur.revenue += Number(q.total_ttc || 0);
       if (!cur.lastContact || q.created_at > cur.lastContact) cur.lastContact = q.created_at;
       map.set(k, cur);
     }
@@ -501,11 +498,7 @@ function AdminClientsPage() {
                         </thead>
                         <tbody>
                           {selectedHistory.map((q) => {
-                            const total =
-                              Number(q.total_ttc || 0) +
-                              Number(q.delivery_fee || 0) +
-                              Number(q.setup_fee || 0) +
-                              Number(q.pickup_fee || 0);
+                            const total = Number(q.total_ttc || 0);
                             return (
                               <tr key={q.id} className="border-t border-border">
                                 <td className="px-2 py-1.5">{fmtDate(q.created_at)}</td>

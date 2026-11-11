@@ -20,13 +20,11 @@ type Quote = {
   pickup_fee: number;
   created_at: string;
   items: any;
+  has_custom: boolean | null;
 };
 
-const finalTotal = (q: Quote) =>
-  Number(q.total_ttc) +
-  Number(q.delivery_fee || 0) +
-  Number(q.setup_fee || 0) +
-  Number(q.pickup_fee || 0);
+// total_ttc already includes delivery/setup/pickup fees.
+const finalTotal = (q: Quote) => Number(q.total_ttc) || 0;
 
 const PIPELINE_STATUSES = new Set(["pending", "contacted", "confirmed", "completed"]);
 const ENGAGED_STATUSES = new Set(["confirmed", "completed"]);
@@ -54,7 +52,7 @@ function AdminDashboardPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("quote_requests")
-        .select("id, customer_name, status, total_ttc, delivery_fee, setup_fee, pickup_fee, created_at, items")
+        .select("id, customer_name, status, total_ttc, delivery_fee, setup_fee, pickup_fee, created_at, items, has_custom")
         .order("created_at", { ascending: false });
       if (!error) setQuotes((data as Quote[]) ?? []);
       setLoading(false);
@@ -74,6 +72,8 @@ function AdminDashboardPage() {
     let curCount = 0, prevCount = 0;
     let curPipeline = 0, prevPipeline = 0;
     let curEngaged = 0, prevEngaged = 0;
+    let curPricedSum = 0, curPricedCount = 0, prevPricedSum = 0, prevPricedCount = 0;
+    let curCustom = 0;
     const productCounts = new Map<string, { name: string; qty: number }>();
 
     for (const q of quotes) {
@@ -83,6 +83,8 @@ function AdminDashboardPage() {
       const inPrev = inRange(created, prevStart, prevEnd);
       if (inCur) {
         curCount++;
+        if (total > 0) { curPricedSum += total; curPricedCount++; }
+        if (q.has_custom) curCustom++;
         if (PIPELINE_STATUSES.has(q.status)) curPipeline += total;
         if (ENGAGED_STATUSES.has(q.status)) curEngaged += total;
         const items = Array.isArray(q.items) ? q.items : [];
@@ -98,6 +100,7 @@ function AdminDashboardPage() {
       }
       if (inPrev) {
         prevCount++;
+        if (total > 0) { prevPricedSum += total; prevPricedCount++; }
         if (PIPELINE_STATUSES.has(q.status)) prevPipeline += total;
         if (ENGAGED_STATUSES.has(q.status)) prevEngaged += total;
       }
@@ -113,6 +116,9 @@ function AdminDashboardPage() {
       curPipeline, prevPipeline,
       curEngaged, prevEngaged,
       topProducts,
+      curAvg: curPricedCount ? curPricedSum / curPricedCount : 0,
+      prevAvg: prevPricedCount ? prevPricedSum / prevPricedCount : 0,
+      curCustom,
     };
   }, [quotes, lang]);
 
@@ -133,7 +139,7 @@ function AdminDashboardPage() {
 
       <ConversionBlock />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<FileText className="size-5" />}
           label={t("dash.quotesMonth")}
@@ -159,6 +165,17 @@ function AdminDashboardPage() {
           previousLabel={t("dash.vsLastMonth")}
           change={pctChange(stats.curEngaged, stats.prevEngaged)}
           previousValue={formatPrice(stats.prevEngaged)}
+        />
+        <StatCard
+          icon={<TrendingUp className="size-5" />}
+          label={lang === "fr" ? "Panier moyen TTC" : "Average basket incl. VAT"}
+          value={formatPrice(stats.curAvg)}
+          subLabel={lang === "fr"
+            ? `Demandes chiffrées uniquement · ${stats.curCustom} avec sur-mesure`
+            : `Priced requests only · ${stats.curCustom} with custom-made`}
+          previousLabel={t("dash.vsLastMonth")}
+          change={pctChange(stats.curAvg, stats.prevAvg)}
+          previousValue={formatPrice(stats.prevAvg)}
         />
       </div>
 

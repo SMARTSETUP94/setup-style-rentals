@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
@@ -11,7 +12,7 @@ import {
   type QuantityDiscountTier,
   type Totals,
 } from "@/lib/pricing";
-import { getPiece, SUR_MESURE_KEYS, THUMB_PREFIX } from "@/lib/sur-mesure";
+import { getPiece, SUR_MESURE_KEYS, THUMB_PREFIX, configLink } from "@/lib/sur-mesure";
 
 /* ------------------------------------------------------------------ */
 /* Input validation — the browser sends NO prices, totals, HTML or URL */
@@ -196,6 +197,7 @@ interface StoredCustom {
   configurator_recap: string;
   custom_alerts: string[];
   custom_weight_kg: number | null;
+  resume_url: string | null;
   line_net: 0;
   line_gross: 0;
   line_discount: 0;
@@ -219,6 +221,7 @@ function customBlock(p: Payload, customs: StoredCustom[]) {
         <div style="font-weight:600;">${escapeHtml(c.name_fr)} × ${c.quantity}</div>
         <div style="font-size:12px;color:#666;">Référence : ${escapeHtml(c.custom_ref)}${c.custom_weight_kg != null ? ` — Poids estimé : ${escapeHtml(String(c.custom_weight_kg))} kg` : ""}</div>
         ${c.configurator_recap ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(c.configurator_recap)}</pre>` : ""}
+        ${c.resume_url ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(c.resume_url)}" style="color:#1d4ed8;">Reprendre / partager cette configuration</a></div>` : ""}
         ${c.custom_alerts.length ? `<div style="margin-top:8px;font-size:12px;"><strong>Points à vérifier par le bureau d'études :</strong><ul style="margin:4px 0 0 18px;padding:0;">${c.custom_alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>` : ""}
       </div>`,
     )
@@ -622,6 +625,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
               configurator_recap: c.recap,
               custom_alerts: c.alerts,
               custom_weight_kg: c.weight_kg ?? null,
+              resume_url: configLink(piece.k, c.configuration as Record<string, unknown>, SITE_URL),
               line_net: 0,
               line_gross: 0,
               line_discount: 0,

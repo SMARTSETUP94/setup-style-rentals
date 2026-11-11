@@ -23,6 +23,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SurMesurePieceRouteImport } from './routes/sur-mesure.$piece'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
+import { Route as ApiTrackRouteImport } from './routes/api.track'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
 import { Route as ApiContactRouteImport } from './routes/api.contact'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -105,6 +106,11 @@ const CategorieSlugRoute = CategorieSlugRouteImport.update({
   path: '/categorie/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTrackRoute = ApiTrackRouteImport.update({
+  id: '/api/track',
+  path: '/api/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
   id: '/api/send-quote-emails',
   path: '/api/send-quote-emails',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
+  '/api/track': typeof ApiTrackRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/sur-mesure/$piece': typeof SurMesurePieceRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
+  '/api/track': typeof ApiTrackRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/sur-mesure/$piece': typeof SurMesurePieceRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
+  '/api/track': typeof ApiTrackRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/sur-mesure/$piece': typeof SurMesurePieceRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/api/contact'
     | '/api/send-quote-emails'
+    | '/api/track'
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/sur-mesure/$piece'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/api/contact'
     | '/api/send-quote-emails'
+    | '/api/track'
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/sur-mesure/$piece'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/api/contact'
     | '/api/send-quote-emails'
+    | '/api/track'
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/sur-mesure/$piece'
@@ -337,6 +349,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiContactRoute: typeof ApiContactRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
+  ApiTrackRoute: typeof ApiTrackRoute
   CategorieSlugRoute: typeof CategorieSlugRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
   SurMesurePieceRoute: typeof SurMesurePieceRoute
@@ -442,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/categorie/$slug'
       fullPath: '/categorie/$slug'
       preLoaderRoute: typeof CategorieSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/track': {
+      id: '/api/track'
+      path: '/api/track'
+      fullPath: '/api/track'
+      preLoaderRoute: typeof ApiTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/send-quote-emails': {
@@ -562,6 +582,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiContactRoute: ApiContactRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
+  ApiTrackRoute: ApiTrackRoute,
   CategorieSlugRoute: CategorieSlugRoute,
   ProduitSlugRoute: ProduitSlugRoute,
   SurMesurePieceRoute: SurMesurePieceRoute,

@@ -306,7 +306,7 @@ const PRESENTATION_CUES: Cue[] = [
   { start: 20, end: 26, fr: "Personnalisez les couleurs, matières et finitions en temps réel.", en: "Customize colors, materials and finishes in real time." },
   { start: 26, end: 32, fr: "Ajoutez votre logo, votre texte, vos visuels.", en: "Add your logo, your text, your artwork." },
   { start: 32, end: 38, fr: "Visualisez le rendu sous tous les angles avant de réserver.", en: "Preview the result from every angle before booking." },
-  { start: 38, end: 44, fr: "Recevez un devis instantané et une livraison à Paris et en Île-de-France.", en: "Get an instant quote with delivery in Paris and Île-de-France." },
+  { start: 38, end: 44, fr: "Demande de devis en ligne, réponse sous 24 h ouvrées — Paris et Île-de-France.", en: "Online quote request, reply within one business day — Paris & Île-de-France." },
   { start: 44, end: 51, fr: "Setup Paris — Personnalisez. Configurez. Louez.", en: "Setup Paris — Customize. Configure. Rent." },
 ];
 

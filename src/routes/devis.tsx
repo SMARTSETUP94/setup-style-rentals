@@ -18,8 +18,8 @@ import { canonicalLink, hreflangLinks } from "@/lib/seo";
 export const Route = createFileRoute("/devis")({
   head: () => ({
     meta: [
-      { title: "Mon devis — Setup Paris" },
-      { name: "description", content: "Constituez votre devis et envoyez votre demande à notre équipe commerciale." },
+      { title: "Ma demande de devis — Setup Paris" },
+      { name: "description", content: "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise sur devis — Paris et Île-de-France." },
     ],
     links: [canonicalLink("/devis"), ...hreflangLinks("/devis")],
   }),

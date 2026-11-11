@@ -7,7 +7,7 @@ type Dict = Record<string, { fr: string; en: string }>;
 const DICT: Dict = {
   "nav.home": { fr: "Accueil", en: "Home" },
   "nav.catalog": { fr: "Catalogue", en: "Catalog" },
-  "nav.quote": { fr: "Mon devis", en: "My quote" },
+  "nav.quote": { fr: "Ma demande", en: "My request" },
   "nav.admin": { fr: "Admin", en: "Admin" },
 
   "hero.eyebrow": { fr: "Setup Paris — Location événementielle", en: "Setup Paris — Event Rental" },
@@ -16,9 +16,9 @@ const DICT: Dict = {
   "hero.cta": { fr: "Découvrir le catalogue", en: "Explore the catalog" },
   "hero.cta2": { fr: "Configurateur 3D", en: "3D Configurator" },
 
-  "trust.delivery": { fr: "Livraison & reprise incluses", en: "Delivery & pickup included" },
+  "trust.delivery": { fr: "Livraison, installation et reprise sur devis — Paris et Île-de-France", en: "Delivery, setup and pickup quoted separately — Paris & Île-de-France" },
   "trust.custom": { fr: "Objets personnalisables", en: "Customizable items" },
-  "trust.quote": { fr: "Devis instantané", en: "Instant quote" },
+  "trust.quote": { fr: "Demande de devis en ligne, réponse sous 24 h ouvrées", en: "Online quote request, reply within one business day" },
   "trust.bespoke": { fr: "Sur-mesure disponible", en: "Bespoke available" },
 
   "clients.label": { fr: "Ils nous font confiance", en: "Trusted by" },
@@ -73,7 +73,7 @@ const DICT: Dict = {
   "product.back": { fr: "Retour au catalogue", en: "Back to catalog" },
   "product.notFound": { fr: "Produit introuvable", en: "Product not found" },
 
-  "cart.title": { fr: "Demande de devis", en: "Quote request" },
+  "cart.title": { fr: "Ma demande de devis", en: "My quote request" },
   "cart.empty": { fr: "Votre devis est vide.", en: "Your quote is empty." },
   "cart.continue": { fr: "Parcourir le catalogue", en: "Browse the catalog" },
   "cart.remove": { fr: "Retirer", en: "Remove" },
@@ -84,8 +84,8 @@ const DICT: Dict = {
   "cart.totalTTC": { fr: "Total TTC", en: "Total incl. tax" },
   "cart.deposits": { fr: "Cautions (remboursables)", en: "Deposits (refundable)" },
   "cart.delivery": { fr: "Livraison & Reprise", en: "Delivery & Pickup" },
-  "cart.deliveryNote": { fr: "Inclut livraison et reprise sur Paris/IDF", en: "Includes delivery and pickup in Paris/IDF" },
-  "cart.exportPdf": { fr: "Exporter en PDF", en: "Export as PDF" },
+  "cart.deliveryNote": { fr: "Livraison, installation et reprise sur devis — Paris et Île-de-France", en: "Delivery, setup and pickup quoted separately — Paris & Île-de-France" },
+  "cart.exportPdf": { fr: "Télécharger l'estimation (PDF)", en: "Download estimate (PDF)" },
   "cart.formTitle": { fr: "Vos coordonnées", en: "Your details" },
   "cart.name": { fr: "Nom complet", en: "Full name" },
   "cart.company": { fr: "Entreprise", en: "Company" },
@@ -176,7 +176,7 @@ const DICT: Dict = {
   "cart.pickup": { fr: "Reprise", en: "Pickup" },
   "cart.configRecap": { fr: "Configuration 3D", en: "3D configuration" },
   "cart.pickDates": { fr: "Choisir les dates de location", en: "Pick rental dates" },
-  "cart.quoteSimulation": { fr: "Simulation de devis", en: "Quote simulation" },
+  "cart.quoteSimulation": { fr: "Ma demande de devis", en: "My quote request" },
   "cart.col.product": { fr: "Produit", en: "Product" },
   "cart.col.qty": { fr: "Qté", en: "Qty" },
   "cart.col.days": { fr: "Jours", en: "Days" },

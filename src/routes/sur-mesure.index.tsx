@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ConciergeBell, Boxes, Signpost, Armchair, type LucideIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useCustomPublicPricing, priceLines } from "@/lib/custom-pricing";
-import { canonicalLink, hreflangLinks, canonicalUrl } from "@/lib/seo";
+import { canonicalLink, hreflangLinks, canonicalUrl, serviceJsonLd } from "@/lib/seo";
 import { SUR_MESURE_FAMILIES, SUR_MESURE_PIECES, type SurMesureFamily } from "@/lib/sur-mesure";
 
 export const Route = createFileRoute("/sur-mesure/")({
@@ -24,6 +24,18 @@ export const Route = createFileRoute("/sur-mesure/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [canonicalLink("/sur-mesure"), ...hreflangLinks("/sur-mesure")],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(
+          serviceJsonLd(
+            "Fabrication de mobilier événementiel sur mesure",
+            "Comptoirs, stèles, podiums, totems, arches et assises fabriqués à vos cotes et finitions, configurés en 3D.",
+            canonicalUrl("/sur-mesure"),
+          ),
+        ),
+      },
+    ],
   }),
   component: SurMesurePage,
 });

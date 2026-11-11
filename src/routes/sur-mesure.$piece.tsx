@@ -8,7 +8,7 @@ import { useCustomPublicPricing, priceLines, rangeLine, studyLine, type PublicRa
 import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
-import { canonicalLink, canonicalUrl, hreflangLinks } from "@/lib/seo";
+import { canonicalLink, canonicalUrl, hreflangLinks, serviceJsonLd } from "@/lib/seo";
 import { getPiece, SurMesureConfigMessage, SUR_MESURE_FAMILIES, decodeConfigParam, configLink } from "@/lib/sur-mesure";
 
 const ALLOWED_TYPES = new Set(["sur-mesure-ready", "sur-mesure-config", "sur-mesure-save"]);
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/sur-mesure/$piece")({
         { name: "twitter:card", content: "summary" },
       ],
       links: [canonicalLink(path), ...hreflangLinks(path)],
+      scripts: [{ type: "application/ld+json", children: JSON.stringify(serviceJsonLd(`${p.nom} sur mesure`, p.desc, canonicalUrl(path))) }],
     };
   },
   component: PiecePage,
@@ -114,11 +115,18 @@ function PiecePage() {
     }, 800);
   };
   useEffect(() => () => window.clearTimeout(debounceRef.current), []);
+  const lastQtyRef = useRef(1);
+  const lastConfigForRange = useRef<Record<string, unknown> | null>(null);
   const lines = rangeOn && estimate
     ? [estimate.study ? studyLine(lang) : rangeLine(estimate.range!, lang)]
     : priceLines(prices[piece.k], lang);
   const sharedConfigRef = useRef<Record<string, unknown> | null>(decodeConfigParam(c, piece.k));
   const [lastConfig, setLastConfig] = useState<Record<string, unknown> | null>(sharedConfigRef.current);
+  lastConfigForRange.current = lastConfig;
+  useEffect(() => {
+    if (rangeOn && lastConfigForRange.current) requestEstimate(lastConfigForRange.current, lastQtyRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeOn]);
   useEffect(() => {
     trackSiteEvent("custom_view", piece.k);
   }, [piece.k]);
@@ -185,6 +193,7 @@ function PiecePage() {
       const m = parsed.data;
       if (m.piece === piece.k) {
         setLastConfig(m.configuration);
+        lastQtyRef.current = m.quantity;
         requestEstimate(m.configuration, m.quantity);
       }
       if (m.action !== "save") return;

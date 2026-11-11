@@ -104,6 +104,16 @@ function PiecePage() {
   const navigate = useNavigate();
   const { items, add, update } = useCart();
   const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const [noReply, setNoReply] = useState(false);
+  const readyRef = useRef(false);
+  useEffect(() => {
+    readyRef.current = false;
+    setNoReply(false);
+    const t = window.setTimeout(() => {
+      if (!readyRef.current) setNoReply(true);
+    }, 6000);
+    return () => window.clearTimeout(t);
+  }, [piece.k]);
   const [banner, setBanner] = useState<null | "added" | "updated">(null);
 
   const itemsRef = useRef(items);
@@ -122,6 +132,8 @@ function PiecePage() {
       if (!d || typeof d !== "object" || typeof d.type !== "string" || !ALLOWED_TYPES.has(d.type)) return;
 
       if (d.type === "sur-mesure-ready") {
+        readyRef.current = true;
+        setNoReply(false);
         const editing = editLineRef.current
           ? itemsRef.current.find((i) => i.lineId === editLineRef.current && i.kind === "custom")
           : undefined;
@@ -194,6 +206,14 @@ function PiecePage() {
             sandbox="allow-scripts allow-downloads"
             className="block w-full flex-1 min-h-0 border-0"
           />
+          {noReply && (
+            <p role="status" className="shrink-0 border-t border-border bg-background px-4 py-2 text-xs text-muted-foreground">
+              {lang === "fr"
+                ? "Le configurateur 3D n'a pas répondu. Vous pouvez décrire votre besoin via le "
+                : "The 3D configurator did not respond. You can describe what you need via the "}
+              <Link to="/contact" className="underline hover:text-foreground">{lang === "fr" ? "formulaire de contact" : "contact form"}</Link>.
+            </p>
+          )}
           <div className="absolute top-[max(0.25rem,env(safe-area-inset-top))] right-4 z-10 flex items-center gap-2">
           {lastConfig && (
             <button

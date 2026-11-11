@@ -18,6 +18,7 @@ import { Route as CglRouteImport } from './routes/cgl'
 import { Route as CatalogueRouteImport } from './routes/catalogue'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SurMesureIndexRouteImport } from './routes/sur-mesure.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
@@ -76,6 +77,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SurMesureIndexRoute = SurMesureIndexRouteImport.update({
+  id: '/sur-mesure/',
+  path: '/sur-mesure/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/sur-mesure/': typeof SurMesureIndexRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRoutesByTo {
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/sur-mesure': typeof SurMesureIndexRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRoutesById {
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/sur-mesure/': typeof SurMesureIndexRoute
   '/api/quotes/submit': typeof ApiQuotesSubmitRoute
 }
 export interface FileRouteTypes {
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin/'
+    | '/sur-mesure/'
     | '/api/quotes/submit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin'
+    | '/sur-mesure'
     | '/api/quotes/submit'
   id:
     | '__root__'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/categorie/$slug'
     | '/produit/$slug'
     | '/admin/'
+    | '/sur-mesure/'
     | '/api/quotes/submit'
   fileRoutesById: FileRoutesById
 }
@@ -315,6 +327,7 @@ export interface RootRouteChildren {
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   CategorieSlugRoute: typeof CategorieSlugRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
+  SurMesureIndexRoute: typeof SurMesureIndexRoute
   ApiQuotesSubmitRoute: typeof ApiQuotesSubmitRoute
 }
 
@@ -381,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sur-mesure/': {
+      id: '/sur-mesure/'
+      path: '/sur-mesure'
+      fullPath: '/sur-mesure/'
+      preLoaderRoute: typeof SurMesureIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -524,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   CategorieSlugRoute: CategorieSlugRoute,
   ProduitSlugRoute: ProduitSlugRoute,
+  SurMesureIndexRoute: SurMesureIndexRoute,
   ApiQuotesSubmitRoute: ApiQuotesSubmitRoute,
 }
 export const routeTree = rootRouteImport

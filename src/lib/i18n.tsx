@@ -9,6 +9,8 @@ const DICT: Dict = {
   "nav.catalog": { fr: "Catalogue", en: "Catalog" },
   "nav.quote": { fr: "Ma demande", en: "My request" },
   "nav.admin": { fr: "Admin", en: "Admin" },
+  "nav.contact": { fr: "Contact", en: "Contact" },
+  "cart.emptyContact": { fr: "Une question ? Contactez-nous", en: "A question? Contact us" },
 
   "hero.eyebrow": { fr: "Setup Paris — Location événementielle", en: "Setup Paris — Event Rental" },
   "hero.title": { fr: "Location d'objets événementiels", en: "Event object rentals" },

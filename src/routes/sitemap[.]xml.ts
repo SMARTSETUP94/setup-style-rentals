@@ -28,27 +28,27 @@ export const Route = createFileRoute("/sitemap.xml")({
           .select("slug, updated_at")
           .eq("is_active", true);
 
-        const today = new Date().toISOString().slice(0, 10);
 
         // Static, indexable pages.
-        const staticUrls: Array<{ loc: string; lastmod: string; priority: string; changefreq: string }> = [
-          { loc: "/", lastmod: today, priority: "1.0", changefreq: "weekly" },
-          { loc: "/catalogue", lastmod: today, priority: "0.9", changefreq: "weekly" },
-          { loc: "/devis", lastmod: today, priority: "0.6", changefreq: "monthly" },
-          { loc: "/cgl", lastmod: today, priority: "0.3", changefreq: "yearly" },
-          { loc: "/mentions-legales", lastmod: today, priority: "0.3", changefreq: "yearly" },
+        // Static pages carry no lastmod (no page-specific timestamp available).
+        const staticUrls: Array<{ loc: string; lastmod?: string; priority: string; changefreq: string }> = [
+          { loc: "/", priority: "1.0", changefreq: "weekly" },
+          { loc: "/catalogue", priority: "0.9", changefreq: "weekly" },
+          { loc: "/contact", priority: "0.6", changefreq: "yearly" },
+          { loc: "/cgl", priority: "0.3", changefreq: "yearly" },
+          { loc: "/mentions-legales", priority: "0.3", changefreq: "yearly" },
         ];
 
         const productUrls = (productsRes.data ?? []).map((p) => ({
           loc: `/produit/${encodeURIComponent(p.slug)}`,
-          lastmod: p.updated_at?.slice(0, 10) ?? today,
+          lastmod: p.updated_at?.slice(0, 10),
           priority: "0.8",
           changefreq: "weekly",
         }));
 
         const categoryUrls = (categoriesRes.data ?? []).map((c) => ({
           loc: `/categorie/${encodeURIComponent(c.slug)}`,
-          lastmod: c.updated_at?.slice(0, 10) ?? today,
+          lastmod: c.updated_at?.slice(0, 10),
           priority: "0.85",
           changefreq: "weekly",
         }));
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/sitemap.xml")({
               return (
                 `  <url>\n` +
                 `    <loc>${canonical}</loc>\n` +
-                `    <lastmod>${u.lastmod}</lastmod>\n` +
+                (u.lastmod ? `    <lastmod>${u.lastmod}</lastmod>\n` : "") +
                 `    <changefreq>${u.changefreq}</changefreq>\n` +
                 `    <priority>${u.priority}</priority>\n` +
                 `    <xhtml:link rel="alternate" hreflang="fr" href="${canonical}"/>\n` +

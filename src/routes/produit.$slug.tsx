@@ -217,6 +217,18 @@ function ProductPage() {
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
+  /** Origin of the configurator iframe — target for outgoing postMessage. */
+  const configuratorOrigin = (() => {
+    try {
+      return product?.configurator_url
+        ? new URL(product.configurator_url, typeof window !== "undefined" ? window.location.href : "https://catalogue.setup.paris").origin
+        : null;
+    } catch {
+      return null;
+    }
+  })();
+  const configuratorOriginRef = useRef<string | null>(configuratorOrigin);
+  configuratorOriginRef.current = configuratorOrigin;
   const [configuratorData, setConfiguratorData] = useState<ConfiguratorConfigData | null>(null);
   const [configuratorRecap, setConfiguratorRecap] = useState<string>("");
   const [configuratorRecapHtml, setConfiguratorRecapHtml] = useState<string>("");
@@ -261,7 +273,7 @@ function ProductPage() {
     setLoading(true);
     supabase
       .from("products")
-      .select("*")
+      .select(configuratorOriginRef.current ?? window.location.origin)
       .eq("slug", slug)
       .eq("is_active", true)
       .maybeSingle()
@@ -270,10 +282,10 @@ function ProductPage() {
         setProduct(prod);
         if (prod) {
           const [{ data: cat }, { data: cats }] = await Promise.all([
-            supabase.from("categories").select("*").eq("slug", prod.category_slug).maybeSingle(),
+            supabase.from("categories").select(configuratorOriginRef.current ?? window.location.origin).eq("slug", prod.category_slug).maybeSingle(),
             supabase
               .from("product_option_categories")
-              .select("*")
+              .select(configuratorOriginRef.current ?? window.location.origin)
               .eq("product_id", prod.id)
               .order("sort_order"),
           ]);
@@ -284,7 +296,7 @@ function ProductPage() {
           if (catList.length > 0) {
             const { data: opts } = await supabase
               .from("product_options")
-              .select("*")
+              .select(configuratorOriginRef.current ?? window.location.origin)
               .in("category_id", catList.map((c) => c.id))
               .eq("is_active", true)
               .order("sort_order");
@@ -344,7 +356,7 @@ function ProductPage() {
     try {
       frame.contentWindow?.postMessage(
         { type: "set-prices", options: opts, basePrice: Number(product.price_day) || 0 },
-        "*",
+        configuratorOriginRef.current ?? window.location.origin,
       );
     } catch {
       // ignore cross-origin failures
@@ -362,7 +374,7 @@ function ProductPage() {
     try {
       // Newer Pro configurators (Basketball, Chamboule-tout, Mini-Golf, …)
       // accept the full payload back.
-      win.postMessage({ type: "restore-config", configuration: configuratorData }, "*");
+      win.postMessage({ type: "restore-config", configuration: configuratorData }, configuratorOriginRef.current ?? window.location.origin);
       // Legacy fallback: per-field messages keyed by the configurator group.
       const opts = product?.configurator_options ?? {};
       for (const groupKey of Object.keys(opts)) {
@@ -371,7 +383,7 @@ function ProductPage() {
           configuratorData[`${groupKey}Option`] ??
           configuratorData[groupKey];
         if (typeof value === "string") {
-          win.postMessage({ type: "parent-set-config", group: groupKey, value }, "*");
+          win.postMessage({ type: "parent-set-config", group: groupKey, value }, configuratorOriginRef.current ?? window.location.origin);
         }
       }
     } catch {
@@ -382,6 +394,12 @@ function ProductPage() {
   // Listen for configurator messages
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
+      // Whitelist: configurator origin + this site's own origin, and the
+      // sender must be one of our configurator iframes.
+      const allowed = [configuratorOriginRef.current, window.location.origin].filter(Boolean);
+      if (!allowed.includes(e.origin)) return;
+      const frames = [inlineIframeRef.current].filter(Boolean) as HTMLIFrameElement[];
+      if (!e.source || !frames.some((f) => f.contentWindow === e.source)) return;
       const d = e.data as ConfiguratorMessage | undefined;
       if (!d || typeof d !== "object") return;
       // Generic "ready" handshake — accept legacy `cornhole-ready` and any
@@ -549,7 +567,7 @@ function ProductPage() {
     const msg = { type: "parent-set-config", group: groupKey, value };
     [inlineIframeRef.current].forEach((frame) => {
       try {
-        frame?.contentWindow?.postMessage(msg, "*");
+        frame?.contentWindow?.postMessage(msg, configuratorOriginRef.current ?? window.location.origin);
       } catch {
         // ignore cross-origin failures
       }
@@ -687,7 +705,7 @@ function ProductPage() {
     [inlineIframeRef.current].forEach((frame) => {
       if (!frame) return;
       try {
-        frame.contentWindow?.postMessage({ type: "reset-config" }, "*");
+        frame.contentWindow?.postMessage({ type: "reset-config" }, configuratorOriginRef.current ?? window.location.origin);
       } catch {
         // ignore cross-origin
       }

@@ -15,6 +15,7 @@ import { canonicalUrl, SITE_URL, hreflangLinks } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PRODUCT_TO_PIECE } from "@/lib/sur-mesure";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -940,6 +941,16 @@ function ProductPage() {
             <div className="mt-4 text-sm">
               <span className="text-muted-foreground">Dimensions :</span> <span>{product.dimensions}</span>
             </div>
+          )}
+          {PRODUCT_TO_PIECE[product.slug] && (
+            <Link
+              to="/sur-mesure/$piece"
+              params={{ piece: PRODUCT_TO_PIECE[product.slug]! }}
+              search={{ line: undefined }}
+              className="mt-3 inline-block text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              {t("sm.productLink")}
+            </Link>
           )}
 
           {product.configurator_url && (

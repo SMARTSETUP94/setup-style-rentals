@@ -149,7 +149,6 @@ function HomePage() {
               <div key={i} className="flex items-center gap-3 text-xs md:text-sm font-medium">{inner}</div>
             );
           })}
-          ))}
         </div>
       </section>
 

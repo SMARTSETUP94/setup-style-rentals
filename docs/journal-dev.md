@@ -38,3 +38,14 @@
 - « Ajouter à ma demande » → `sur-mesure-save` → ligne custom dans le panier ; /devis l'affiche avec vignette JPEG et récap.
 - Message 6 s : logique déjà correcte, non modifiée.
 - Non vérifié : site publié, envoi réel du devis, une 404 isolée en console (ressource non identifiée), mobile.
+
+## S5
+- Test unique (dev, 1280 px) : Samias ×1 du 11 au 12/12/2026 (2 j) + stèle sur mesure (H 1500 mm, corps placage chêne). POST /api/quotes/submit → 200, n° W-00001, email_admin_status=sent, email_client_status=sent (à smart@setup.paris).
+- quote_requests id 166fd130… : has_custom=true, discount_total=0, subtotal_ht 60, livraison 110, installation 50, reprise 50, total_ht 270, vat 54, total_ttc 324 ; items : location avec productId, ligne custom (kind=custom, ref STL-400×1500×400-CHENE). Livraison souhaitée 15/01/2027, après l'événement = à discuter, échantillons = oui. Statut pending, NON supprimée.
+- custom_configs : 1 ligne (stele, ref, configuration, recap) ; vignette custom-previews/166fd130…/22baef45….jpg (8 371 o).
+- Confirmation : n° W-00001, récap des deux lignes, totaux, lien « Reprendre / partager » (pointe vers catalogue.setup.paris).
+- A.4 : le lien de reprise restaure H 1500 et corps chêne à l'identique.
+- A.5 : 30 € × 2 j × 1 = 60 (pas de remise sous 2 unités) ; livraison 80 + 30 × 1 ligne de location = 110 ; +50 +50 → HT 270 ; TVA 20 % 54 ; TTC 324. Identique en base. La pièce sur mesure n'entre pas dans les frais.
+- B (390 px) : /, /sur-mesure, /sur-mesure/stele, /devis (2 lignes), /contact sans débordement horizontal ; « Cotes », « Recadrer » et « Ajouter à ma demande » du configurateur sont libres (rien du site par-dessus).
+- Défauts corrigés : libellé « Livraison & Reprise » sur les frais de livraison seuls (doublon visuel avec « Reprise ») → « Livraison » / « Delivery » ; 404 de S4 = /favicon.ico absent (demandé par l'iframe) → favicon ajouté et déclaré.
+- Non vérifié : réception réelle des mails dans la boîte, admin à l'écran.

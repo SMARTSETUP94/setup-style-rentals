@@ -21,19 +21,27 @@ type Row = {
   enabled: boolean;
   validated_by: string | null;
   validated_at: string | null;
+  range_enabled: boolean;
+  range_low_pct: number;
+  range_high_pct: number;
+  floor_ht: number;
 };
-type Draft = { price: string; lead: string; enabled: boolean; validatedBy: string };
+type Draft = { price: string; lead: string; enabled: boolean; validatedBy: string; range: boolean; low: string; high: string; floor: string };
 
 const L = {
   fr: {
     title: "Sur mesure — prix « à partir de »",
     warn: "Ces montants sont des estimations internes. N'activez l'affichage d'un prix qu'après validation par l'atelier.",
+    warn2: "N'activez la fourchette qu'après validation des temps par l'atelier et avis juridique sur l'affichage d'un prix indicatif.",
+    range: "Fourchette publique", low: "− %", high: "+ %", floor: "Plancher HT",
     piece: "Pièce", price: "À partir de (€ HT)", lead: "Délai indicatif (jours ouvrés)", show: "Afficher sur le site",
     by: "Validé par", save: "Enregistrer", saved: "Enregistré", invalid: "Valeurs invalides", on: "validé le",
   },
   en: {
     title: "Custom-made — “from” prices",
     warn: "These amounts are internal estimates. Only enable a price once the workshop has validated it.",
+    warn2: "Only enable the price range after the workshop has validated the times and legal advice on showing an indicative price.",
+    range: "Public range", low: "− %", high: "+ %", floor: "Floor excl. VAT",
     piece: "Piece", price: "From (€ excl. VAT)", lead: "Indicative lead time (business days)", show: "Show on site",
     by: "Validated by", save: "Save", saved: "Saved", invalid: "Invalid values", on: "validated on",
   },
@@ -47,7 +55,7 @@ function AdminCustomPricingPage() {
   const [saving, setSaving] = useState<string | null>(null);
 
   const load = async () => {
-    const { data, error } = await supabase.from("custom_pricing").select("piece,from_price_ht,lead_time_days,enabled,validated_by,validated_at");
+    const { data, error } = await supabase.from("custom_pricing").select("piece,from_price_ht,lead_time_days,enabled,validated_by,validated_at,range_enabled,range_low_pct,range_high_pct,floor_ht");
     if (error) return toast.error(error.message);
     const order = new Map(SUR_MESURE_PIECES.map((p, i) => [p.k, i]));
     const list = ((data ?? []) as Row[]).sort((a, b) => (order.get(a.piece) ?? 99) - (order.get(b.piece) ?? 99));
@@ -57,6 +65,10 @@ function AdminCustomPricingPage() {
       lead: r.lead_time_days != null ? String(r.lead_time_days) : "",
       enabled: r.enabled,
       validatedBy: r.validated_by ?? "",
+      range: r.range_enabled,
+      low: String(r.range_low_pct ?? 5),
+      high: String(r.range_high_pct ?? 15),
+      floor: String(r.floor_ht ?? 0),
     }])));
   };
   useEffect(() => { void load(); }, []);
@@ -70,12 +82,19 @@ function AdminCustomPricingPage() {
     if (!Number.isFinite(price) || price < 0 || (lead !== null && (!Number.isInteger(lead) || lead < 0 || lead > 365))) {
       return toast.error(tx.invalid);
     }
+    const num = (v: string) => Number(v.replace(",", "."));
+    const low = num(d.low), high = num(d.high), floor = num(d.floor);
+    if (![low, high, floor].every(Number.isFinite) || low < 0 || low > 90 || high < 0 || high > 200 || floor < 0) return toast.error(tx.invalid);
     const by = d.validatedBy.trim().slice(0, 120) || null;
     setSaving(r.piece);
     const { error } = await supabase.from("custom_pricing").update({
       from_price_ht: Math.round(price * 100) / 100,
       lead_time_days: lead,
       enabled: d.enabled,
+      range_enabled: d.range,
+      range_low_pct: low,
+      range_high_pct: high,
+      floor_ht: Math.round(floor * 100) / 100,
       validated_by: by,
       validated_at: by !== r.validated_by ? (by ? new Date().toISOString() : null) : r.validated_at,
       updated_at: new Date().toISOString(),
@@ -90,14 +109,14 @@ function AdminCustomPricingPage() {
     <div className="p-4 md:p-8 max-w-6xl">
       <h1 className="font-display text-2xl font-semibold">{tx.title}</h1>
       <div role="alert" className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-        <AlertTriangle className="size-4 mt-0.5 shrink-0" /> {tx.warn}
+        <AlertTriangle className="size-4 mt-0.5 shrink-0" /> <div>{tx.warn}<div className="mt-1 font-medium">{tx.warn2}</div></div>
       </div>
       <div className="mt-6 overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="p-3">{tx.piece}</th><th className="p-3">{tx.price}</th><th className="p-3">{tx.lead}</th>
-              <th className="p-3">{tx.show}</th><th className="p-3">{tx.by}</th><th className="p-3" />
+              <th className="p-3">{tx.show}</th><th className="p-3">{tx.range}</th><th className="p-3">{tx.low}</th><th className="p-3">{tx.high}</th><th className="p-3">{tx.floor}</th><th className="p-3">{tx.by}</th><th className="p-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -111,6 +130,10 @@ function AdminCustomPricingPage() {
                   <td className="p-3"><Input inputMode="decimal" value={d.price} onChange={(e) => setD(r.piece, { price: e.target.value })} className="w-28" aria-label={`${tx.price} ${r.piece}`} /></td>
                   <td className="p-3"><Input inputMode="numeric" value={d.lead} onChange={(e) => setD(r.piece, { lead: e.target.value })} className="w-20" aria-label={`${tx.lead} ${r.piece}`} /></td>
                   <td className="p-3"><Checkbox checked={d.enabled} onCheckedChange={(v) => setD(r.piece, { enabled: v === true })} aria-label={`${tx.show} ${r.piece}`} /></td>
+                  <td className="p-3"><Checkbox checked={d.range} onCheckedChange={(v) => setD(r.piece, { range: v === true })} aria-label={`${tx.range} ${r.piece}`} /></td>
+                  <td className="p-3"><Input inputMode="decimal" value={d.low} onChange={(e) => setD(r.piece, { low: e.target.value })} className="w-16" aria-label={`${tx.low} ${r.piece}`} /></td>
+                  <td className="p-3"><Input inputMode="decimal" value={d.high} onChange={(e) => setD(r.piece, { high: e.target.value })} className="w-16" aria-label={`${tx.high} ${r.piece}`} /></td>
+                  <td className="p-3"><Input inputMode="decimal" value={d.floor} onChange={(e) => setD(r.piece, { floor: e.target.value })} className="w-24" aria-label={`${tx.floor} ${r.piece}`} /></td>
                   <td className="p-3">
                     <Input value={d.validatedBy} onChange={(e) => setD(r.piece, { validatedBy: e.target.value })} className="w-40" aria-label={`${tx.by} ${r.piece}`} />
                     {r.validated_at && <div className="mt-1 text-[11px] text-muted-foreground">{tx.on} {new Date(r.validated_at).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB")}</div>}

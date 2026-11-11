@@ -287,6 +287,11 @@ function QuotePage() {
             <Link to="/catalogue" className="mt-6 inline-flex items-center gap-2 bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-semibold hover:bg-foreground/90 transition-colors">
               {t("cart.continue")}
             </Link>
+            <div className="mt-4">
+              <Link to="/contact" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+                {t("cart.emptyContact")}
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="mt-8 grid lg:grid-cols-3 gap-6 lg:gap-10 items-start">

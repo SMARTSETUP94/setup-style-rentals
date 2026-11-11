@@ -46,7 +46,16 @@ type Quote = {
   setup_fee: number;
   pickup_fee: number;
   logistics_notes: string | null;
+  request_no: number | null;
+  email_admin_status: string | null;
+  email_client_status: string | null;
+  source: string | null;
 };
+
+const quoteNumber = (q: Pick<Quote, "request_no">) =>
+  q.request_no != null ? `W-${String(q.request_no).padStart(5, "0")}` : "—";
+const isFailed = (s: string | null | undefined) => typeof s === "string" && s.startsWith("failed");
+const hasEmailFailure = (q: Quote) => isFailed(q.email_admin_status) || isFailed(q.email_client_status);
 
 // total_ttc already includes delivery/setup/pickup fees.
 const finalTotal = (q: Quote) => Number(q.total_ttc) || 0;
@@ -84,6 +93,15 @@ function AdminQuotesPage() {
     logistics_notes: "",
   });
   const [savingLogistics, setSavingLogistics] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const visible = quotes.filter((q) => {
+    if (statusFilter !== "all" && q.status !== statusFilter) return false;
+    const needle = search.trim().toLowerCase();
+    if (!needle) return true;
+    return [q.customer_name, q.company, q.email, quoteNumber(q), q.request_no != null ? String(q.request_no) : ""]
+      .some((v) => (v ?? "").toLowerCase().includes(needle));
+  });
 
   const openDetail = (q: Quote) => {
     setSelected(q);
@@ -187,32 +205,59 @@ function AdminQuotesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t("quotes.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {quotes.length} {t("quotes.count")}
+            {visible.length} / {quotes.length} {t("quotes.count")}
           </p>
         </div>
       </div>
 
-      <ScrollableTable minWidth={840}>
+      <div className="flex flex-wrap gap-3 mb-4">
+        <Input
+          aria-label={t("quotes.search")}
+          placeholder={t("quotes.search")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+        <select
+          aria-label={t("quotes.col.status")}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+        >
+          <option value="all">{t("quotes.filter.all")}</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>{statusLabel(s)}</option>
+          ))}
+        </select>
+      </div>
+
+      <ScrollableTable minWidth={1000}>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.number")}</th>
               <th className="text-left px-4 py-3 font-medium">{t("quotes.col.date")}</th>
               <th className="text-left px-4 py-3 font-medium">{t("quotes.col.client")}</th>
               <th className="text-left px-4 py-3 font-medium">{t("quotes.col.email")}</th>
               <th className="text-left px-4 py-3 font-medium">{t("quotes.col.event")}</th>
               <th className="text-right px-4 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
+              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.emails")}</th>
               <th className="text-left px-4 py-3 font-medium">{t("quotes.col.status")}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("layout.loading")}</td></tr>
-            ) : quotes.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{t("quotes.empty")}</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">{t("layout.loading")}</td></tr>
+            ) : visible.length === 0 ? (
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">{t("quotes.empty")}</td></tr>
             ) : (
-              quotes.map((q) => (
+              visible.map((q) => (
                 <tr key={q.id} className="border-t border-border hover:bg-muted/30">
+                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
+                    {quoteNumber(q)}
+                    {q.source && <span className="block text-[10px] text-muted-foreground">{q.source}</span>}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(q.created_at).toLocaleDateString(dateLocale)}
                   </td>
@@ -226,6 +271,9 @@ function AdminQuotesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <EmailStatusBadge q={q} title={t("quotes.emails.failed")} />
                   </td>
                   <td className="px-4 py-3">
                     <select
@@ -274,7 +322,7 @@ function AdminQuotesPage() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>{t("layout.quotes")} — {selected.customer_name}</DialogTitle>
+                <DialogTitle>{t("layout.quotes")} {quoteNumber(selected)} — {selected.customer_name}</DialogTitle>
                 <DialogDescription>
                   {t("quotes.detail.received")} {new Date(selected.created_at).toLocaleString(dateLocale)}
                 </DialogDescription>
@@ -288,6 +336,10 @@ function AdminQuotesPage() {
                   <Field label={t("quotes.detail.location")} value={selected.event_location || "—"} />
                   <Field label={t("quotes.slot.delivery")} value={selected.delivery_time ? selected.delivery_time.slice(0, 5) : "—"} />
                   <Field label={t("quotes.slot.pickup")} value={selected.pickup_time ? selected.pickup_time.slice(0, 5) : "—"} />
+                  <Field label={t("quotes.col.number")} value={quoteNumber(selected)} />
+                  <Field label={t("quotes.detail.source")} value={selected.source || "—"} />
+                  <Field label={t("quotes.emails.admin")} value={selected.email_admin_status || "—"} className={isFailed(selected.email_admin_status) ? "text-destructive" : ""} />
+                  <Field label={t("quotes.emails.client")} value={selected.email_client_status || "—"} className={isFailed(selected.email_client_status) ? "text-destructive" : ""} />
                 </div>
                 {selected.message && (
                   <div className="text-sm">
@@ -469,6 +521,17 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
     <div className={`flex justify-between ${bold ? "font-semibold text-base" : ""}`}>
       <span>{label}</span>
       <span>{value}</span>
+    </div>
+  );
+}
+
+function EmailStatusBadge({ q, title }: { q: Quote; title: string }) {
+  const failed = hasEmailFailure(q);
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground" title={failed ? title : undefined}>
+      <span className={`inline-block size-2 rounded-full ${failed ? "bg-destructive" : "bg-muted-foreground/40"}`} />
+      <span>A: {q.email_admin_status || "—"}</span>
+      <span>C: {q.email_client_status || "—"}</span>
     </div>
   );
 }

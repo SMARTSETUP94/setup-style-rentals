@@ -15,3 +15,13 @@
 - Écarts : le lien « Modifier » remplace la ligne à chaque sauvegarde ; le reste du site en mode sur mesure envoie restore-config uniquement si la ligne est encore dans le panier ; tel du configurateur = numéro du pied de page.
 - Testé : 400 pour pièce inconnue, quantité 99 et vignette non JPEG ; /sur-mesure 200, /sur-mesure/nope 404, sitemap.
 - Non vérifié : vrai configurateur (messages ready/config/save, bandeau, restore), soumission réussie avec ligne custom (téléversement, custom_configs, mails), affichage admin du détail custom, PDF.
+
+## S3
+- Créés : src/routes/admin.sur-mesure.tsx, src/routes/api.track.ts, src/lib/custom-pricing.ts, src/lib/track.ts, drizzle/migrations/0003_s3_custom_pricing_site_events.sql.
+- Modifiés : sur-mesure.$piece.tsx (bandeau prix au-dessus de l'iframe, ?c → restore-config, « Copier le lien »), sur-mesure.index.tsx, sur-mesure.ts (encodage base64url ≤ 6000), devis.tsx, contact.tsx, produit.$slug.tsx (suivi, dimensions « a voir » masquées), api.quotes.submit.ts (resume_url dans les lignes et les mails), admin.tsx, admin.index.tsx, admin.devis.tsx, ProductImage.tsx, index.tsx.
+- SQL : custom_pricing (RLS, politique admin unique, anon révoqué) pré-remplie 24 pièces enabled=false ; fonction SECURITY DEFINER get_custom_public_pricing() (lignes activées seulement) ; site_events (RLS, lecture admin, index created_at).
+- Écarts : limite /api/track en mémoire par instance (60/10 min, IP hachée non stockée), pas via submit_attempts pour ne pas consommer le quota des devis ; le lien ?c encode {piece, configuration} ; au-delà de 6000 caractères, pas de bouton de copie.
+- Configurateur public/configurators/sur-mesure.html : 642 octets, md5 ba97debc5a512fe5fa90b350bdf56ce8 → toujours le placeholder, le définitif (~130 Ko) n'est pas déposé.
+- Hors ticket, relevé : le tableau de bord admin additionne encore les frais à total_ttc (double comptage) dans ses KPI.
+- Testé : compilation OK ; /api/track 204 (valide et invalide) avec insertion ; RPC publique renvoie [] ; lecture anonyme de custom_pricing refusée.
+- Non vérifié : restore-config et copie du lien avec le vrai configurateur, lien dans le mail réel, affichage admin à l'écran, sendBeacon en production.

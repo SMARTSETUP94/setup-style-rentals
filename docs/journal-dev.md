@@ -31,3 +31,10 @@
 - Recherche globale : même double comptage trouvé et corrigé dans admin.clients.tsx (CA par client et historique) ; seul reste feesOf() d'admin.devis.tsx, qui soustrait les frais de total_ht (correct).
 - sur-mesure.$piece.tsx : sans `sur-mesure-ready` sous 6 s, message discret sous l'iframe avec lien vers /contact (FR/EN).
 - Compilation OK ; affichage admin et message configurateur non vérifiés à l'écran. Aucune migration, pas de publication.
+
+## S4
+- `public/configurators/sur-mesure.html` reconstitué par script (tmp_transfer → base64 → brotli), md5 vérifiés avant écriture : dd5be69883e6d3eb511365310ee45fcb, 112 102 octets. Ajouté à `.prettierignore`.
+- Navigateur (local, /sur-mesure/comptoir) : iframe chargée, `sur-mesure-ready` reçu, aucun message « n'a pas répondu », pas de CSP bloquante (aucune CSP définie).
+- « Ajouter à ma demande » → `sur-mesure-save` → ligne custom dans le panier ; /devis l'affiche avec vignette JPEG et récap.
+- Message 6 s : logique déjà correcte, non modifiée.
+- Non vérifié : site publié, envoi réel du devis, une 404 isolée en console (ressource non identifiée), mobile.

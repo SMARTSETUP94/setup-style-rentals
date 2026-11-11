@@ -363,7 +363,7 @@ function totalsBlock(t: Totals) {
     </table>`;
 }
 
-export function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[], estimates: Map<string, InternalEstimate>) {
+function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[], estimates: Map<string, InternalEstimate>) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:20px;margin:0 0 16px;">Nouvelle demande de devis ${escapeHtml(number)} <span style="font-size:13px;font-weight:600;background:#eef2ff;color:#1d4ed8;padding:2px 8px;border-radius:999px;vertical-align:middle;">${items.length && customs.length ? "Mixte" : customs.length ? "Sur mesure" : "Location"}</span></h1>
@@ -385,7 +385,7 @@ export function adminEmail(p: Payload, number: string, items: StoredItem[], t: T
     </div>`;
 }
 
-export function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
+function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:22px;margin:0 0 8px;">Merci ${escapeHtml(p.customer_name)} !</h1>

@@ -1,0 +1,560 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import {
+  computeLine,
+  computeTotals,
+  DEFAULT_QUANTITY_DISCOUNTS,
+  LOGISTICS_KEYS,
+  logisticsFromSettings,
+  type DurationDiscountTier,
+  type LineResult,
+  type QuantityDiscountTier,
+  type Totals,
+} from "@/lib/pricing";
+
+/* ------------------------------------------------------------------ */
+/* Input validation — the browser sends NO prices, totals, HTML or URL */
+/* ------------------------------------------------------------------ */
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+const isRealDate = (s: string) => DATE_RE.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
+const dateStr = z.string().refine(isRealDate, "invalid date");
+const optStr = (max: number) => z.string().trim().max(max).optional().nullable();
+
+const ItemSchema = z
+  .object({
+    line_id: z.string().min(1).max(64),
+    productId: z.string().uuid(),
+    quantity: z.number().int().min(1).max(500),
+    startDate: dateStr.optional().nullable(),
+    endDate: dateStr.optional().nullable(),
+    days: z.number().int().min(1).max(365).optional().nullable(),
+    option_ids: z.array(z.string().uuid()).max(50).default([]),
+    configurator_recap: z.string().max(5000).optional().nullable(),
+    configurator_data: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .nullable()
+      .refine((v) => v == null || JSON.stringify(v).length <= 20000, "configurator_data too large"),
+    logo_path: z
+      .string()
+      .max(300)
+      .refine((p) => p.startsWith("client-logos/") && !p.includes(".."), "invalid logo path")
+      .optional()
+      .nullable(),
+    logo_filename: z.string().max(300).optional().nullable(),
+  })
+  .strict()
+  .refine((i) => !!i.startDate === !!i.endDate, "both dates required")
+  .refine((i) => !i.startDate || !i.endDate || i.endDate >= i.startDate, "endDate before startDate");
+
+const PayloadSchema = z
+  .object({
+    customer_name: z.string().trim().min(1).max(200),
+    company: optStr(200),
+    email: z.string().trim().email().max(320),
+    phone: optStr(50),
+    message: optStr(5000),
+    event_date: dateStr.optional().nullable(),
+    event_location: optStr(500),
+    delivery_time: z.string().regex(TIME_RE).optional().nullable(),
+    pickup_time: z.string().regex(TIME_RE).optional().nullable(),
+    lang: z.enum(["fr", "en"]),
+    website: z.string().max(500).optional().nullable(),
+    turnstile_token: z.string().max(4096).optional().nullable(),
+    items: z.array(ItemSchema).min(1).max(50),
+  })
+  .strict();
+
+type Payload = z.infer<typeof PayloadSchema>;
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+const DEFAULT_ADMIN_EMAIL = "smart@setup.paris";
+const DEFAULT_FROM = "Setup Paris <onboarding@resend.dev>";
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+
+const json = (body: unknown, status = 200) => Response.json(body, { status });
+
+const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+const fmtDate = (s: string) => {
+  const [y, m, d] = s.split("-");
+  return `${d}/${m}/${y}`;
+};
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+const daysBetweenInclusive = (start: string, end: string) =>
+  Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000) + 1;
+
+async function sha256Hex(input: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function clientIp(request: Request) {
+  const cf = request.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+  const xff = request.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]!.trim() || "unknown";
+  return "unknown";
+}
+
+const asTiers = <T,>(v: unknown): T[] | undefined => (Array.isArray(v) ? (v as T[]) : undefined);
+
+interface StoredOption {
+  categoryName_fr: string;
+  categoryName_en: string;
+  name_fr: string;
+  name_en: string;
+  price: number;
+  line_total: number;
+}
+
+interface StoredItem {
+  productId: string;
+  line_id: string;
+  slug: string;
+  name_fr: string;
+  name_en: string;
+  quantity: number;
+  days: number;
+  price_day: number;
+  deposit: number;
+  startDate: string | null;
+  endDate: string | null;
+  line_gross: number;
+  line_discount: number;
+  line_net: number;
+  line_deposit: number;
+  options: StoredOption[];
+  option_ids: string[];
+  options_per_unit_per_day: number;
+  options_total: number;
+  configurator_recap: string | null;
+  configurator_data: Record<string, unknown> | null;
+  configurator_recap_html: null;
+  logo_url: string | null;
+  logo_filename: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Emails — built ONLY from server-recomputed data, everything escaped */
+/* ------------------------------------------------------------------ */
+
+function itemsTable(items: StoredItem[]) {
+  const rows = items
+    .map((i) => {
+      const datesRow =
+        i.startDate && i.endDate
+          ? `<tr><td colspan="5" style="padding:2px 8px 6px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">Du ${escapeHtml(fmtDate(i.startDate))} au ${escapeHtml(fmtDate(i.endDate))}</td></tr>`
+          : "";
+      const optionsRows = i.options
+        .map(
+          (o) => `
+        <tr>
+          <td colspan="4" style="padding:4px 8px 4px 24px;border-bottom:1px solid #f5f5f5;color:#666;font-size:13px;">
+            • <strong style="color:#1a1a1a;">${escapeHtml(o.categoryName_fr)}:</strong> ${escapeHtml(o.name_fr)}
+          </td>
+          <td style="padding:4px 8px;border-bottom:1px solid #f5f5f5;text-align:right;color:#666;font-size:13px;">
+            ${o.price > 0 ? `+${fmt(o.price)}` : "—"}
+          </td>
+        </tr>`,
+        )
+        .join("");
+      const discountRow =
+        i.line_discount > 0
+          ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">Remise</td><td style="padding:2px 8px;text-align:right;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">−${fmt(i.line_discount)}</td></tr>`
+          : "";
+      const recapRow = i.configurator_recap
+        ? `
+        <tr>
+          <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#fffbe6;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#a07c00;font-weight:600;margin-bottom:4px;">✦ Configuration 3D</div>
+            <pre style="margin:0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;">${escapeHtml(i.configurator_recap)}</pre>
+          </td>
+        </tr>`
+        : "";
+      const logoRow = i.logo_url
+        ? `
+        <tr>
+          <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#eef6ff;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#1d4ed8;font-weight:600;margin-bottom:4px;">📎 Logo client</div>
+            <a href="${escapeHtml(i.logo_url)}" target="_blank" rel="noreferrer" style="font-size:13px;color:#1d4ed8;word-break:break-all;">
+              ${escapeHtml(i.logo_filename || "Télécharger le logo")}
+            </a>
+          </td>
+        </tr>`
+        : "";
+      return `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(i.name_fr)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.days}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmt(i.price_day)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(i.line_net)}</td>
+        </tr>
+        ${datesRow}${optionsRows}${discountRow}${recapRow}${logoRow}`;
+    })
+    .join("");
+  return `
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
+      <thead>
+        <tr style="background:#f5f5f5;">
+          <th style="padding:8px;text-align:left;">Produit</th>
+          <th style="padding:8px;text-align:center;">Qté</th>
+          <th style="padding:8px;text-align:center;">Jours</th>
+          <th style="padding:8px;text-align:right;">PU/jour</th>
+          <th style="padding:8px;text-align:right;">Total HT</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function totalsBlock(t: Totals) {
+  const r = (label: string, v: string, extra = "") =>
+    `<tr><td style="padding:4px 12px;color:#666;${extra}">${label}</td><td style="padding:4px 0;text-align:right;${extra}">${v}</td></tr>`;
+  return `
+    <table style="margin-left:auto;font-size:14px;">
+      ${r("Sous-total produits HT", fmt(t.subtotal_ht))}
+      ${t.discount_total > 0 ? r("Remise", `−${fmt(t.discount_total)}`) : ""}
+      ${t.delivery_fee > 0 ? r("Livraison", fmt(t.delivery_fee)) : ""}
+      ${t.setup_fee > 0 ? r("Installation", fmt(t.setup_fee)) : ""}
+      ${t.pickup_fee > 0 ? r("Reprise", fmt(t.pickup_fee)) : ""}
+      ${r("Total HT", fmt(t.total_ht))}
+      ${r("TVA 20%", fmt(t.vat))}
+      <tr><td style="padding:8px 12px;font-weight:700;border-top:2px solid #1a1a1a;">Total TTC</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:2px solid #1a1a1a;">${fmt(t.total_ttc)}</td></tr>
+      ${r("Caution (non incluse)", fmt(t.total_deposit), "font-size:12px;")}
+    </table>`;
+}
+
+function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals) {
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
+      <h1 style="font-size:20px;margin:0 0 16px;">Nouvelle demande de devis ${escapeHtml(number)}</h1>
+      <div style="background:#f9f9f9;padding:16px;border-radius:8px;font-size:14px;line-height:1.6;">
+        <strong>${escapeHtml(p.customer_name)}</strong>${p.company ? ` — ${escapeHtml(p.company)}` : ""}<br/>
+        Email : <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a><br/>
+        ${p.phone ? `Téléphone : ${escapeHtml(p.phone)}<br/>` : ""}
+        ${p.event_date ? `Date événement : ${escapeHtml(fmtDate(p.event_date))}<br/>` : ""}
+        ${p.event_location ? `Lieu : ${escapeHtml(p.event_location)}<br/>` : ""}
+        ${p.delivery_time ? `Créneau livraison : <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
+        ${p.pickup_time ? `Créneau reprise : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
+      </div>
+      ${p.message ? `<div style="margin-top:16px;padding:12px;background:#fffbe6;border-left:3px solid #f0c000;font-size:14px;white-space:pre-wrap;">${escapeHtml(p.message)}</div>` : ""}
+      <h2 style="font-size:16px;margin:24px 0 8px;">Produits</h2>
+      ${itemsTable(items)}
+      ${totalsBlock(t)}
+      <p style="margin-top:24px;font-size:12px;color:#999;">Connectez-vous à l'admin pour répondre à cette demande.</p>
+    </div>`;
+}
+
+function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals) {
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
+      <h1 style="font-size:22px;margin:0 0 8px;">Merci ${escapeHtml(p.customer_name)} !</h1>
+      <p style="font-size:14px;line-height:1.6;color:#555;">
+        Nous avons bien reçu votre demande de devis <strong>${escapeHtml(number)}</strong>. Notre équipe revient vers vous sous 24 h ouvrées
+        avec une proposition personnalisée.
+      </p>
+      ${(p.delivery_time || p.pickup_time || p.event_date || p.event_location) ? `
+      <div style="margin-top:16px;padding:14px 16px;background:#f9f9f9;border-radius:8px;font-size:14px;line-height:1.7;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#666;font-weight:600;margin-bottom:6px;">Logistique</div>
+        ${p.event_date ? `Date événement : <strong>${escapeHtml(fmtDate(p.event_date))}</strong><br/>` : ""}
+        ${p.event_location ? `Lieu : <strong>${escapeHtml(p.event_location)}</strong><br/>` : ""}
+        ${p.delivery_time ? `Créneau livraison souhaité : <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
+        ${p.pickup_time ? `Créneau reprise souhaité : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
+      </div>` : ""}
+      <h2 style="font-size:16px;margin:24px 0 8px;">Récapitulatif de votre demande ${escapeHtml(number)}</h2>
+      ${itemsTable(items)}
+      ${totalsBlock(t)}
+      <p style="margin-top:24px;font-size:13px;color:#666;">
+        Cette estimation est indicative. Le devis final dépendra des disponibilités et de la logistique.
+      </p>
+      <p style="margin-top:24px;font-size:14px;">— L'équipe Setup Paris</p>
+    </div>`;
+}
+
+async function sendEmail(args: { to: string[]; subject: string; html: string; replyTo?: string }): Promise<string> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return "failed:no_key";
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || DEFAULT_FROM,
+        to: args.to,
+        subject: args.subject,
+        html: args.html,
+        reply_to: args.replyTo,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[quotes/submit] Resend failed [${res.status}]: ${body}`);
+      return `failed:${res.status}`;
+    }
+    return "sent";
+  } catch (err) {
+    console.error("[quotes/submit] Resend network error", err);
+    return "failed:network";
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Route                                                               */
+/* ------------------------------------------------------------------ */
+
+export const Route = createFileRoute("/api/quotes/submit")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        try {
+          let raw: unknown;
+          try {
+            raw = await request.json();
+          } catch {
+            return json({ error: "invalid_json" }, 400);
+          }
+          const parsed = PayloadSchema.safeParse(raw);
+          if (!parsed.success) {
+            return json({ error: "invalid_payload", fields: parsed.error.issues.map((i) => i.path.join(".")) }, 400);
+          }
+          const p = parsed.data;
+
+          // 2. Honeypot
+          if (p.website && p.website.trim() !== "") return json({ ok: true });
+
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+          // 3. Rate limit
+          const ipHash = await sha256Hex(`${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ""}:${clientIp(request)}`);
+          const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+          const { count, error: rlErr } = await supabaseAdmin
+            .from("submit_attempts")
+            .select("id", { count: "exact", head: true })
+            .eq("ip_hash", ipHash)
+            .gte("created_at", since);
+          if (rlErr) console.error("[quotes/submit] rate-limit read failed", rlErr);
+          if ((count ?? 0) >= RATE_LIMIT_MAX) return json({ error: "rate_limited" }, 429);
+          const { error: attErr } = await supabaseAdmin.from("submit_attempts").insert({ ip_hash: ipHash });
+          if (attErr) console.error("[quotes/submit] rate-limit insert failed", attErr);
+
+          // 4. Turnstile (only when configured)
+          const tsSecret = process.env.TURNSTILE_SECRET_KEY;
+          if (tsSecret) {
+            if (!p.turnstile_token) return json({ error: "captcha" }, 400);
+            const form = new FormData();
+            form.append("secret", tsSecret);
+            form.append("response", p.turnstile_token);
+            const ip = clientIp(request);
+            if (ip !== "unknown") form.append("remoteip", ip);
+            const tsRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
+            const tsBody = (await tsRes.json().catch(() => ({}))) as { success?: boolean };
+            if (!tsBody.success) return json({ error: "captcha" }, 400);
+          }
+
+          // 5. Read products, options and logistics from DB
+          const productIds = [...new Set(p.items.map((i) => i.productId))];
+          const { data: products, error: prodErr } = await supabaseAdmin
+            .from("products")
+            .select("id,slug,name_fr,name_en,price_day,deposit,quantity_discounts,duration_discounts,is_active")
+            .in("id", productIds)
+            .eq("is_active", true);
+          if (prodErr) throw prodErr;
+          const productMap = new Map((products ?? []).map((pr) => [pr.id, pr]));
+          const unknownLines = p.items.filter((i) => !productMap.has(i.productId)).map((i) => i.line_id);
+          if (unknownLines.length) return json({ error: "unknown_product", lines: unknownLines }, 400);
+
+          const optionIds = [...new Set(p.items.flatMap((i) => i.option_ids))];
+          const optionMap = new Map<string, { id: string; name_fr: string; name_en: string; price: number; product_id: string; cat_fr: string; cat_en: string }>();
+          if (optionIds.length) {
+            const { data: opts, error: optErr } = await supabaseAdmin
+              .from("product_options")
+              .select("id,name_fr,name_en,price,is_active,product_option_categories!inner(product_id,name_fr,name_en)")
+              .in("id", optionIds)
+              .eq("is_active", true);
+            if (optErr) throw optErr;
+            for (const o of opts ?? []) {
+              const cat = (Array.isArray(o.product_option_categories) ? o.product_option_categories[0] : o.product_option_categories) as
+                | { product_id: string; name_fr: string; name_en: string }
+                | undefined;
+              if (!cat) continue;
+              optionMap.set(o.id, {
+                id: o.id,
+                name_fr: o.name_fr,
+                name_en: o.name_en,
+                price: Number(o.price) || 0,
+                product_id: cat.product_id,
+                cat_fr: cat.name_fr,
+                cat_en: cat.name_en,
+              });
+            }
+          }
+          const badOptionLines = p.items
+            .filter((i) => i.option_ids.some((id) => optionMap.get(id)?.product_id !== i.productId))
+            .map((i) => i.line_id);
+          if (badOptionLines.length) return json({ error: "invalid_option", lines: badOptionLines }, 400);
+
+          const { data: settings, error: setErr } = await supabaseAdmin
+            .from("site_settings")
+            .select("key,value_fr")
+            .in("key", Object.values(LOGISTICS_KEYS));
+          if (setErr) throw setErr;
+          const logistics = logisticsFromSettings(settings ?? []);
+
+          // 6. Compute lines from DB prices
+          const storageBase = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || process.env.SUPABASE_URL || "";
+          const lineResults: LineResult[] = [];
+          const storedItems: StoredItem[] = p.items.map((i) => {
+            const pr = productMap.get(i.productId)!;
+            const days = i.startDate && i.endDate ? daysBetweenInclusive(i.startDate, i.endDate) : i.days ?? 1;
+            const opts = i.option_ids.map((id) => optionMap.get(id)!);
+            const lr = computeLine({
+              price_day: Number(pr.price_day) || 0,
+              deposit: Number(pr.deposit) || 0,
+              quantity: i.quantity,
+              days,
+              optionPrices: opts.map((o) => o.price),
+              quantityDiscounts: asTiers<QuantityDiscountTier>(pr.quantity_discounts) ?? DEFAULT_QUANTITY_DISCOUNTS,
+              durationDiscounts: asTiers<DurationDiscountTier>(pr.duration_discounts) ?? [],
+            });
+            lineResults.push(lr);
+            const logo_url =
+              i.logo_path && storageBase
+                ? `${storageBase}/storage/v1/object/public/quote-uploads/${i.logo_path.split("/").map(encodeURIComponent).join("/")}`
+                : null;
+            return {
+              productId: pr.id,
+              line_id: i.line_id,
+              slug: pr.slug,
+              name_fr: pr.name_fr,
+              name_en: pr.name_en,
+              quantity: i.quantity,
+              days,
+              price_day: Number(pr.price_day) || 0,
+              deposit: Number(pr.deposit) || 0,
+              startDate: i.startDate ?? null,
+              endDate: i.endDate ?? null,
+              line_gross: lr.gross,
+              line_discount: lr.discount,
+              line_net: lr.net,
+              line_deposit: lr.deposit,
+              options: opts.map((o) => ({
+                categoryName_fr: o.cat_fr,
+                categoryName_en: o.cat_en,
+                name_fr: o.name_fr,
+                name_en: o.name_en,
+                price: o.price,
+                line_total: o.price * i.quantity,
+              })),
+              option_ids: i.option_ids,
+              options_per_unit_per_day: lr.optionsPerUnit,
+              options_total: lr.optionsTotal,
+              configurator_recap: i.configurator_recap?.trim() || null,
+              configurator_data: (i.configurator_data as Record<string, unknown> | null | undefined) ?? null,
+              configurator_recap_html: null,
+              logo_url,
+              logo_filename: i.logo_filename ?? null,
+            };
+          });
+          const totals = computeTotals(lineResults, logistics);
+
+          // 7. Stock check (sum per product + date range)
+          const groups = new Map<string, { productId: string; start: string; end: string; qty: number; lines: string[] }>();
+          for (const i of p.items) {
+            if (!i.startDate || !i.endDate) continue;
+            const k = `${i.productId}|${i.startDate}|${i.endDate}`;
+            const g = groups.get(k) ?? { productId: i.productId, start: i.startDate, end: i.endDate, qty: 0, lines: [] };
+            g.qty += i.quantity;
+            g.lines.push(i.line_id);
+            groups.set(k, g);
+          }
+          // Lines of the same product on overlapping ranges also compete for stock.
+          const stockIssues: Array<{ line_id: string; available: number }> = [];
+          for (const g of groups.values()) {
+            const { data, error } = await supabaseAdmin.rpc("get_available_stock", {
+              _product_id: g.productId,
+              _start_date: g.start,
+              _end_date: g.end,
+            });
+            if (error) throw error;
+            const available = Number(data) || 0;
+            const overlapQty = p.items
+              .filter((i) => i.productId === g.productId && i.startDate && i.endDate && i.startDate <= g.end && i.endDate >= g.start)
+              .reduce((s, i) => s + i.quantity, 0);
+            if (Math.max(g.qty, overlapQty) > available) g.lines.forEach((line_id) => stockIssues.push({ line_id, available }));
+          }
+          if (stockIssues.length) return json({ error: "stock", lines: stockIssues }, 409);
+
+          // 8. Insert
+          const { data: inserted, error: insErr } = await supabaseAdmin
+            .from("quote_requests")
+            .insert({
+              customer_name: p.customer_name,
+              company: p.company || null,
+              email: p.email,
+              phone: p.phone || null,
+              message: p.message || null,
+              event_date: p.event_date || null,
+              event_location: p.event_location || null,
+              delivery_time: p.delivery_time || null,
+              pickup_time: p.pickup_time || null,
+              items: storedItems as unknown as never,
+              subtotal_ht: totals.subtotal_ht,
+              discount_total: totals.discount_total,
+              total_ht: totals.total_ht,
+              delivery_fee: totals.delivery_fee,
+              setup_fee: totals.setup_fee,
+              pickup_fee: totals.pickup_fee,
+              vat: totals.vat,
+              total_ttc: totals.total_ttc,
+              total_deposit: totals.total_deposit,
+              status: "pending",
+              source: "web",
+            })
+            .select("id,request_no")
+            .single();
+          if (insErr || !inserted) throw insErr ?? new Error("insert failed");
+          const number = `W-${String(inserted.request_no).padStart(5, "0")}`;
+
+          // 9. Emails (awaited, failures recorded but never fatal)
+          const notifyTo = (process.env.QUOTE_NOTIFY_TO || DEFAULT_ADMIN_EMAIL)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const [adminStatus, clientStatus] = await Promise.all([
+            sendEmail({
+              to: notifyTo,
+              subject: `Nouvelle demande de devis ${number} — ${p.customer_name}`,
+              html: adminEmail(p, number, storedItems, totals),
+              replyTo: p.email,
+            }),
+            sendEmail({
+              to: [p.email],
+              subject: `Votre demande de devis ${number} — Setup Paris`,
+              html: clientEmail(p, number, storedItems, totals),
+              replyTo: notifyTo[0],
+            }),
+          ]);
+          const { error: updErr } = await supabaseAdmin
+            .from("quote_requests")
+            .update({ email_admin_status: adminStatus, email_client_status: clientStatus })
+            .eq("id", inserted.id);
+          if (updErr) console.error("[quotes/submit] email status update failed", updErr);
+
+          return json({ ok: true, number, email: { admin: adminStatus === "sent", client: clientStatus === "sent" } });
+        } catch (err) {
+          console.error("[quotes/submit] unexpected error", err);
+          return json({ error: "server_error" }, 500);
+        }
+      },
+    },
+  },
+});

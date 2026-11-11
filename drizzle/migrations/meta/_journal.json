@@ -29,6 +29,13 @@
       "when": 1794401005653,
       "tag": "0003_s3_custom_pricing_site_events",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794411297859,
+      "tag": "0004_custom_configs_estimates",
+      "breakpoints": true
     }
   ]
 }

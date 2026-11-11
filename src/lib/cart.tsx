@@ -24,6 +24,8 @@ export interface DurationDiscountTier {
 }
 
 export interface CartItem {
+  /** Unique identity of this cart line (generated on add). */
+  lineId: string;
   productId: string;
   slug: string;
   name_fr: string;
@@ -47,13 +49,52 @@ export interface CartItem {
   logoUrl?: string;
   /** Original filename of the uploaded logo, for display purposes. */
   logoFilename?: string;
+  /** Structured configuration received from the 3D configurator. */
+  configuratorData?: Record<string, unknown>;
+}
+
+export type NewCartItem = Omit<CartItem, "lineId"> & { lineId?: string };
+
+export function newLineId(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  } catch {
+    // fall through
+  }
+  return `line-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/** Tolerant parsing of a stored cart: never throws. */
+export function parseStoredCart(raw: string | null): CartItem[] {
+  if (!raw) return [];
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(data)) return [];
+  const out: CartItem[] = [];
+  for (const row of data) {
+    if (!row || typeof row !== "object") continue;
+    const r = row as Record<string, unknown>;
+    if (typeof r.productId !== "string" || !r.productId) continue;
+    const q = Number(r.quantity);
+    if (!Number.isFinite(q) || q < 1) continue;
+    out.push({
+      ...(r as unknown as CartItem),
+      quantity: Math.floor(q),
+      lineId: typeof r.lineId === "string" && r.lineId ? r.lineId : newLineId(),
+    });
+  }
+  return out;
 }
 
 interface CartContextValue {
   items: CartItem[];
-  add: (item: CartItem) => void;
-  update: (productId: string, patch: Partial<CartItem>) => void;
-  remove: (productId: string) => void;
+  add: (item: NewCartItem) => void;
+  update: (lineId: string, patch: Partial<Omit<CartItem, "lineId">>) => void;
+  remove: (lineId: string) => void;
   clear: () => void;
   count: number;
 }
@@ -68,8 +109,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw));
+      setItems(parseStoredCart(localStorage.getItem(STORAGE_KEY)));
     } catch {
       // ignore
     }
@@ -81,7 +121,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Don't persist until we've loaded the existing cart from storage,
     // otherwise the empty initial state would overwrite it.
     if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // storage full or blocked — keep in-memory cart
+    }
   }, [items, hydrated]);
 
   // Two cart lines are considered the same only if same product, same options, AND same dates
@@ -93,7 +137,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? "", item.logoUrl ?? ""].join("¦");
   };
 
-  const add = (item: CartItem) => {
+  const add = (item: NewCartItem) => {
     setItems((prev) => {
       const key = lineKey(item);
       const existing = prev.find(
@@ -111,20 +155,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 quantityDiscounts: item.quantityDiscounts ?? i.quantityDiscounts,
                 durationDiscounts: item.durationDiscounts ?? i.durationDiscounts,
                 configuratorRecap: item.configuratorRecap ?? i.configuratorRecap,
+                configuratorData: item.configuratorData ?? i.configuratorData,
               }
             : i,
         );
       }
-      return [...prev, item];
+      return [...prev, { ...item, lineId: newLineId() }];
     });
   };
 
-  const update = (productId: string, patch: Partial<CartItem>) => {
-    setItems((prev) => prev.map((i) => (i.productId === productId ? { ...i, ...patch } : i)));
+  const update = (lineId: string, patch: Partial<Omit<CartItem, "lineId">>) => {
+    setItems((prev) => prev.map((i) => (i.lineId === lineId ? { ...i, ...patch, lineId: i.lineId } : i)));
   };
 
-  const remove = (productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const remove = (lineId: string) => {
+    setItems((prev) => prev.filter((i) => i.lineId !== lineId));
   };
 
   const clear = () => setItems([]);

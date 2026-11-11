@@ -5,8 +5,9 @@ import { toast } from "sonner";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useI18n, pickLang } from "@/lib/i18n";
-import { useCart, lineTotal } from "@/lib/cart";
+import { useCart, lineTotal, type CartItem } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { ProductImage } from "@/components/site/ProductImage";
@@ -29,6 +30,39 @@ export const Route = createFileRoute("/devis")({
 function QuotePage() {
   const { t, lang } = useI18n();
   const { items, update, remove, clear } = useCart();
+
+  /** Available stock for a product over a date range; null if unknown/error. */
+  const fetchStock = async (productId: string, start: string, end: string): Promise<number | null> => {
+    const { data, error } = await supabase.rpc("get_available_stock", {
+      _product_id: productId,
+      _start_date: start,
+      _end_date: end,
+    });
+    if (error || data == null) return null;
+    const n = Number(data);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const changeDates = async (item: CartItem, start: string, end: string, days: number) => {
+    const stock = await fetchStock(item.productId, start, end);
+    if (stock !== null && item.quantity > stock) {
+      toast.error(t("product.insufficientStock"));
+      return;
+    }
+    update(item.lineId, { startDate: start, endDate: end, days });
+  };
+
+  const increaseQty = async (item: CartItem) => {
+    const next = item.quantity + 1;
+    if (item.startDate && item.endDate) {
+      const stock = await fetchStock(item.productId, item.startDate, item.endDate);
+      if (stock !== null && next > stock) {
+        toast.error(t("product.insufficientStock"));
+        return;
+      }
+    }
+    update(item.lineId, { quantity: next });
+  };
   const [submitting, setSubmitting] = useState(false);
   const [logistics, setLogistics] = useState({ base: 0, perItem: 0, setup: 0, pickup: 0 });
   const [form, setForm] = useState({
@@ -98,6 +132,10 @@ function QuotePage() {
       items: items.map((i) => {
         const lt = lineTotal(i);
         return {
+          productId: i.productId,
+          line_id: i.lineId,
+          option_ids: (i.selectedOptions ?? []).map((o) => o.optionId),
+          configurator_data: (i.configuratorData ?? null) as Json | null,
           slug: i.slug,
           name_fr: i.name_fr,
           name_en: i.name_en,
@@ -253,14 +291,10 @@ function QuotePage() {
             {/* Items + form (left, 2 cols) */}
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
-                {items.map((item, idx) => {
+                {items.map((item) => {
                   const lt = lineTotal(item);
-                  // Composite key: same productId can appear multiple times with
-                  // different options/dates (cart deduplicates on a composite key).
-                  const optsKey = (item.selectedOptions ?? []).map((o) => o.optionId).sort().join("|");
-                  const lineKey = `${item.productId}¦${optsKey}¦${item.startDate ?? ""}¦${item.endDate ?? ""}¦${idx}`;
                   return (
-                    <div key={lineKey} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
+                    <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
                       <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0">
                         <ProductImage name={pickLang(item, "name", lang)} category_slug={item.category_slug} image_url={item.image_url} />
                       </div>
@@ -306,7 +340,7 @@ function QuotePage() {
                                     const start = format(range.from, "yyyy-MM-dd");
                                     const end = format(range.to, "yyyy-MM-dd");
                                     const days = Math.max(1, differenceInCalendarDays(range.to, range.from) + 1);
-                                    update(item.productId, { startDate: start, endDate: end, days });
+                                    void changeDates(item, start, end, days);
                                   }}
                                   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                                   className={cn("p-3 pointer-events-auto")}
@@ -386,15 +420,15 @@ function QuotePage() {
                               </div>
                             )}
                           </div>
-                          <button onClick={() => remove(item.productId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
+                          <button onClick={() => remove(item.lineId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
                             <Trash2 className="size-4" />
                           </button>
                         </div>
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <div className="flex items-center border border-border rounded-md">
-                            <button aria-label={t("product.qtyDecrease")} onClick={() => update(item.productId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
+                            <button aria-label={t("product.qtyDecrease")} onClick={() => update(item.lineId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
                             <div className="w-10 text-center text-sm" aria-live="polite">{item.quantity}</div>
-                            <button aria-label={t("product.qtyIncrease")} onClick={() => update(item.productId, { quantity: item.quantity + 1 })} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
+                            <button aria-label={t("product.qtyIncrease")} onClick={() => void increaseQty(item)} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
                           </div>
                           <div className="text-right">
                             {lt.qtyRate + lt.durationRate > 0 && (

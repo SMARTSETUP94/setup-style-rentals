@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as DevisRouteImport } from './routes/devis'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CglRouteImport } from './routes/cgl'
 import { Route as CatalogueRouteImport } from './routes/catalogue'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -21,6 +22,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
+import { Route as ApiContactRouteImport } from './routes/api.contact'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -49,6 +51,11 @@ const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
 const DevisRoute = DevisRouteImport.update({
   id: '/devis',
   path: '/devis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CglRoute = CglRouteImport.update({
@@ -89,6 +96,11 @@ const CategorieSlugRoute = CategorieSlugRouteImport.update({
 const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
   id: '/api/send-quote-emails',
   path: '/api/send-quote-emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContactRoute = ApiContactRouteImport.update({
+  id: '/api/contact',
+  path: '/api/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
@@ -142,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
+  '/contact': typeof ContactRoute
   '/devis': typeof DevisRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -154,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
@@ -164,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
+  '/contact': typeof ContactRoute
   '/devis': typeof DevisRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -176,6 +191,7 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
@@ -188,6 +204,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/catalogue': typeof CatalogueRoute
   '/cgl': typeof CglRoute
+  '/contact': typeof ContactRoute
   '/devis': typeof DevisRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -200,6 +217,7 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/api/contact': typeof ApiContactRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/categorie/$slug': typeof CategorieSlugRoute
   '/produit/$slug': typeof ProduitSlugRoute
@@ -213,6 +231,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/catalogue'
     | '/cgl'
+    | '/contact'
     | '/devis'
     | '/mentions-legales'
     | '/robots.txt'
@@ -225,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/roadmap'
     | '/admin/settings'
+    | '/api/contact'
     | '/api/send-quote-emails'
     | '/categorie/$slug'
     | '/produit/$slug'
@@ -235,6 +255,7 @@ export interface FileRouteTypes {
     | '/'
     | '/catalogue'
     | '/cgl'
+    | '/contact'
     | '/devis'
     | '/mentions-legales'
     | '/robots.txt'
@@ -247,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/roadmap'
     | '/admin/settings'
+    | '/api/contact'
     | '/api/send-quote-emails'
     | '/categorie/$slug'
     | '/produit/$slug'
@@ -258,6 +280,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/catalogue'
     | '/cgl'
+    | '/contact'
     | '/devis'
     | '/mentions-legales'
     | '/robots.txt'
@@ -270,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/roadmap'
     | '/admin/settings'
+    | '/api/contact'
     | '/api/send-quote-emails'
     | '/categorie/$slug'
     | '/produit/$slug'
@@ -282,10 +306,12 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CatalogueRoute: typeof CatalogueRoute
   CglRoute: typeof CglRoute
+  ContactRoute: typeof ContactRoute
   DevisRoute: typeof DevisRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiContactRoute: typeof ApiContactRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   CategorieSlugRoute: typeof CategorieSlugRoute
   ProduitSlugRoute: typeof ProduitSlugRoute
@@ -320,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/devis'
       fullPath: '/devis'
       preLoaderRoute: typeof DevisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cgl': {
@@ -376,6 +409,13 @@ declare module '@tanstack/react-router' {
       path: '/api/send-quote-emails'
       fullPath: '/api/send-quote-emails'
       preLoaderRoute: typeof ApiSendQuoteEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/contact': {
+      id: '/api/contact'
+      path: '/api/contact'
+      fullPath: '/api/contact'
+      preLoaderRoute: typeof ApiContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/settings': {
@@ -475,10 +515,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CatalogueRoute: CatalogueRoute,
   CglRoute: CglRoute,
+  ContactRoute: ContactRoute,
   DevisRoute: DevisRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiContactRoute: ApiContactRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   CategorieSlugRoute: CategorieSlugRoute,
   ProduitSlugRoute: ProduitSlugRoute,

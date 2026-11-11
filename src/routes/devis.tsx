@@ -291,11 +291,8 @@ function QuotePage() {
             {/* Items + form (left, 2 cols) */}
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
-                {items.map((item, idx) => {
+                {items.map((item) => {
                   const lt = lineTotal(item);
-                  // Composite key: same productId can appear multiple times with
-                  // different options/dates (cart deduplicates on a composite key).
-                  const optsKey = (item.selectedOptions ?? []).map((o) => o.optionId).sort().join("|");
                   return (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
                       <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0">

@@ -760,6 +760,7 @@ function ProductPage() {
       configuratorRecapHtml: configuratorRecapHtml || undefined,
       logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
+      configuratorData: configuratorData ?? undefined,
     });
     toast.success(
       hasPendingConfig

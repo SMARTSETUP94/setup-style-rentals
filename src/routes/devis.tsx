@@ -6,7 +6,7 @@ import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
-import { useCart, lineTotal } from "@/lib/cart";
+import { useCart, lineTotal, type CartItem } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { ProductImage } from "@/components/site/ProductImage";
@@ -98,6 +98,10 @@ function QuotePage() {
       items: items.map((i) => {
         const lt = lineTotal(i);
         return {
+          productId: i.productId,
+          line_id: i.lineId,
+          option_ids: (i.selectedOptions ?? []).map((o) => o.optionId),
+          configurator_data: i.configuratorData ?? null,
           slug: i.slug,
           name_fr: i.name_fr,
           name_en: i.name_en,
@@ -260,7 +264,7 @@ function QuotePage() {
                   const optsKey = (item.selectedOptions ?? []).map((o) => o.optionId).sort().join("|");
                   const lineKey = `${item.productId}¦${optsKey}¦${item.startDate ?? ""}¦${item.endDate ?? ""}¦${idx}`;
                   return (
-                    <div key={lineKey} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
+                    <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
                       <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0">
                         <ProductImage name={pickLang(item, "name", lang)} category_slug={item.category_slug} image_url={item.image_url} />
                       </div>
@@ -306,7 +310,7 @@ function QuotePage() {
                                     const start = format(range.from, "yyyy-MM-dd");
                                     const end = format(range.to, "yyyy-MM-dd");
                                     const days = Math.max(1, differenceInCalendarDays(range.to, range.from) + 1);
-                                    update(item.productId, { startDate: start, endDate: end, days });
+                                    void changeDates(item, start, end, days);
                                   }}
                                   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                                   className={cn("p-3 pointer-events-auto")}
@@ -386,15 +390,15 @@ function QuotePage() {
                               </div>
                             )}
                           </div>
-                          <button onClick={() => remove(item.productId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
+                          <button onClick={() => remove(item.lineId)} className="text-muted-foreground hover:text-destructive p-1" aria-label={t("cart.remove")}>
                             <Trash2 className="size-4" />
                           </button>
                         </div>
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <div className="flex items-center border border-border rounded-md">
-                            <button aria-label={t("product.qtyDecrease")} onClick={() => update(item.productId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
+                            <button aria-label={t("product.qtyDecrease")} onClick={() => update(item.lineId, { quantity: Math.max(1, item.quantity - 1) })} className="p-1.5 hover:bg-secondary"><Minus className="size-3.5" /></button>
                             <div className="w-10 text-center text-sm" aria-live="polite">{item.quantity}</div>
-                            <button aria-label={t("product.qtyIncrease")} onClick={() => update(item.productId, { quantity: item.quantity + 1 })} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
+                            <button aria-label={t("product.qtyIncrease")} onClick={() => void increaseQty(item)} className="p-1.5 hover:bg-secondary"><Plus className="size-3.5" /></button>
                           </div>
                           <div className="text-right">
                             {lt.qtyRate + lt.durationRate > 0 && (

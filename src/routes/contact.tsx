@@ -2,8 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Check, Mail, MapPin, Phone } from "lucide-react";
-import { Navbar } from "@/components/site/Navbar";
-import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,7 +109,6 @@ function ContactPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
       <main className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-5xl mx-auto grid gap-12 md:grid-cols-[1fr_1.4fr]">
           <div>
@@ -182,7 +179,6 @@ function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

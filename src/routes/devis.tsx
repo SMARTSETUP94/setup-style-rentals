@@ -23,7 +23,7 @@ export const Route = createFileRoute("/devis")({
   head: () => ({
     meta: [
       { title: "Ma demande de devis — Setup Paris" },
-      { name: "description", content: "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise sur devis — Paris et Île-de-France." },
+      { name: "description", content: "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis." },
     ],
     links: [canonicalLink("/devis"), ...hreflangLinks("/devis")],
   }),
@@ -699,6 +699,8 @@ function QuotePage() {
                 {hasRental && hasCustom && (
                   <div className="text-xs font-medium pt-1">{t("sm.plusCustom").replace("{n}", String(customItems.length))}</div>
                 )}
+                {hasRental && <p className="text-[11px] text-muted-foreground pt-1">{t("cart.estimateNote")}</p>}
+                {hasCustom && <p className="text-[11px] text-muted-foreground">{t("sm.customDeliveryNote")}</p>}
                 <button
                   type="button"
                   onClick={handleExportPdf}
@@ -837,7 +839,8 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
           <span className="font-mono font-semibold text-lg">{c.number}</span>
         </div>
       )}
-      <p className="mt-3 text-sm">{t("cart.confirm.reply")}</p>
+      {c.hasRental && <p className="mt-3 text-sm">{t("cart.confirm.reply")}</p>}
+      {c.lines.some((l) => l.custom) && <p className="mt-1 text-sm">{t("cart.confirm.replyCustom")}</p>}
       {!c.emailClientOk && (
         <div role="alert" className="mt-4 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
           {t("cart.confirm.emailFailed")}
@@ -882,8 +885,11 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
           <span>{formatPrice(tt.total_ttc, lang)}</span>
         </div>
         <Row label={t("cart.deposits")} value={formatPrice(tt.total_deposit, lang)} />
+        <p className="pt-1 text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</p>
+        <p className="text-[11px] text-muted-foreground">{t("cart.estimateNote")}</p>
       </div>
       )}
+      {c.lines.some((l) => l.custom) && <p className="mt-2 text-[11px] text-muted-foreground">{t("sm.customDeliveryNote")}</p>}
       <Link to="/catalogue" className="mt-6 inline-flex items-center gap-2 bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-semibold hover:bg-foreground/90 transition-colors">
         {t("cart.confirm.back")}
       </Link>

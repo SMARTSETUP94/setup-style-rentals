@@ -49,3 +49,10 @@
 - B (390 px) : /, /sur-mesure, /sur-mesure/stele, /devis (2 lignes), /contact sans débordement horizontal ; « Cotes », « Recadrer » et « Ajouter à ma demande » du configurateur sont libres (rien du site par-dessus).
 - Défauts corrigés : libellé « Livraison & Reprise » sur les frais de livraison seuls (doublon visuel avec « Reprise ») → « Livraison » / « Delivery » ; 404 de S4 = /favicon.ico absent (demandé par l'iframe) → favicon ajouté et déclaré.
 - Non vérifié : réception réelle des mails dans la boîte, admin à l'écran.
+
+## S6
+- Frais : formule « forfait indicatif pour Paris et l'Île-de-France, confirmé par devis » (FR/EN) dans i18n, métadonnées fiche produit et /devis, llms.txt, mail client ; phrase « Estimation indicative… » sous les totaux, sur la confirmation et dans le mail.
+- Sur-mesure seul : aucun forfait (déjà le cas dans le calcul) ; ajout « Livraison et pose du sur-mesure : sur devis » sur /devis, la confirmation et le mail.
+- Délais : 24 h ouvrées (location) et « prix et délai de fabrication confirmés sous 48 h ouvrées » (sur-mesure), alignés sur la confirmation, le mail, le libellé prix des lignes et le message « Demande envoyée » (24h → 24 h ouvrées). Écart restant : la barre du configurateur affiche « Prix sur devis sous 48 h » (fichier non modifiable).
+- /admin/devis : bouton « Exporter en CSV » sur la liste filtrée (12 colonnes demandées).
+- Compilation OK ; /devis à 390 px avec 2 lignes : pas de débordement, notes lisibles. Non vérifié : export CSV et mail réels à l'écran.

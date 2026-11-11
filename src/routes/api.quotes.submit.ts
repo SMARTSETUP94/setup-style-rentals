@@ -358,8 +358,8 @@ function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals,
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
       <h1 style="font-size:22px;margin:0 0 8px;">Merci ${escapeHtml(p.customer_name)} !</h1>
       <p style="font-size:14px;line-height:1.6;color:#555;">
-        Nous avons bien reçu votre demande de devis <strong>${escapeHtml(number)}</strong>. Notre équipe revient vers vous sous 24 h ouvrées
-        avec une proposition personnalisée.
+        Nous avons bien reçu votre demande de devis <strong>${escapeHtml(number)}</strong>. ${items.length ? "Notre équipe revient vers vous sous 24 h ouvrées avec une proposition personnalisée." : ""}
+        ${customs.length ? "Pour le sur-mesure : prix et délai de fabrication confirmés sous 48 h ouvrées." : ""}
       </p>
       ${(p.delivery_time || p.pickup_time || p.event_date || p.event_location) ? `
       <div style="margin-top:16px;padding:14px 16px;background:#f9f9f9;border-radius:8px;font-size:14px;line-height:1.7;">
@@ -372,9 +372,8 @@ function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals,
       <h2 style="font-size:16px;margin:24px 0 8px;">Récapitulatif de votre demande ${escapeHtml(number)}</h2>
       ${rentalBlock(items, t)}
       ${customBlock(p, customs)}
-      <p style="margin-top:24px;font-size:13px;color:#666;">
-        Cette estimation est indicative. Le devis final dépendra des disponibilités et de la logistique.
-      </p>
+      ${items.length ? `<p style="margin-top:24px;font-size:13px;color:#666;">Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.<br/>Estimation indicative. Le devis final dépend des disponibilités et de la logistique.</p>` : ""}
+      ${customs.length ? `<p style="margin-top:8px;font-size:13px;color:#666;">Livraison et pose du sur-mesure : sur devis.</p>` : ""}
       <p style="margin-top:24px;font-size:14px;">— L'équipe Setup Paris</p>
     </div>`;
 }

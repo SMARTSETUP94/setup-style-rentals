@@ -157,6 +157,36 @@ export type Database = {
           },
         ]
       }
+      custom_pricing: {
+        Row: {
+          enabled: boolean
+          from_price_ht: number
+          lead_time_days: number | null
+          piece: string
+          updated_at: string | null
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          from_price_ht?: number
+          lead_time_days?: number | null
+          piece: string
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          from_price_ht?: number
+          lead_time_days?: number | null
+          piece?: string
+          updated_at?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: []
+      }
       product_option_categories: {
         Row: {
           created_at: string
@@ -466,6 +496,30 @@ export type Database = {
         }
         Relationships: []
       }
+      site_events: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+          path: string | null
+          ref: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          name: string
+          path?: string | null
+          ref?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
+          name?: string
+          path?: string | null
+          ref?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string
@@ -540,6 +594,14 @@ export type Database = {
         Returns: {
           available: number
           product_id: string
+        }[]
+      }
+      get_custom_public_pricing: {
+        Args: never
+        Returns: {
+          from_price_ht: number
+          lead_time_days: number
+          piece: string
         }[]
       }
       has_role: {

@@ -121,7 +121,7 @@ function ChiffragePage() {
         <div className="lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto">
           {rowLoaded && (
             <ChiffragePanel
-              key={`${pieceKey}-${row?.id ?? "new"}-${qty}`}
+              key={`${pieceKey}-${row?.id ?? "new"}`}
               configuration={usesStored ? null : panelConfig}
               configId={usesStored ? row!.id : null}
               saveId={row && row.piece === pieceKey ? row.id : null}

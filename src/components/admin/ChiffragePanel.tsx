@@ -79,6 +79,14 @@ export function ChiffragePanel({
   const [showDebit, setShowDebit] = useState(false);
   const [tick, setTick] = useState(0);
   const reqId = useRef(0);
+  const firstQty = useRef(true);
+  useEffect(() => {
+    if (firstQty.current) {
+      firstQty.current = false;
+      return;
+    }
+    setQty(initialQty);
+  }, [initialQty]);
 
   const confKey = configuration ? JSON.stringify(configuration) : null;
   useEffect(() => {

@@ -32,6 +32,7 @@ import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminDevisRouteImport } from './routes/admin.devis'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
+import { Route as AdminChiffrageRouteImport } from './routes/admin.chiffrage'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
@@ -153,6 +154,11 @@ const AdminClientsRoute = AdminClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminChiffrageRoute = AdminChiffrageRouteImport.update({
+  id: '/chiffrage',
+  path: '/chiffrage',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/chiffrage': typeof AdminChiffrageRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/chiffrage': typeof AdminChiffrageRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/admin/auth': typeof AdminAuthRoute
   '/admin/calendrier': typeof AdminCalendrierRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/chiffrage': typeof AdminChiffrageRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/chiffrage'
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/chiffrage'
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/admin/auth'
     | '/admin/calendrier'
     | '/admin/categories'
+    | '/admin/chiffrage'
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
@@ -545,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminClientsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/chiffrage': {
+      id: '/admin/chiffrage'
+      path: '/chiffrage'
+      fullPath: '/admin/chiffrage'
+      preLoaderRoute: typeof AdminChiffrageRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -587,6 +606,7 @@ interface AdminRouteChildren {
   AdminAuthRoute: typeof AdminAuthRoute
   AdminCalendrierRoute: typeof AdminCalendrierRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminChiffrageRoute: typeof AdminChiffrageRoute
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDevisRoute: typeof AdminDevisRoute
   AdminProductsRoute: typeof AdminProductsRoute
@@ -600,6 +620,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthRoute: AdminAuthRoute,
   AdminCalendrierRoute: AdminCalendrierRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminChiffrageRoute: AdminChiffrageRoute,
   AdminClientsRoute: AdminClientsRoute,
   AdminDevisRoute: AdminDevisRoute,
   AdminProductsRoute: AdminProductsRoute,

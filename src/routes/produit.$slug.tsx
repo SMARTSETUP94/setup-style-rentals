@@ -240,6 +240,7 @@ function ProductPage() {
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const close3DButtonRef = useRef<HTMLButtonElement | null>(null);
   /** Origin of the configurator iframe — target for outgoing postMessage. */
   const configuratorOrigin = (() => {
     try {
@@ -833,9 +834,15 @@ function ProductPage() {
 
   return (
     <div className="pt-20 md:pt-24">
+      <ConfiguratorFocus open={!!product.configurator_url && is3DMode} closeRef={close3DButtonRef} onEscape={() => close3DButtonRef.current?.click()} />
       {/* Immersive 3D mode — covers the page body, hides title/breadcrumbs/pricing */}
       {product.configurator_url && is3DMode && (
-        <div className="fixed inset-0 z-[60] bg-background animate-fade-in md:top-24">
+        <div
+          className="fixed inset-0 z-[60] bg-background animate-fade-in md:top-24"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
+        >
           <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)]">
             <iframe
               ref={inlineIframeRef}
@@ -853,6 +860,7 @@ function ProductPage() {
               }}
             />
             <button
+              ref={close3DButtonRef}
               type="button"
               onClick={() => {
                 // If the user has interacted with the configurator (we
@@ -877,7 +885,7 @@ function ProductPage() {
               className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.resetConfigTitle")}
             >
-              <RotateCcw className="size-4" />
+              <RotateCcw className="size-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -1465,4 +1473,31 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
       <span className={cn(highlight && "text-accent font-medium")}>{value}</span>
     </div>
   );
+}
+
+/**
+ * Keyboard support for the full-screen 3D configurator: moves focus to the
+ * Close button when it opens, closes on Escape (when focus is outside the
+ * iframe), and returns focus to the element that opened it.
+ */
+function ConfiguratorFocus({ open, closeRef, onEscape }: { open: boolean; closeRef: React.RefObject<HTMLButtonElement | null>; onEscape: () => void }) {
+  const openerRef = useRef<HTMLElement | null>(null);
+  const escRef = useRef(onEscape);
+  escRef.current = onEscape;
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    const id = requestAnimationFrame(() => closeRef.current?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.querySelector('[role="alertdialog"]')) escRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(id);
+      document.removeEventListener("keydown", onKey);
+      const opener = openerRef.current;
+      if (opener && document.contains(opener)) requestAnimationFrame(() => opener.focus());
+    };
+  }, [open, closeRef]);
+  return null;
 }

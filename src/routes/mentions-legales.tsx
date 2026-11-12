@@ -1,6 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Navbar } from "@/components/site/Navbar";
-import { Footer } from "@/components/site/Footer";
 import { useI18n } from "@/lib/i18n";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
@@ -29,13 +27,12 @@ function LegalPage() {
   const { lang } = useI18n();
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 container-x py-16 md:py-24">
+      <div className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <Link
               to="/"
-              className="text-xs uppercase tracking-[0.22em] text-gold hover:underline"
+              className="text-xs uppercase tracking-[0.22em] text-gold-ink hover:underline"
             >
               ← {lang === "fr" ? "Retour à l'accueil" : "Back to home"}
             </Link>
@@ -46,8 +43,7 @@ function LegalPage() {
             {lang === "fr" ? "Tous droits réservés." : "All rights reserved."}
           </p>
         </div>
-      </main>
-      <Footer />
+      </div>
     </div>
   );
 }
@@ -64,7 +60,7 @@ function Sub({ children }: { children: React.ReactNode }) {
 }
 function H2({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="font-display text-xl md:text-2xl font-semibold mt-10 mb-3 text-gold">
+    <h2 className="font-display text-xl md:text-2xl font-semibold mt-10 mb-3 text-gold-ink">
       {children}
     </h2>
   );
@@ -114,21 +110,21 @@ function ContentFR() {
         </p>
         <p>
           <strong>Téléphone :</strong>{" "}
-          <a href="tel:+33143911045" className="text-gold hover:underline">
+          <a href="tel:+33143911045" className="text-gold-ink hover:underline">
             01 43 91 10 45
           </a>{" "}
           ·{" "}
-          <a href="tel:+33601416111" className="text-gold hover:underline">
+          <a href="tel:+33601416111" className="text-gold-ink hover:underline">
             +33 6 01 41 61 11
           </a>
         </p>
         <p>
           <strong>Email :</strong>{" "}
-          <a href="mailto:contact@setup.paris" className="text-gold hover:underline">
+          <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
             contact@setup.paris
           </a>{" "}
           ·{" "}
-          <a href="mailto:smart@setup.paris" className="text-gold hover:underline">
+          <a href="mailto:smart@setup.paris" className="text-gold-ink hover:underline">
             smart@setup.paris
           </a>
         </p>
@@ -138,7 +134,7 @@ function ContentFR() {
             href="https://www.setup.paris"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gold hover:underline"
+            className="text-gold-ink hover:underline"
           >
             www.setup.paris
           </a>
@@ -268,7 +264,7 @@ function ContentFR() {
       <P>
         Le site est hébergé par <strong>Lovable</strong>. Pour toute information
         relative à l'hébergement, contactez-nous à{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold hover:underline">
+        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
           contact@setup.paris
         </a>
         .
@@ -287,7 +283,7 @@ function ContentFR() {
       <P>
         Pour les conditions spécifiques à la location de mobilier et d'objets
         événementiels, consultez nos{" "}
-        <Link to="/cgl" className="text-gold hover:underline font-medium">
+        <Link to="/cgl" className="text-gold-ink hover:underline font-medium">
           Conditions générales de location
         </Link>
         .
@@ -316,21 +312,21 @@ function ContentEN() {
         </p>
         <p>
           <strong>Phone:</strong>{" "}
-          <a href="tel:+33143911045" className="text-gold hover:underline">
+          <a href="tel:+33143911045" className="text-gold-ink hover:underline">
             +33 1 43 91 10 45
           </a>{" "}
           ·{" "}
-          <a href="tel:+33601416111" className="text-gold hover:underline">
+          <a href="tel:+33601416111" className="text-gold-ink hover:underline">
             +33 6 01 41 61 11
           </a>
         </p>
         <p>
           <strong>Email:</strong>{" "}
-          <a href="mailto:contact@setup.paris" className="text-gold hover:underline">
+          <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
             contact@setup.paris
           </a>{" "}
           ·{" "}
-          <a href="mailto:smart@setup.paris" className="text-gold hover:underline">
+          <a href="mailto:smart@setup.paris" className="text-gold-ink hover:underline">
             smart@setup.paris
           </a>
         </p>
@@ -340,7 +336,7 @@ function ContentEN() {
             href="https://www.setup.paris"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gold hover:underline"
+            className="text-gold-ink hover:underline"
           >
             www.setup.paris
           </a>
@@ -469,7 +465,7 @@ function ContentEN() {
       <P>
         The site is hosted by <strong>Lovable</strong>. For any information
         regarding hosting, please contact us at{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold hover:underline">
+        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
           contact@setup.paris
         </a>
         .
@@ -486,7 +482,7 @@ function ContentEN() {
       <H2>See also</H2>
       <P>
         For terms specific to the rental of event furniture and objects, see our{" "}
-        <Link to="/cgl" className="text-gold hover:underline font-medium">
+        <Link to="/cgl" className="text-gold-ink hover:underline font-medium">
           General rental terms and conditions
         </Link>
         .

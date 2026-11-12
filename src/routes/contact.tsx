@@ -114,23 +114,23 @@ function ContactPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
+      <div className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-5xl mx-auto grid gap-12 md:grid-cols-[1fr_1.4fr]">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-gold font-medium">{tx.eyebrow}</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-gold-ink font-medium">{tx.eyebrow}</div>
             <h1 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">{tx.title}</h1>
             <p className="mt-4 text-muted-foreground">{tx.intro}</p>
             <ul className="mt-8 space-y-4 text-sm">
               <li className="flex items-start gap-3">
-                <Phone className="size-4 mt-0.5 text-gold shrink-0" />
+                <Phone className="size-4 mt-0.5 text-gold-ink shrink-0" />
                 <a href="tel:+33601416111" className="hover:underline">06 01 41 61 11</a>
               </li>
               <li className="flex items-start gap-3">
-                <Mail className="size-4 mt-0.5 text-gold shrink-0" />
+                <Mail className="size-4 mt-0.5 text-gold-ink shrink-0" />
                 <a href="mailto:smart@setup.paris" className="hover:underline">smart@setup.paris</a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin className="size-4 mt-0.5 text-gold shrink-0" />
+                <MapPin className="size-4 mt-0.5 text-gold-ink shrink-0" />
                 <span>8 avenue du Président Salvador Allende<br />Vitry-sur-Seine</span>
               </li>
             </ul>
@@ -187,7 +187,7 @@ function ContactPage() {
             )}
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

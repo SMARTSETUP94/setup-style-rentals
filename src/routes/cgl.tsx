@@ -1,6 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Navbar } from "@/components/site/Navbar";
-import { Footer } from "@/components/site/Footer";
 import { useI18n } from "@/lib/i18n";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
@@ -29,13 +27,12 @@ function CGLPage() {
   const { lang } = useI18n();
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 container-x py-16 md:py-24">
+      <div className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-3xl mx-auto">
           <div className="mb-8">
             <Link
               to="/"
-              className="text-xs uppercase tracking-[0.22em] text-gold hover:underline"
+              className="text-xs uppercase tracking-[0.22em] text-gold-ink hover:underline"
             >
               ← {lang === "fr" ? "Retour à l'accueil" : "Back to home"}
             </Link>
@@ -47,8 +44,7 @@ function CGLPage() {
               : "Last updated: April 2026"}
           </p>
         </div>
-      </main>
-      <Footer />
+      </div>
     </div>
   );
 }
@@ -60,7 +56,7 @@ function Sub({ children }: { children: React.ReactNode }) {
   return <p className="text-muted-foreground mb-10">{children}</p>;
 }
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-display text-xl md:text-2xl font-semibold mt-10 mb-3 text-gold">{children}</h2>;
+  return <h2 className="font-display text-xl md:text-2xl font-semibold mt-10 mb-3 text-gold-ink">{children}</h2>;
 }
 function P({ children }: { children: React.ReactNode }) {
   return <p className="text-sm md:text-base leading-relaxed text-foreground/85 mb-3">{children}</p>;
@@ -255,7 +251,7 @@ function ContentFR() {
         Informatique et Libertés. Elles sont utilisées exclusivement pour le traitement des commandes,
         la facturation et la communication commerciale. Le Client dispose d'un droit d'accès, de
         rectification, de suppression et d'opposition en contactant Setup Paris à l'adresse email :{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold hover:underline">contact@setup.paris</a>.
+        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">contact@setup.paris</a>.
       </P>
 
       <H2>Article 14 — Droit applicable et litiges</H2>
@@ -464,7 +460,7 @@ function ContentEN() {
         Act. It is used exclusively for order processing, invoicing and commercial communication.
         The Client has the right to access, rectify, delete and object to their data by contacting
         Setup Paris at the email address:{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold hover:underline">contact@setup.paris</a>.
+        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">contact@setup.paris</a>.
       </P>
 
       <H2>Article 14 — Applicable law and disputes</H2>

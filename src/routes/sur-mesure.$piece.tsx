@@ -309,7 +309,7 @@ function PiecePage() {
 
       {/* Indexable text (behind the immersive layer) */}
       <div className="container-x">
-        <Link to="/sur-mesure" className="text-xs uppercase tracking-[0.22em] text-gold hover:underline">← {tx.back}</Link>
+        <Link to="/sur-mesure" className="text-xs uppercase tracking-[0.22em] text-gold-ink hover:underline">← {tx.back}</Link>
         {family && <div className="mt-4 text-sm text-muted-foreground">{lang === "fr" ? family.fr : family.en}</div>}
         <h1 className="mt-2 font-display font-semibold text-4xl tracking-tight">
           {lang === "fr" ? piece.nom : piece.name_en} {tx.suffix}

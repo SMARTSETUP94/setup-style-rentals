@@ -141,7 +141,7 @@ function HomePage() {
           ].map((b, i) => {
             const inner = (
               <>
-                <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold">
+                <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold-ink">
                   <b.i className="size-4" strokeWidth={2} />
                 </span>
                 <span className="leading-tight">{b.label}</span>
@@ -250,7 +250,7 @@ function HomePage() {
             <SectionHeader num="04" title={t("featured.title")} sub={t("featured.sub")} />
             <Link
               to="/catalogue"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold transition-colors duration-300 shrink-0"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold-ink transition-colors duration-300 shrink-0"
             >
               {t("featured.all")}
               <ArrowRight className="size-4" />
@@ -302,8 +302,8 @@ function HomePage() {
               className="rounded-xl border border-border p-7 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-gold tracking-widest">0{idx + 1}</span>
-                <s.i className="size-5 text-gold" />
+                <span className="text-xs font-mono text-gold-ink tracking-widest">0{idx + 1}</span>
+                <s.i className="size-5 text-gold-ink" />
               </div>
               <h4 className="mt-6 font-display font-semibold text-xl">{s.t}</h4>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.d}</p>

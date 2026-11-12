@@ -455,7 +455,7 @@ function QuotePage() {
                             )}
                             {(item.configuratorRecapHtml || item.configuratorRecap) && (
                               <div className="mt-2 rounded-md border border-gold/30 bg-gold/5 p-2">
-                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold font-semibold mb-1">
+                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold-ink font-semibold mb-1">
                                   <Wand2 className="size-3" />
                                   {t("cart.configRecap")}
                                 </div>
@@ -531,7 +531,7 @@ function QuotePage() {
               {hasCustom && (
                 <div className="space-y-4">
                   <h2 className="font-display font-semibold text-xl flex items-center gap-2">
-                    <Hammer className="size-5 text-gold" /> {t("sm.blockCustom")}
+                    <Hammer className="size-5 text-gold-ink" /> {t("sm.blockCustom")}
                   </h2>
                   {customItems.map((item) => (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
@@ -624,7 +624,7 @@ function QuotePage() {
                 )}
                 {hasCustom && (
                   <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 space-y-3">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-gold">{t("sm.blockCustom")}</div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-gold-ink">{t("sm.blockCustom")}</div>
                     <Input label={t("sm.deliveryDate")} type="date" value={form.custom_delivery_date} onChange={(v) => setForm({ ...form, custom_delivery_date: v })} />
                     <fieldset>
                       <legend className="text-xs text-muted-foreground">{t("sm.afterEvent")}</legend>

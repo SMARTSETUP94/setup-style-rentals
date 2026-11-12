@@ -969,7 +969,7 @@ function ProductPage() {
         {/* Details — 40% on desktop */}
         <div className="lg:col-span-2">
           {category && (
-            <div className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold border border-gold/20">
+            <div className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold-ink border border-gold/20">
               {pickLang(category, "name", lang)}
             </div>
           )}
@@ -1021,7 +1021,7 @@ function ProductPage() {
             <div className="mt-4 rounded-xl border border-gold/40 bg-gold/5 p-4 animate-fade-in">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold">
+                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold-ink">
                     <Check className="size-4" />
                   </span>
                   <div className="text-sm font-semibold">
@@ -1067,7 +1067,7 @@ function ProductPage() {
                 <div key={i} className="rounded-lg bg-background border border-border p-4 text-center">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.label}</div>
                   {p.value != null ? (
-                    <div className="mt-2 font-display font-semibold text-xl text-gold">
+                    <div className="mt-2 font-display font-semibold text-xl text-gold-ink">
                       {formatPrice(p.value, lang)}
                     </div>
                   ) : (
@@ -1091,7 +1091,7 @@ function ProductPage() {
               </div>
               {autoSelectedCatIds.size > 0 && (
                 <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5 -mt-2">
-                  <Wand2 className="size-3.5 text-gold/80" />
+                  <Wand2 className="size-3.5 text-gold-ink/80" />
                   {t("product.optionsFrom3D")}
                 </p>
               )}
@@ -1164,13 +1164,13 @@ function ProductPage() {
                                 {active && autoSelectedCatIds.has(cat.id) && (
                                   <span
                                     title={t("product.autoSelectedHint")}
-                                    className="inline-flex items-center text-gold/80"
+                                    className="inline-flex items-center text-gold-ink/80"
                                   >
                                     <Wand2 className="size-3.5" />
                                   </span>
                                 )}
                               </span>
-                              {active && <Check className="size-4 text-gold shrink-0" />}
+                              {active && <Check className="size-4 text-gold-ink shrink-0" />}
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {o.price > 0
@@ -1320,7 +1320,7 @@ function ProductPage() {
               ))}
               {activeConfiguratorOptionsList.length > 0 && (
                 <div className="pt-1 border-t border-dashed border-border/60 mt-1">
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-gold-ink/80 font-semibold mb-1 flex items-center gap-1">
                     <Wand2 className="size-3" />
                     {t("product.threeDConfiguration")}
                   </div>
@@ -1365,7 +1365,7 @@ function ProductPage() {
                       : qty > availableStock
                         ? "border-destructive/40 bg-destructive/5 text-destructive"
                         : availableStock <= 2
-                          ? "border-gold/40 bg-gold/5 text-gold"
+                          ? "border-gold/40 bg-gold/5 text-gold-ink"
                           : "border-accent/40 bg-accent/5 text-accent",
               )}
             >

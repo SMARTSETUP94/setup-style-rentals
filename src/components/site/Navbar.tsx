@@ -47,7 +47,7 @@ export function Navbar() {
             rel="noopener noreferrer"
             className={cn(
               "text-[9px] sm:text-[10px] font-medium tracking-wider uppercase whitespace-nowrap transition-opacity hover:opacity-100 leading-none self-end pb-0.5",
-              transparent ? "text-white/70" : "text-muted-foreground",
+              transparent ? "text-white/90" : "text-muted-foreground",
             )}
           >
             by setup.paris ↗

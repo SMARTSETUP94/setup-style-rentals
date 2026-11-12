@@ -136,7 +136,7 @@ function SurMesurePage() {
           <ol className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {tx.steps.map(([title, text], i) => (
               <li key={title} className="rounded-2xl border border-border bg-card p-5">
-                <div className="text-xs font-semibold text-gold">0{i + 1}</div>
+                <div className="text-xs font-semibold text-gold-ink">0{i + 1}</div>
                 <div className="mt-2 font-semibold">{title}</div>
                 <p className="mt-1 text-sm text-muted-foreground">{text}</p>
               </li>
@@ -152,7 +152,7 @@ function SurMesurePage() {
             return (
               <div key={f.key} className="mt-8">
                 <h3 className="flex items-center gap-2 text-sm uppercase tracking-[0.18em] text-muted-foreground font-medium">
-                  <Icon className="size-4 text-gold" /> {lang === "fr" ? f.fr : f.en}
+                  <Icon className="size-4 text-gold-ink" /> {lang === "fr" ? f.fr : f.en}
                 </h3>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {pieces.map((p) => (
@@ -163,7 +163,7 @@ function SurMesurePage() {
                       search={{ line: undefined, c: undefined }}
                       className="group rounded-2xl border border-border bg-card p-5 hover:border-foreground/30 hover:shadow-soft transition-all"
                     >
-                      <span className="inline-flex items-center justify-center size-10 rounded-full bg-gold/15 text-gold">
+                      <span className="inline-flex items-center justify-center size-10 rounded-full bg-gold/15 text-gold-ink">
                         <Icon className="size-4" />
                       </span>
                       <div className="mt-3 font-semibold">{lang === "fr" ? p.nom : p.name_en}</div>

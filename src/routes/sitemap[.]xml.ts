@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { SITE_URL } from "@/lib/seo";
+import { canonicalUrl } from "@/lib/seo";
 import { SUR_MESURE_PIECES } from "@/lib/sur-mesure";
 
 /**
@@ -58,26 +58,29 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const all = [...staticUrls, ...categoryUrls, ...productUrls];
 
-        // Each canonical URL is listed once (no ?lang param to avoid
-        // duplicate-content). FR/EN variants are declared via
-        // <xhtml:link rel="alternate" hreflang="..."> inside the same <url>
-        // entry, per Google's sitemap hreflang spec.
+        // Both language variants are listed (French at the clean URL, English
+        // under /en), each declaring fr/en/x-default alternates.
         const xml =
           `<?xml version="1.0" encoding="UTF-8"?>\n` +
           `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n` +
           `        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n` +
           all
-            .map((u) => {
-              const canonical = `${SITE_URL}${u.loc}`;
-              return (
-                `  <url>\n` +
-                `    <loc>${canonical}</loc>\n` +
-                (u.lastmod ? `    <lastmod>${u.lastmod}</lastmod>\n` : "") +
-                `    <changefreq>${u.changefreq}</changefreq>\n` +
-                `    <priority>${u.priority}</priority>\n` +
-                `    <xhtml:link rel="alternate" hreflang="fr" href="${canonical}"/>\n` +
-                `    <xhtml:link rel="alternate" hreflang="x-default" href="${canonical}"/>\n` +
-                `  </url>`
+            .flatMap((u) => {
+              const fr = canonicalUrl(u.loc, "fr");
+              const en = canonicalUrl(u.loc, "en");
+              const alts =
+                `    <xhtml:link rel="alternate" hreflang="fr" href="${fr}"/>\n` +
+                `    <xhtml:link rel="alternate" hreflang="en" href="${en}"/>\n` +
+                `    <xhtml:link rel="alternate" hreflang="x-default" href="${fr}"/>\n`;
+              return [fr, en].map(
+                (loc) =>
+                  `  <url>\n` +
+                  `    <loc>${loc}</loc>\n` +
+                  (u.lastmod ? `    <lastmod>${u.lastmod}</lastmod>\n` : "") +
+                  `    <changefreq>${u.changefreq}</changefreq>\n` +
+                  `    <priority>${u.priority}</priority>\n` +
+                  alts +
+                  `  </url>`,
               );
             })
             .join("\n") +

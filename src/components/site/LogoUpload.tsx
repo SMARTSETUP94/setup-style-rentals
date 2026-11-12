@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Upload, X, Check, Loader2, FileImage } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -32,20 +31,12 @@ export function LogoUpload({ value, onChange }: LogoUploadProps) {
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-      const safeBase = file.name
-        .replace(/\.[^.]+$/, "")
-        .replace(/[^a-zA-Z0-9_-]+/g, "-")
-        .slice(0, 60) || "logo";
-      const path = `client-logos/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${safeBase}.${ext}`;
-      const { error } = await supabase.storage.from("quote-uploads").upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type,
-      });
-      if (error) throw error;
-      const { data } = supabase.storage.from("quote-uploads").getPublicUrl(path);
-      onChange({ url: data.publicUrl, filename: file.name });
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/logo-upload", { method: "POST", body: fd });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      if (!res.ok || !data.url) throw new Error(`upload ${res.status}`);
+      onChange({ url: data.url, filename: file.name });
       toast.success(t("logoUpload.success"));
     } catch (err) {
       console.error("Logo upload failed:", err);

@@ -25,6 +25,7 @@ import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
 import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
 import { Route as ApiTrackRouteImport } from './routes/api.track'
 import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
+import { Route as ApiLogoUploadRouteImport } from './routes/api.logo-upload'
 import { Route as ApiContactRouteImport } from './routes/api.contact'
 import { Route as AdminSurMesureRouteImport } from './routes/admin.sur-mesure'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -120,6 +121,11 @@ const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
   path: '/api/send-quote-emails',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLogoUploadRoute = ApiLogoUploadRouteImport.update({
+  id: '/api/logo-upload',
+  path: '/api/logo-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiContactRoute = ApiContactRouteImport.update({
   id: '/api/contact',
   path: '/api/contact',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sur-mesure': typeof AdminSurMesureRoute
   '/api/contact': typeof ApiContactRoute
+  '/api/logo-upload': typeof ApiLogoUploadRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/api/track': typeof ApiTrackRoute
   '/categorie/$slug': typeof CategorieSlugRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sur-mesure': typeof AdminSurMesureRoute
   '/api/contact': typeof ApiContactRoute
+  '/api/logo-upload': typeof ApiLogoUploadRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/api/track': typeof ApiTrackRoute
   '/categorie/$slug': typeof CategorieSlugRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sur-mesure': typeof AdminSurMesureRoute
   '/api/contact': typeof ApiContactRoute
+  '/api/logo-upload': typeof ApiLogoUploadRoute
   '/api/send-quote-emails': typeof ApiSendQuoteEmailsRoute
   '/api/track': typeof ApiTrackRoute
   '/categorie/$slug': typeof CategorieSlugRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/sur-mesure'
     | '/api/contact'
+    | '/api/logo-upload'
     | '/api/send-quote-emails'
     | '/api/track'
     | '/categorie/$slug'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/sur-mesure'
     | '/api/contact'
+    | '/api/logo-upload'
     | '/api/send-quote-emails'
     | '/api/track'
     | '/categorie/$slug'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/sur-mesure'
     | '/api/contact'
+    | '/api/logo-upload'
     | '/api/send-quote-emails'
     | '/api/track'
     | '/categorie/$slug'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiContactRoute: typeof ApiContactRoute
+  ApiLogoUploadRoute: typeof ApiLogoUploadRoute
   ApiSendQuoteEmailsRoute: typeof ApiSendQuoteEmailsRoute
   ApiTrackRoute: typeof ApiTrackRoute
   CategorieSlugRoute: typeof CategorieSlugRoute
@@ -519,6 +532,13 @@ declare module '@tanstack/react-router' {
       path: '/api/send-quote-emails'
       fullPath: '/api/send-quote-emails'
       preLoaderRoute: typeof ApiSendQuoteEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/logo-upload': {
+      id: '/api/logo-upload'
+      path: '/api/logo-upload'
+      fullPath: '/api/logo-upload'
+      preLoaderRoute: typeof ApiLogoUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/contact': {
@@ -663,6 +683,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiContactRoute: ApiContactRoute,
+  ApiLogoUploadRoute: ApiLogoUploadRoute,
   ApiSendQuoteEmailsRoute: ApiSendQuoteEmailsRoute,
   ApiTrackRoute: ApiTrackRoute,
   CategorieSlugRoute: CategorieSlugRoute,

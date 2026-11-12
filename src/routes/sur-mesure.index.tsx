@@ -189,7 +189,7 @@ function SurMesurePage() {
                         <ArrowRight aria-hidden className="size-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" />
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{lang === "fr" ? p.desc : p.desc_en}</p>
-                      {priceLines(prices[p.k], lang).map((l) => (
+                      {prices[p.k]?.from_price_ht != null && priceLines(prices[p.k], lang).slice(0, 1).map((l) => (
                         <p key={l} className="mt-2 text-xs font-medium text-foreground">{l}</p>
                       ))}
                       <span className="sr-only">{tx.configure}</span>

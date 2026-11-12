@@ -197,6 +197,7 @@ function CategoryPage() {
       </div>
 
       <div className="container-x mt-6 pb-16">
+        <h2 className="sr-only">{lang === "en" ? "Products" : "Produits"}</h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (

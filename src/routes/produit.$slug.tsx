@@ -13,7 +13,7 @@ import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, 
 import { ProductImage } from "@/components/site/ProductImage";
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
-import { canonicalUrl, SITE_URL, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -107,19 +107,22 @@ export const Route = createFileRoute("/produit/$slug")({
       .maybeSingle();
     return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null; price_day: number; stock_total: number; category_slug: string } | null };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, match }) => {
+    const lang = headLang(match);
     const m = loaderData?.meta;
     if (!m) {
       return {
         meta: [
-          { title: "Produit — Setup Paris" },
-          { name: "description", content: "Location d'objets événementiels à Paris." },
+          { title: L(lang, "Produit — Setup Paris", "Product — Setup Paris") },
+          { name: "description", content: L(lang, "Location d'objets événementiels à Paris.", "Event object rentals in Paris.") },
         ],
       };
     }
-    const title = `${m.name_fr} — Setup Paris`;
-    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.`;
-    const productUrl = canonicalUrl(`/produit/${m.slug}`);
+    const name = lang === "en" ? m.name_en || m.name_fr : m.name_fr;
+    const desc = lang === "en" ? m.description_en || m.description_fr : m.description_fr;
+    const title = `${name} — Setup Paris`;
+    const description = desc?.slice(0, 160) || L(lang, `Louez ${name} chez Setup Paris : configurateur 3D. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.`, `Rent ${name} from Setup Paris with a 3D configurator. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.`);
+    const productUrl = canonicalUrl(`/produit/${m.slug}`, lang);
     const meta: Array<Record<string, string>> = [
       { title },
       { name: "description", content: description },
@@ -130,6 +133,7 @@ export const Route = createFileRoute("/produit/$slug")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
+      ...localeMeta(lang),
     ];
     if (m.image_url) {
       meta.push({ property: "og:image", content: m.image_url });
@@ -138,8 +142,9 @@ export const Route = createFileRoute("/produit/$slug")({
     const jsonLd: Record<string, unknown> = {
       "@context": "https://schema.org/",
       "@type": "Product",
-      name: m.name_fr,
+      name,
       description,
+      inLanguage: lang,
       sku: m.slug,
       category: m.category_slug,
       url: productUrl,
@@ -166,22 +171,22 @@ export const Route = createFileRoute("/produit/$slug")({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Accueil", item: `${SITE_URL}/` },
-        { "@type": "ListItem", position: 2, name: "Catalogue", item: `${SITE_URL}/catalogue` },
+        { "@type": "ListItem", position: 1, name: L(lang, "Accueil", "Home"), item: canonicalUrl("/", lang) },
+        { "@type": "ListItem", position: 2, name: "Catalogue", item: canonicalUrl("/catalogue", lang) },
         {
           "@type": "ListItem",
           position: 3,
           name: m.category_slug,
-          item: `${SITE_URL}/catalogue?categorie=${encodeURIComponent(m.category_slug)}`,
+          item: canonicalUrl(`/categorie/${encodeURIComponent(m.category_slug)}`, lang),
         },
-        { "@type": "ListItem", position: 4, name: m.name_fr, item: productUrl },
+        { "@type": "ListItem", position: 4, name, item: productUrl },
       ],
     };
     return {
       meta,
       links: [
-        { rel: "canonical", href: productUrl },
-        ...hreflangLinks(`/produit/${m.slug}`),
+        ...seoLinks(`/produit/${m.slug}`, lang),
+        ...(m.image_url ? [{ rel: "preload", as: "image", href: m.image_url, fetchpriority: "high" }] : []),
       ],
       scripts: [
         {

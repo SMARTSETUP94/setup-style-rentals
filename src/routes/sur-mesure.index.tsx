@@ -2,41 +2,48 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ConciergeBell, Boxes, Signpost, Armchair, type LucideIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useCustomPublicPricing, priceLines } from "@/lib/custom-pricing";
-import { canonicalLink, hreflangLinks, canonicalUrl, serviceJsonLd } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks, serviceJsonLd } from "@/lib/seo";
 import { SUR_MESURE_FAMILIES, SUR_MESURE_PIECES, type SurMesureFamily } from "@/lib/sur-mesure";
 
 export const Route = createFileRoute("/sur-mesure/")({
-  head: () => ({
-    meta: [
-      { title: "Mobilier événementiel sur mesure — Setup Paris" },
-      {
-        name: "description",
-        content:
-          "Faites fabriquer votre mobilier événementiel sur mesure : comptoirs, stèles, podiums, totems, arches… Configurez en 3D, prix et délai confirmés sous 48 h ouvrées.",
-      },
-      { property: "og:title", content: "Mobilier événementiel sur mesure — Setup Paris" },
-      {
-        property: "og:description",
-        content: "24 pièces à vos cotes et finitions, configurées en 3D. Prix et délai confirmés sous 48 h ouvrées.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: canonicalUrl("/sur-mesure") },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [canonicalLink("/sur-mesure"), ...hreflangLinks("/sur-mesure")],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(
-          serviceJsonLd(
-            "Fabrication de mobilier événementiel sur mesure",
-            "Comptoirs, stèles, podiums, totems, arches et assises fabriqués à vos cotes et finitions, configurés en 3D.",
-            canonicalUrl("/sur-mesure"),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Mobilier événementiel sur mesure — Setup Paris", "Custom-made event furniture — Setup Paris");
+    return {
+      meta: [
+        { title },
+        {
+          name: "description",
+          content: L(lang,
+            "Faites fabriquer votre mobilier événementiel sur mesure : comptoirs, stèles, podiums, totems, arches… Configurez en 3D, prix et délai confirmés sous 48 h ouvrées.",
+            "Have your event furniture custom-made: counters, plinths, podiums, totems, arches… Configure in 3D; price and production time confirmed within two business days."),
+        },
+        { property: "og:title", content: title },
+        {
+          property: "og:description",
+          content: L(lang, "24 pièces à vos cotes et finitions, configurées en 3D. Prix et délai confirmés sous 48 h ouvrées.", "24 pieces to your dimensions and finishes, configured in 3D. Price and production time confirmed within two business days."),
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/sur-mesure", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: seoLinks("/sur-mesure", lang),
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(
+            serviceJsonLd(
+              L(lang, "Fabrication de mobilier événementiel sur mesure", "Custom-made event furniture production"),
+              L(lang, "Comptoirs, stèles, podiums, totems, arches et assises fabriqués à vos cotes et finitions, configurés en 3D.", "Counters, plinths, podiums, totems, arches and seating made to your dimensions and finishes, configured in 3D."),
+              canonicalUrl("/sur-mesure", lang),
+              lang,
+            ),
           ),
-        ),
-      },
-    ],
-  }),
+        },
+      ],
+    };
+  },
   component: SurMesurePage,
 });
 

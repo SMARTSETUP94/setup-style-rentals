@@ -1,3 +1,4 @@
+import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, seoLinks } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, MousePointerClick, Truck, Wand2, Zap, Ruler, Sparkles } from "lucide-react";
@@ -7,7 +8,6 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
 import { ClientsBand } from "@/components/site/ClientsBand";
-import { canonicalLink, ogImageMeta, hreflangLinks } from "@/lib/seo";
 
 interface Category {
   id: string;
@@ -30,23 +30,28 @@ interface FeaturedProduct {
 }
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Setup Paris — Location d'objets événementiels" },
-      { name: "description", content: "Personnalisez, configurez, louez. Catalogue d'objets événementiels avec configurateur 3D : jeux, structures, signalétique, décoration, mobilier." },
-      { property: "og:title", content: "Setup Paris — Location d'objets événementiels" },
-      { property: "og:description", content: "Personnalisez, configurez, louez." },
-      ...ogImageMeta(
-        "https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg",
-        { alt: "Setup Paris — Location d'objets événementiels personnalisables" },
-      ),
-    ],
-    links: [
-      canonicalLink("/"),
-      ...hreflangLinks("/"),
-      { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
-    ],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Setup Paris — Location d'objets événementiels", "Setup Paris — Event object rentals in Paris");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Personnalisez, configurez, louez. Catalogue d'objets événementiels avec configurateur 3D : jeux, structures, signalétique, décoration, mobilier.", "Customize, configure, rent. A catalogue of event objects with a 3D configurator: games, structures, signage, decor and furniture in Paris.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Personnalisez, configurez, louez.", "Customize, configure, rent.") },
+        { property: "og:url", content: canonicalUrl("/", lang) },
+        ...localeMeta(lang),
+        ...ogImageMeta(
+          "https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg",
+          { alt: L(lang, "Setup Paris — Location d'objets événementiels personnalisables", "Setup Paris — Customizable event object rentals") },
+        ),
+      ],
+      links: [
+        ...seoLinks("/", lang),
+        { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
+      ],
+    };
+  },
   component: HomePage,
 });
 

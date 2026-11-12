@@ -8,7 +8,7 @@ import { useCustomPublicPricing, priceLines, rangeLine, studyLine, type PublicRa
 import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
-import { canonicalLink, canonicalUrl, hreflangLinks, serviceJsonLd } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks, serviceJsonLd } from "@/lib/seo";
 import { getPiece, SurMesureConfigMessage, SUR_MESURE_FAMILIES, decodeConfigParam, configLink } from "@/lib/sur-mesure";
 
 const ALLOWED_TYPES = new Set(["sur-mesure-ready", "sur-mesure-config", "sur-mesure-save"]);
@@ -21,23 +21,27 @@ export const Route = createFileRoute("/sur-mesure/$piece")({
     if (!piece) throw notFound();
     return { piece };
   },
-  head: ({ loaderData, params }) => {
+  head: ({ loaderData, params, match }) => {
+    const lang = headLang(match);
     const p = loaderData?.piece;
-    if (!p) return { meta: [{ title: "Pièce introuvable — Setup Paris" }, { name: "robots", content: "noindex" }] };
-    const title = `${p.nom} sur mesure — Setup Paris`;
+    if (!p) return { meta: [{ title: L(lang, "Pièce introuvable — Setup Paris", "Piece not found — Setup Paris") }, { name: "robots", content: "noindex" }] };
+    const name = lang === "en" ? p.name_en : p.nom;
+    const desc = lang === "en" ? p.desc_en : p.desc;
+    const title = L(lang, `${name} sur mesure — Setup Paris`, `Custom-made ${name.toLowerCase()} — Setup Paris`);
     const path = `/sur-mesure/${params.piece}`;
     return {
       meta: [
         { title },
-        { name: "description", content: `${p.desc} Configurez en 3D, prix et délai confirmés sous 48 h ouvrées.` },
+        { name: "description", content: L(lang, `${desc} Configurez en 3D, prix et délai confirmés sous 48 h ouvrées.`, `${desc} Configure in 3D; price and production time confirmed within two business days.`) },
         { property: "og:title", content: title },
-        { property: "og:description", content: p.desc },
+        { property: "og:description", content: desc },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: canonicalUrl(path) },
+        { property: "og:url", content: canonicalUrl(path, lang) },
+        ...localeMeta(lang),
         { name: "twitter:card", content: "summary" },
       ],
-      links: [canonicalLink(path), ...hreflangLinks(path)],
-      scripts: [{ type: "application/ld+json", children: JSON.stringify(serviceJsonLd(`${p.nom} sur mesure`, p.desc, canonicalUrl(path))) }],
+      links: seoLinks(path, lang),
+      scripts: [{ type: "application/ld+json", children: JSON.stringify(serviceJsonLd(title.replace(" — Setup Paris", ""), desc, canonicalUrl(path, lang), lang)) }],
     };
   },
   component: PiecePage,

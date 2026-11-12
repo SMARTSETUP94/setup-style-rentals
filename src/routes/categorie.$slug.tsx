@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
-import { canonicalLink, ogImageMeta, SITE_URL, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, SITE_URL, seoLinks } from "@/lib/seo";
 import {
   Accordion,
   AccordionContent,
@@ -50,24 +50,28 @@ export const Route = createFileRoute("/categorie/$slug")({
     if (error || !data) throw notFound();
     return { category: data as unknown as Category };
   },
-  head: ({ loaderData, params }) => {
+  head: ({ loaderData, params, match }) => {
+    const lang = headLang(match);
     const cat = loaderData?.category;
-    const nameFr = cat?.name_fr ?? params.slug;
-    const title = `${nameFr} — Location événementielle | Setup Paris`;
-    const description = `Location de ${nameFr.toLowerCase()} à Paris et en Île-de-France. Découvrez notre sélection Setup Paris.`;
+    const name = (lang === "en" ? cat?.name_en || cat?.name_fr : cat?.name_fr) ?? params.slug;
+    const title = L(lang, `${name} — Location événementielle | Setup Paris`, `${name} — Event rental | Setup Paris`);
+    const description = L(lang, `Location de ${name.toLowerCase()} à Paris et en Île-de-France. Découvrez notre sélection Setup Paris.`, `${name} for hire in Paris and Île-de-France. Discover the Setup Paris selection.`);
+    const path = `/categorie/${params.slug}`;
     return {
       meta: [
         { title },
         { name: "description", content: description },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
+        { property: "og:url", content: canonicalUrl(path, lang) },
+        ...localeMeta(lang),
         ...ogImageMeta(
           cat?.image_url ??
             "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&h=630&q=80",
-          { alt: `Catégorie ${nameFr} — Setup Paris` },
+          { alt: L(lang, `Catégorie ${name} — Setup Paris`, `${name} category — Setup Paris`) },
         ),
       ],
-      links: [canonicalLink(`/categorie/${params.slug}`), ...hreflangLinks(`/categorie/${params.slug}`)],
+      links: seoLinks(path, lang),
     };
   },
   component: CategoryPage,

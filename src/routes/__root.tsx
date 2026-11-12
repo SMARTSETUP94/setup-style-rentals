@@ -7,7 +7,7 @@ import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
-import { ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { ogImageMeta, SITE_URL, DEFAULT_OG_IMAGE, headLang, L } from "@/lib/seo";
 import { applyNotFoundStatus } from "@/lib/ssr-status";
 
 import appCss from "../styles.css?url";
@@ -42,7 +42,7 @@ export const Route = createRootRoute({
   // (src/lib/lang-url.ts). Retained so internal links stay in the same language.
   validateSearch: zodValidator(z.object({ lang: z.enum(["en"]).optional().catch(undefined) })),
   search: { middlewares: [retainSearchParams(["lang"])] },
-  head: () => ({
+  head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -82,9 +82,12 @@ export const Route = createRootRoute({
           url: SITE_URL,
           logo: DEFAULT_OG_IMAGE,
           image: DEFAULT_OG_IMAGE,
-          description:
+          description: L(
+            headLang(match),
             "Location d'objets événementiels personnalisables avec configurateur 3D à Paris et en Île-de-France.",
-          areaServed: { "@type": "Place", name: "Paris et Île-de-France" },
+            "Customizable event object rentals with a 3D configurator in Paris and Île-de-France.",
+          ),
+          areaServed: { "@type": "Place", name: L(headLang(match), "Paris et Île-de-France", "Paris and Île-de-France") },
           address: {
             "@type": "PostalAddress",
             addressLocality: "Paris",

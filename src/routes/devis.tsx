@@ -15,7 +15,7 @@ import { ProductImage } from "@/components/site/ProductImage";
 import { configLink } from "@/lib/sur-mesure";
 import { SITE_URL } from "@/lib/seo";
 import { trackSiteEvent } from "@/lib/track";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/site/LazyCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";

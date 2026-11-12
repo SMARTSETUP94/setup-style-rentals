@@ -24,7 +24,7 @@ import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/site/LazyCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PRODUCT_TO_PIECE } from "@/lib/sur-mesure";
 import {

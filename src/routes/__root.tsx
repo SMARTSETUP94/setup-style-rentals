@@ -1,7 +1,7 @@
 import { Link, Outlet, createRootRoute, HeadContent, Scripts, useLocation, retainSearchParams, useRouterState } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Toaster } from "@/components/ui/sonner";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
 import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
@@ -123,7 +123,7 @@ function RootComponent() {
       <I18nProvider>
         <CartProvider>
           <SiteShell />
-          <Toaster position="top-center" />
+          <LazyToaster />
         </CartProvider>
       </I18nProvider>
     </AuthProvider>
@@ -154,5 +154,19 @@ function SkipLink() {
     >
       {t("a11y.skip")}
     </a>
+  );
+}
+
+// Toast container loaded after hydration so its library stays out of the
+// initial bundle (pages that call toast() bundle it in their own chunk).
+const ToasterImpl = lazy(() => import("@/components/ui/sonner").then((m) => ({ default: m.Toaster })));
+function LazyToaster() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  if (!ready) return null;
+  return (
+    <Suspense fallback={null}>
+      <ToasterImpl position="top-center" />
+    </Suspense>
   );
 }

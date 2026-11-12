@@ -251,7 +251,7 @@ function ContentFR() {
         Informatique et Libertés. Elles sont utilisées exclusivement pour le traitement des commandes,
         la facturation et la communication commerciale. Le Client dispose d'un droit d'accès, de
         rectification, de suppression et d'opposition en contactant Setup Paris à l'adresse email :{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">contact@setup.paris</a>.
+        <a href="mailto:contact@setup.paris" className="text-gold-ink underline underline-offset-2">contact@setup.paris</a>.
       </P>
 
       <H2>Article 14 — Droit applicable et litiges</H2>
@@ -460,7 +460,7 @@ function ContentEN() {
         Act. It is used exclusively for order processing, invoicing and commercial communication.
         The Client has the right to access, rectify, delete and object to their data by contacting
         Setup Paris at the email address:{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">contact@setup.paris</a>.
+        <a href="mailto:contact@setup.paris" className="text-gold-ink underline underline-offset-2">contact@setup.paris</a>.
       </P>
 
       <H2>Article 14 — Applicable law and disputes</H2>

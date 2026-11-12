@@ -110,21 +110,21 @@ function ContentFR() {
         </p>
         <p>
           <strong>Téléphone :</strong>{" "}
-          <a href="tel:+33143911045" className="text-gold-ink hover:underline">
+          <a href="tel:+33143911045" className="text-gold-ink underline underline-offset-2">
             01 43 91 10 45
           </a>{" "}
           ·{" "}
-          <a href="tel:+33601416111" className="text-gold-ink hover:underline">
+          <a href="tel:+33601416111" className="text-gold-ink underline underline-offset-2">
             +33 6 01 41 61 11
           </a>
         </p>
         <p>
           <strong>Email :</strong>{" "}
-          <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
+          <a href="mailto:contact@setup.paris" className="text-gold-ink underline underline-offset-2">
             contact@setup.paris
           </a>{" "}
           ·{" "}
-          <a href="mailto:smart@setup.paris" className="text-gold-ink hover:underline">
+          <a href="mailto:smart@setup.paris" className="text-gold-ink underline underline-offset-2">
             smart@setup.paris
           </a>
         </p>
@@ -134,7 +134,7 @@ function ContentFR() {
             href="https://www.setup.paris"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gold-ink hover:underline"
+            className="text-gold-ink underline underline-offset-2"
           >
             www.setup.paris
           </a>
@@ -264,7 +264,7 @@ function ContentFR() {
       <P>
         Le site est hébergé par <strong>Lovable</strong>. Pour toute information
         relative à l'hébergement, contactez-nous à{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
+        <a href="mailto:contact@setup.paris" className="text-gold-ink underline underline-offset-2">
           contact@setup.paris
         </a>
         .
@@ -312,21 +312,21 @@ function ContentEN() {
         </p>
         <p>
           <strong>Phone:</strong>{" "}
-          <a href="tel:+33143911045" className="text-gold-ink hover:underline">
+          <a href="tel:+33143911045" className="text-gold-ink underline underline-offset-2">
             +33 1 43 91 10 45
           </a>{" "}
           ·{" "}
-          <a href="tel:+33601416111" className="text-gold-ink hover:underline">
+          <a href="tel:+33601416111" className="text-gold-ink underline underline-offset-2">
             +33 6 01 41 61 11
           </a>
         </p>
         <p>
           <strong>Email:</strong>{" "}
-          <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
+          <a href="mailto:contact@setup.paris" className="text-gold-ink underline underline-offset-2">
             contact@setup.paris
           </a>{" "}
           ·{" "}
-          <a href="mailto:smart@setup.paris" className="text-gold-ink hover:underline">
+          <a href="mailto:smart@setup.paris" className="text-gold-ink underline underline-offset-2">
             smart@setup.paris
           </a>
         </p>
@@ -336,7 +336,7 @@ function ContentEN() {
             href="https://www.setup.paris"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gold-ink hover:underline"
+            className="text-gold-ink underline underline-offset-2"
           >
             www.setup.paris
           </a>
@@ -465,7 +465,7 @@ function ContentEN() {
       <P>
         The site is hosted by <strong>Lovable</strong>. For any information
         regarding hosting, please contact us at{" "}
-        <a href="mailto:contact@setup.paris" className="text-gold-ink hover:underline">
+        <a href="mailto:contact@setup.paris" className="text-gold-ink underline underline-offset-2">
           contact@setup.paris
         </a>
         .

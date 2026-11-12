@@ -1,7 +1,7 @@
 import { matchConfigToOptions, recapPairs, type ConfigChoices } from "@/lib/config-match";
 import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -1480,7 +1480,7 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
  * Close button when it opens, closes on Escape (when focus is outside the
  * iframe), and returns focus to the element that opened it.
  */
-function ConfiguratorFocus({ open, closeRef, onEscape }: { open: boolean; closeRef: React.RefObject<HTMLButtonElement | null>; onEscape: () => void }) {
+function ConfiguratorFocus({ open, closeRef, onEscape }: { open: boolean; closeRef: RefObject<HTMLButtonElement | null>; onEscape: () => void }) {
   const openerRef = useRef<HTMLElement | null>(null);
   const escRef = useRef(onEscape);
   escRef.current = onEscape;

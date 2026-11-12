@@ -1,0 +1,2 @@
+- Language comes from the URL: public `/en/...` is rewritten to internal `?lang=en` (src/lib/lang-url.ts + router `rewrite`, root retains `lang`), so one route file serves both languages; never add `/en` route files or read language from localStorage. Why: indexable English pages without touching French URLs.
+- Storage product/category photos render through `src/lib/image.ts` (render/image with `resize=contain`, 400/800/1200 srcset, onError fallback to the original). Why: without `resize=contain` the transform crops.

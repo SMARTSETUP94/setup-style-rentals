@@ -129,8 +129,8 @@ export function decodeConfigParam(c: string | undefined, piece: string): Record<
 }
 
 /** Absolute or relative resume URL for a configuration. */
-export function configLink(piece: string, configuration: Record<string, unknown> | undefined, base = ""): string | null {
+export function configLink(piece: string, configuration: Record<string, unknown> | undefined, base = "", lang: "fr" | "en" = "fr"): string | null {
   if (!configuration) return null;
   const c = encodeConfigParam(piece, configuration);
-  return c ? `${base}/sur-mesure/${encodeURIComponent(piece)}?c=${c}` : null;
+  return c ? `${base}${lang === "en" ? "/en" : ""}/sur-mesure/${encodeURIComponent(piece)}?c=${c}` : null;
 }

@@ -242,7 +242,7 @@ function QuotePage() {
           net: 0,
           custom: true,
           ref: i.customRef,
-          resumeUrl: configLink(i.customPiece ?? i.slug, i.customConfig, SITE_URL) ?? undefined,
+          resumeUrl: configLink(i.customPiece ?? i.slug, i.customConfig, SITE_URL, lang) ?? undefined,
         })),
       ],
       hasRental,
@@ -564,7 +564,7 @@ function QuotePage() {
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin)!;
+                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin, lang)!;
                                   try {
                                     await navigator.clipboard.writeText(url);
                                     toast.success(lang === "fr" ? "Lien copié" : "Link copied");

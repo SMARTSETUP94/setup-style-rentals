@@ -135,7 +135,7 @@ function PiecePage() {
     trackSiteEvent("custom_view", piece.k);
   }, [piece.k]);
   const copyLink = async () => {
-    const url = configLink(piece.k, lastConfig ?? undefined, window.location.origin);
+    const url = configLink(piece.k, lastConfig ?? undefined, window.location.origin, lang);
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);

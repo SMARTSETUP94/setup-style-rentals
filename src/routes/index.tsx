@@ -305,7 +305,7 @@ function HomePage() {
                 <span className="text-xs font-mono text-gold-ink tracking-widest">0{idx + 1}</span>
                 <s.i className="size-5 text-gold-ink" />
               </div>
-              <h4 className="mt-6 font-display font-semibold text-xl">{s.t}</h4>
+              <h3 className="mt-6 font-display font-semibold text-xl">{s.t}</h3>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.d}</p>
             </div>
           ))}

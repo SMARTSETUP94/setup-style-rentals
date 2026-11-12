@@ -43,6 +43,13 @@
       "when": 1794412685641,
       "tag": "0005_s8_public_price_range",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794505258146,
+      "tag": "0006_restrict_site_settings_and_logo_uploads",
+      "breakpoints": true
     }
   ]
 }

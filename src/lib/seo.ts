@@ -1,3 +1,4 @@
+import { localizedPath } from "./lang-url";
 /**
  * Centralised SEO constants and helpers.
  * Single source of truth for the canonical site URL.
@@ -8,18 +9,41 @@ export const SITE_URL = "https://catalogue.setup.paris";
  * Build an absolute canonical URL from a path (with or without leading slash).
  * Strips query strings and trailing slashes (except root) for canonical stability.
  */
-export function canonicalUrl(path: string = "/"): string {
+export function canonicalUrl(path: string = "/", lang: SeoLang = "fr"): string {
   const clean = path.split("?")[0].split("#")[0];
   const withSlash = clean.startsWith("/") ? clean : `/${clean}`;
   const normalized = withSlash.length > 1 ? withSlash.replace(/\/+$/, "") : withSlash;
-  return `${SITE_URL}${normalized}`;
+  return `${SITE_URL}${localizedPath(normalized, lang)}`;
+}
+
+export type SeoLang = "fr" | "en";
+
+/** Language of a route match inside `head()` (internal `?lang=en` ⇐ public /en/...). */
+export function headLang(match: { search?: unknown } | undefined): SeoLang {
+  return (match?.search as { lang?: string } | undefined)?.lang === "en" ? "en" : "fr";
+}
+
+/** Pick FR/EN copy. */
+export const L = (lang: SeoLang, fr: string, en: string) => (lang === "en" ? en : fr);
+
+/** canonical (self) + hreflang fr/en/x-default for a page. */
+export function seoLinks(path: string, lang: SeoLang) {
+  return [canonicalLink(path, lang), ...hreflangLinks(path)];
+}
+
+/** Locale meta for a page. */
+export function localeMeta(lang: SeoLang) {
+  return [
+    { property: "og:locale", content: lang === "en" ? "en_GB" : "fr_FR" },
+    { property: "og:locale:alternate", content: lang === "en" ? "fr_FR" : "en_GB" },
+  ];
 }
 
 /**
  * Convenience helper for TanStack Router `head().links` arrays.
  */
-export function canonicalLink(path: string = "/") {
-  return { rel: "canonical", href: canonicalUrl(path) } as const;
+export function canonicalLink(path: string = "/", lang: SeoLang = "fr") {
+  return { rel: "canonical", href: canonicalUrl(path, lang) } as const;
 }
 
 /**
@@ -47,31 +71,24 @@ export function ogImageMeta(
 }
 
 /**
- * Build hreflang alternate links for a given route path.
- *
- * IMPORTANT: hreflang must reference the same indexable, canonical URL —
- * never a `?lang=…` variant. The `?lang` query is a client-side language
- * toggle and is excluded from indexing (see robots.txt + sitemap).
- *
- * Until dedicated localized routes (`/fr/...`, `/en/...`) exist, the page
- * serves both languages at the same URL. We therefore emit FR and x-default
- * pointing to the clean canonical URL, and omit EN to avoid declaring a
- * non-existent alternate URL.
+ * hreflang alternates: French at the clean URL, English under /en,
+ * x-default = French. Never a `?lang=` variant (legacy, 301-redirected).
  */
 export function hreflangLinks(path: string = "/") {
-  const base = canonicalUrl(path);
   return [
-    { rel: "alternate", hrefLang: "fr", href: base },
-    { rel: "alternate", hrefLang: "x-default", href: base },
+    { rel: "alternate", hrefLang: "fr", href: canonicalUrl(path, "fr") },
+    { rel: "alternate", hrefLang: "en", href: canonicalUrl(path, "en") },
+    { rel: "alternate", hrefLang: "x-default", href: canonicalUrl(path, "fr") },
   ] as const;
 }
 
 /** Schema.org Service for custom-made pages (no price on purpose). */
-export function serviceJsonLd(name: string, description: string, url: string) {
+export function serviceJsonLd(name: string, description: string, url: string, lang: SeoLang = "fr") {
   return {
     "@context": "https://schema.org",
     "@type": "Service",
-    serviceType: "Fabrication de mobilier événementiel sur mesure",
+    serviceType: lang === "en" ? "Custom-made event furniture production" : "Fabrication de mobilier événementiel sur mesure",
+    inLanguage: lang,
     name,
     description,
     url,

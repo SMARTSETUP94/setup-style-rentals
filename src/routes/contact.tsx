@@ -8,24 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n";
-import { canonicalLink, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
-  head: () => ({
-    meta: [
-      { title: "Contact — Setup Paris, location d'objets événementiels" },
-      {
-        name: "description",
-        content: "Contactez Setup Paris pour vos locations d'objets et jeux événementiels à Paris et en Île-de-France : téléphone, mail et formulaire.",
-      },
-      { property: "og:title", content: "Contact — Setup Paris" },
-      { property: "og:description", content: "Une question sur une location événementielle ? Écrivez-nous ou appelez-nous." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-    links: [canonicalLink("/contact"), ...hreflangLinks("/contact")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Contact — Setup Paris, location d'objets événementiels", "Contact — Setup Paris, event object rentals");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Contactez Setup Paris pour vos locations d'objets et jeux événementiels à Paris et en Île-de-France : téléphone, mail et formulaire.", "Contact Setup Paris about event object and game rentals in Paris and Île-de-France: phone, email and contact form.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Une question sur une location événementielle ? Écrivez-nous ou appelez-nous.", "A question about an event rental? Write to us or call us.") },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/contact", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: seoLinks("/contact", lang),
+    };
+  },
 });
 
 const TXT = {

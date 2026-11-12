@@ -18,16 +18,26 @@ import { trackSiteEvent } from "@/lib/track";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { canonicalLink, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/devis")({
-  head: () => ({
-    meta: [
-      { title: "Ma demande de devis — Setup Paris" },
-      { name: "description", content: "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis." },
-    ],
-    links: [canonicalLink("/devis"), ...hreflangLinks("/devis")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Ma demande de devis — Setup Paris", "My quote request — Setup Paris");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.", "My quote request: online quote request, reply within one business day. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Demande de devis en ligne, réponse sous 24 h ouvrées.", "Online quote request, reply within one business day.") },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/devis", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: seoLinks("/devis", lang),
+    };
+  },
   component: QuotePage,
 });
 

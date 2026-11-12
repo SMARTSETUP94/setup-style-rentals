@@ -2,27 +2,27 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { useI18n } from "@/lib/i18n";
-import { canonicalLink, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/cgl")({
   component: CGLPage,
-  head: () => ({
-    meta: [
-      { title: "Conditions générales de location — Setup Paris" },
-      {
-        name: "description",
-        content:
-          "Conditions générales de location de mobilier et d'objets événementiels Setup Paris (Smart Restructuring).",
-      },
-      { property: "og:title", content: "Conditions générales de location — Setup Paris" },
-      {
-        property: "og:description",
-        content:
-          "Conditions générales de location de mobilier et d'objets événementiels Setup Paris.",
-      },
-    ],
-    links: [canonicalLink("/cgl"), ...hreflangLinks("/cgl")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Conditions générales de location — Setup Paris", "General rental terms — Setup Paris");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Conditions générales de location de mobilier et d'objets événementiels Setup Paris (Smart Restructuring).", "General terms for renting event furniture and objects from Setup Paris (Smart Restructuring).") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Conditions générales de location de mobilier et d'objets événementiels Setup Paris.", "General terms for renting event furniture and objects from Setup Paris.") },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/cgl", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: seoLinks("/cgl", lang),
+    };
+  },
 });
 
 function CGLPage() {

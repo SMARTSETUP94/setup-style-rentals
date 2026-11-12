@@ -2,27 +2,27 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { useI18n } from "@/lib/i18n";
-import { canonicalLink, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/mentions-legales")({
   component: LegalPage,
-  head: () => ({
-    meta: [
-      { title: "Mentions légales — Setup Paris" },
-      {
-        name: "description",
-        content:
-          "Mentions légales et conditions générales de Smart Restructuring (Setup Paris) : commandes, paiement, livraison, responsabilité, RGPD.",
-      },
-      { property: "og:title", content: "Mentions légales — Setup Paris" },
-      {
-        property: "og:description",
-        content:
-          "Mentions légales et conditions générales de Smart Restructuring (Setup Paris).",
-      },
-    ],
-    links: [canonicalLink("/mentions-legales"), ...hreflangLinks("/mentions-legales")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Mentions légales — Setup Paris", "Legal notice — Setup Paris");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Mentions légales et conditions générales de Smart Restructuring (Setup Paris) : commandes, paiement, livraison, responsabilité, RGPD.", "Legal notice and general terms of Smart Restructuring (Setup Paris): orders, payment, delivery, liability, GDPR.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Mentions légales de Setup Paris (Smart Restructuring).", "Legal notice of Setup Paris (Smart Restructuring).") },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/mentions-legales", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: seoLinks("/mentions-legales", lang),
+    };
+  },
 });
 
 function LegalPage() {

@@ -45,18 +45,5 @@ export function localizedPath(path: string, lang: UrlLang): string {
   return clean === "/" ? "/en" : `/en${clean}`;
 }
 
-/**
- * Legacy `?lang=xx` → equivalent clean URL (or null when no redirect needed).
- * Used by the server request middleware to issue a 301.
- */
-export function legacyLangRedirect(url: URL): string | null {
-  const lang = url.searchParams.get("lang");
-  if (lang === null) return null;
-  if (UNPREFIXED.test(url.pathname)) return null;
-  const params = new URLSearchParams(url.search);
-  params.delete("lang");
-  const qs = params.toString();
-  const base = isEnPublicPath(url.pathname) ? url.pathname.slice(3) || "/" : url.pathname;
-  const path = localizedPath(base, lang === "en" ? "en" : "fr");
-  return path + (qs ? `?${qs}` : "") + url.hash;
-}
+// Legacy `?lang=en` URLs: the input keeps `lang=en`, the output turns it into
+// /en/..., so the router redirects them to the clean localized URL by itself.

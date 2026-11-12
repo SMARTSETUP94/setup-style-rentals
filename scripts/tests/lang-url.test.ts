@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { rewriteInput, rewriteOutput, legacyLangRedirect, localizedPath } from "../../src/lib/lang-url";
+import { rewriteInput, rewriteOutput, localizedPath } from "../../src/lib/lang-url";
 import { canonicalUrl, hreflangLinks } from "../../src/lib/seo";
 
 const u = (s: string) => new URL(s, "https://catalogue.setup.paris");
@@ -25,9 +25,8 @@ describe("language-prefixed URLs", () => {
     expect(rewriteOutput(u("/api/quotes/submit?lang=en")).pathname).toBe("/api/quotes/submit");
   });
   test("legacy ?lang= maps to the clean URL", () => {
-    expect(legacyLangRedirect(u("/catalogue?lang=en&q=x"))).toBe("/en/catalogue?q=x");
-    expect(legacyLangRedirect(u("/contact?lang=fr"))).toBe("/contact");
-    expect(legacyLangRedirect(u("/contact"))).toBeNull();
+    expect(roundTrip("/catalogue?lang=en&q=x")).toBe("/en/catalogue?q=x");
+    expect(roundTrip("/contact?lang=fr")).toBe("/contact");
   });
   test("canonical and hreflang: x-default is French", () => {
     expect(localizedPath("/", "en")).toBe("/en");

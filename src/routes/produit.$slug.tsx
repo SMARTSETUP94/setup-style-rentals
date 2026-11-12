@@ -11,6 +11,15 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
+import { PRODUCT_HERO_SIZES, responsiveImage } from "@/lib/image";
+
+/** Preload the main product photo with the same srcset the page renders. */
+function preloadFor(url: string) {
+  const r = responsiveImage(url);
+  return r.srcSet
+    ? { rel: "preload", as: "image", href: r.src, imageSrcSet: r.srcSet, imageSizes: PRODUCT_HERO_SIZES, fetchpriority: "high" }
+    : { rel: "preload", as: "image", href: url, fetchpriority: "high" };
+}
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
@@ -186,7 +195,7 @@ export const Route = createFileRoute("/produit/$slug")({
       meta,
       links: [
         ...seoLinks(`/produit/${m.slug}`, lang),
-        ...(m.image_url ? [{ rel: "preload", as: "image", href: m.image_url, fetchpriority: "high" }] : []),
+        ...(m.image_url ? [preloadFor(m.image_url)] : []),
       ],
       scripts: [
         {
@@ -951,6 +960,7 @@ function ProductPage() {
               category_slug={product.category_slug}
               image_url={product.image_url}
               priority
+              sizes={PRODUCT_HERO_SIZES}
               className="w-full h-full object-cover"
             />
           </div>

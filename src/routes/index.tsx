@@ -7,6 +7,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
+import { responsiveImage } from "@/lib/image";
 import { ClientsBand } from "@/components/site/ClientsBand";
 
 interface Category {
@@ -204,7 +205,8 @@ function HomePage() {
               }}
             >
               <img
-                src={categoryImage(cat.slug)}
+                {...responsiveImage(categoryImage(cat.slug))}
+                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
                 alt={pickLang(cat, "name", lang)}
                 loading="lazy"
                 decoding="async"

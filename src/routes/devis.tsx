@@ -380,7 +380,7 @@ function QuotePage() {
                   return (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
                       <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0">
-                        <ProductImage name={pickLang(item, "name", lang)} category_slug={item.category_slug} image_url={item.image_url} />
+                        <ProductImage name={pickLang(item, "name", lang)} category_slug={item.category_slug} image_url={item.image_url} sizes="96px" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">

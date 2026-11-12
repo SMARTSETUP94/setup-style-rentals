@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 
 export type Lang = "fr" | "en";
 
@@ -298,6 +299,7 @@ const DICT: Dict = {
   },
 
   // Common
+  "a11y.skip": { fr: "Aller au contenu", en: "Skip to content" },
   "common.back": { fr: "Retour", en: "Back" },
   "common.home": { fr: "Accueil", en: "Home" },
 };
@@ -310,40 +312,28 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "setup-paris-lang";
-
+/**
+ * Language is derived from the URL: /en/... = English, everything else = French.
+ * (Internally the router sees ?lang=en, see src/lib/lang-url.ts.)
+ */
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("fr");
+  const lang: Lang = useRouterState({
+    select: (st) => ((st.location.search as { lang?: string }).lang === "en" ? "en" : "fr"),
+  });
+  const navigate = useNavigate();
 
+  // Keep <html lang> in sync on client navigations (SSR sets it in the shell).
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    // Priority: ?lang= query > localStorage > browser language > default 'fr'
-    const params = new URLSearchParams(window.location.search);
-    const qsLang = params.get("lang");
-    if (qsLang === "fr" || qsLang === "en") {
-      setLangState(qsLang);
-      localStorage.setItem(STORAGE_KEY, qsLang);
-      return;
-    }
-    const stored = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (stored === "fr" || stored === "en") {
-      setLangState(stored);
-      return;
-    }
-    const nav = (navigator.language || "fr").toLowerCase();
-    if (nav.startsWith("en")) setLangState("en");
-  }, []);
-
-  // Keep <html lang> in sync with the current language for a11y/SEO.
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = lang;
-    }
+    if (typeof document !== "undefined") document.documentElement.lang = lang;
   }, [lang]);
 
   const setLang = (next: Lang) => {
-    setLangState(next);
-    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, next);
+    if (next === lang) return;
+    void navigate({
+      to: ".",
+      search: (prev: Record<string, unknown>) => ({ ...prev, lang: next === "en" ? "en" : undefined }),
+      hash: (h: string | undefined) => h ?? "",
+    } as never);
   };
 
   const t = (key: string) => {

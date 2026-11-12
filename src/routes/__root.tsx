@@ -1,6 +1,8 @@
-import { Link, Outlet, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { Link, Outlet, createRootRoute, HeadContent, Scripts, useLocation, retainSearchParams, useRouterState } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { Toaster } from "@/components/ui/sonner";
-import { I18nProvider } from "@/lib/i18n";
+import { I18nProvider, useI18n } from "@/lib/i18n";
 import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { Navbar } from "@/components/site/Navbar";
@@ -36,6 +38,10 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
+  // `lang` is internal only: public /en/... URLs are rewritten to ?lang=en
+  // (src/lib/lang-url.ts). Retained so internal links stay in the same language.
+  validateSearch: zodValidator(z.object({ lang: z.enum(["en"]).optional().catch(undefined) })),
+  search: { middlewares: [retainSearchParams(["lang"])] },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -95,8 +101,9 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  const lang = useRouterState({ select: (st) => ((st.location.search as { lang?: string }).lang === "en" ? "en" : "fr") });
   return (
-    <html lang="fr">
+    <html lang={lang}>
       <head>
         <HeadContent />
       </head>
@@ -126,11 +133,24 @@ function SiteShell() {
   const isAdmin = location.pathname.startsWith("/admin");
   return (
     <>
+      {!isAdmin && <SkipLink />}
       {!isAdmin && <Navbar />}
-      <main className={isAdmin ? "" : "min-h-screen"}>
+      <main id="contenu" tabIndex={-1} className={isAdmin ? "" : "min-h-screen focus:outline-none"}>
         <Outlet />
       </main>
       {!isAdmin && <Footer />}
     </>
+  );
+}
+
+function SkipLink() {
+  const { t } = useI18n();
+  return (
+    <a
+      href="#contenu"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-foreground focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-background focus:outline-none focus:ring-2 focus:ring-ring"
+    >
+      {t("a11y.skip")}
+    </a>
   );
 }

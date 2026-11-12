@@ -86,7 +86,7 @@ export function ProductCard({
             {fromLabel}
           </div>
           <div className="mt-0.5 flex items-baseline gap-1.5">
-            <span className="font-display font-semibold text-lg text-gold">
+            <span className="font-display font-semibold text-lg text-gold-ink">
               {formatPrice(product.price_day, lang)}
             </span>
             <span className="text-xs text-muted-foreground">{perDayLabel}</span>

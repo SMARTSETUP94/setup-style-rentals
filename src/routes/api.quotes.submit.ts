@@ -148,6 +148,18 @@ interface StoredCustom {
   days: 1;
 }
 
+type MailLang = "fr" | "en";
+/** FR/EN pick for client-facing blocks; the internal mail is always French. */
+const tr = (lang: MailLang, fr: string, en: string) => (lang === "en" ? en : fr);
+/** French puts a space before ":"; English does not. */
+const colon = (lang: MailLang) => (lang === "en" ? ":" : " :");
+
+const AFTER_EVENT_EN: Record<string, string> = {
+  keep: "You keep the piece",
+  pickup: "Collected by Setup Paris",
+  discuss: "To be discussed",
+};
+
 const AFTER_EVENT_FR: Record<string, string> = {
   keep: "Le client garde la pièce",
   pickup: "Reprise par Setup Paris",
@@ -181,16 +193,16 @@ function estimateBlock(e: InternalEstimate | undefined) {
   </div>`;
 }
 
-function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string, InternalEstimate>) {
+function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string, InternalEstimate>, lang: MailLang = "fr") {
   if (!customs.length) return "";
   const rows = customs
     .map(
       (c) => `
       <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin:8px 0;">
-        <div style="font-weight:600;">${escapeHtml(c.name_fr)} × ${c.quantity}</div>
-        <div style="font-size:12px;color:#666;">Référence : ${escapeHtml(c.custom_ref)}${c.custom_weight_kg != null ? ` — Poids estimé : ${escapeHtml(String(c.custom_weight_kg))} kg` : ""}</div>
+        <div style="font-weight:600;">${escapeHtml(lang === "en" ? c.name_en : c.name_fr)} × ${c.quantity}</div>
+        <div style="font-size:12px;color:#666;">${tr(lang, "Référence", "Reference")}${colon(lang)} ${escapeHtml(c.custom_ref)}${c.custom_weight_kg != null ? ` — ${tr(lang, "Poids estimé", "Estimated weight")}${colon(lang)} ${escapeHtml(String(c.custom_weight_kg))} kg` : ""}</div>
         ${stripRecapHeader(c.configurator_recap || "") ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(stripRecapHeader(c.configurator_recap))}</pre>` : ""}
-        ${c.resume_url ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(c.resume_url)}" style="color:#1d4ed8;">Reprendre / partager cette configuration</a></div>` : ""}
+        ${c.resume_url ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(c.resume_url)}" style="color:#1d4ed8;">${tr(lang, "Reprendre / partager cette configuration", "Resume / share this configuration")}</a></div>` : ""}
         ${c.custom_alerts.length ? `<div style="margin-top:8px;font-size:12px;"><strong>Points à vérifier par le bureau d'études :</strong><ul style="margin:4px 0 0 18px;padding:0;">${c.custom_alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>` : ""}
         ${estimates ? estimateBlock(estimates.get(c.custom_config_id)) : ""}
         ${estimates ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(`${SITE_URL}/admin/chiffrage?config_id=${encodeURIComponent(c.custom_config_id)}`)}" style="color:#1d4ed8;">Ouvrir dans le chiffrage</a></div>` : ""}
@@ -198,48 +210,48 @@ function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string
     )
     .join("");
   return `
-    <h2 style="font-size:16px;margin:24px 0 8px;">Fabrication sur mesure</h2>
+    <h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Fabrication sur mesure", "Custom-made production")}</h2>
     ${rows}
     <div style="font-size:13px;line-height:1.7;margin-top:8px;">
-      ${p.custom_delivery_date ? `Date de livraison souhaitée : <strong>${escapeHtml(fmtDate(p.custom_delivery_date))}</strong><br/>` : ""}
-      ${p.custom_after_event ? `Après l'événement : <strong>${escapeHtml(AFTER_EVENT_FR[p.custom_after_event] ?? p.custom_after_event)}</strong><br/>` : ""}
-      ${p.wants_samples ? `Échantillons / nuancier demandés : <strong>Oui</strong>` : ""}
+      ${p.custom_delivery_date ? `${tr(lang, "Date de livraison souhaitée", "Preferred delivery date")}${colon(lang)} <strong>${escapeHtml(fmtDate(p.custom_delivery_date))}</strong><br/>` : ""}
+      ${p.custom_after_event ? `${tr(lang, "Après l'événement", "After the event")}${colon(lang)} <strong>${escapeHtml((lang === "en" ? AFTER_EVENT_EN : AFTER_EVENT_FR)[p.custom_after_event] ?? p.custom_after_event)}</strong><br/>` : ""}
+      ${p.wants_samples ? `${tr(lang, "Échantillons / nuancier demandés", "Samples / colour chart requested")}${colon(lang)} <strong>${tr(lang, "Oui", "Yes")}</strong>` : ""}
     </div>
     ${estimates ? `<p style="font-size:13px;color:#a07c00;font-weight:600;">Prix et délai de fabrication confirmés sous 48 h ouvrées.</p>` : ""}`;
 }
 
-function rentalBlock(items: StoredItem[], t: Totals) {
-  if (!items.length) return `<p style="font-size:14px;color:#555;">Votre demande sera chiffrée par notre équipe.</p>`;
-  return `<h2 style="font-size:16px;margin:24px 0 8px;">Location</h2>${itemsTable(items)}${totalsBlock(t)}`;
+function rentalBlock(items: StoredItem[], t: Totals, lang: MailLang = "fr") {
+  if (!items.length) return `<p style="font-size:14px;color:#555;">${tr(lang, "Votre demande sera chiffrée par notre équipe.", "Our team will price your request.")}</p>`;
+  return `<h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Location", "Rental")}</h2>${itemsTable(items, lang)}${totalsBlock(t, lang)}`;
 }
 
 /* ------------------------------------------------------------------ */
 /* Emails — built ONLY from server-recomputed data, everything escaped */
 /* ------------------------------------------------------------------ */
 
-function itemsTable(items: StoredItem[]) {
+function itemsTable(items: StoredItem[], lang: MailLang = "fr") {
   const rows = items
     .map((i) => {
       const datesRow =
         i.startDate && i.endDate
-          ? `<tr><td colspan="5" style="padding:2px 8px 6px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${i.startDate === i.endDate ? `Le ${escapeHtml(fmtDate(i.startDate))}` : `Du ${escapeHtml(fmtDate(i.startDate))} au ${escapeHtml(fmtDate(i.endDate))}`}</td></tr>`
+          ? `<tr><td colspan="5" style="padding:2px 8px 6px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${i.startDate === i.endDate ? `${tr(lang, "Le", "On")} ${escapeHtml(fmtDate(i.startDate))}` : `${tr(lang, "Du", "From")} ${escapeHtml(fmtDate(i.startDate))} ${tr(lang, "au", "to")} ${escapeHtml(fmtDate(i.endDate))}`}</td></tr>`
           : "";
       const optionsRows = i.options
         .map(
           (o) => `
         <tr>
           <td colspan="4" style="padding:4px 8px 4px 24px;border-bottom:1px solid #f5f5f5;color:#666;font-size:13px;">
-            • <strong style="color:#1a1a1a;">${escapeHtml(o.categoryName_fr)} :</strong> ${escapeHtml(o.name_fr)}
+            • <strong style="color:#1a1a1a;">${escapeHtml(lang === "en" ? o.categoryName_en || o.categoryName_fr : o.categoryName_fr)}${colon(lang)}</strong> ${escapeHtml(lang === "en" ? o.name_en || o.name_fr : o.name_fr)}
           </td>
           <td style="padding:4px 8px;border-bottom:1px solid #f5f5f5;text-align:right;color:#666;font-size:13px;">
-            ${o.price > 0 ? `+${fmt(o.price)}` : "inclus"}
+            ${o.price > 0 ? `+${fmt(o.price)}` : tr(lang, "inclus", "included")}
           </td>
         </tr>`,
         )
         .join("");
       const discountRow =
         i.line_discount > 0
-          ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">Remise</td><td style="padding:2px 8px;text-align:right;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">−${fmt(i.line_discount)}</td></tr>`
+          ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Remise", "Discount")}</td><td style="padding:2px 8px;text-align:right;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">−${fmt(i.line_discount)}</td></tr>`
           : "";
       const recapRow = i.configurator_recap
         ? `
@@ -254,16 +266,16 @@ function itemsTable(items: StoredItem[]) {
         ? `
         <tr>
           <td colspan="5" style="padding:8px 12px 12px 24px;border-bottom:1px solid #f5f5f5;background:#eef6ff;">
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#1d4ed8;font-weight:600;margin-bottom:4px;">📎 Logo client</div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#1d4ed8;font-weight:600;margin-bottom:4px;">📎 ${tr(lang, "Logo client", "Client logo")}</div>
             <a href="${escapeHtml(i.logo_url)}" target="_blank" rel="noreferrer" style="font-size:13px;color:#1d4ed8;word-break:break-all;">
-              ${escapeHtml(i.logo_filename || "Télécharger le logo")}
+              ${escapeHtml(i.logo_filename || tr(lang, "Télécharger le logo", "Download the logo"))}
             </a>
           </td>
         </tr>`
         : "";
       return `
         <tr>
-          <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(i.name_fr)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(lang === "en" ? i.name_en || i.name_fr : i.name_fr)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.days}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmt(i.price_day)}</td>
@@ -276,31 +288,31 @@ function itemsTable(items: StoredItem[]) {
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
       <thead>
         <tr style="background:#f5f5f5;">
-          <th style="padding:8px;text-align:left;">Produit</th>
-          <th style="padding:8px;text-align:center;">Qté</th>
-          <th style="padding:8px;text-align:center;">Jours</th>
-          <th style="padding:8px;text-align:right;">PU/jour</th>
-          <th style="padding:8px;text-align:right;">Total HT</th>
+          <th style="padding:8px;text-align:left;">${tr(lang, "Produit", "Product")}</th>
+          <th style="padding:8px;text-align:center;">${tr(lang, "Qté", "Qty")}</th>
+          <th style="padding:8px;text-align:center;">${tr(lang, "Jours", "Days")}</th>
+          <th style="padding:8px;text-align:right;">${tr(lang, "PU/jour", "Unit/day")}</th>
+          <th style="padding:8px;text-align:right;">${tr(lang, "Total HT", "Total excl. VAT")}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
 
-function totalsBlock(t: Totals) {
+function totalsBlock(t: Totals, lang: MailLang = "fr") {
   const r = (label: string, v: string, extra = "") =>
     `<tr><td style="padding:4px 12px;color:#666;${extra}">${label}</td><td style="padding:4px 0;text-align:right;${extra}">${v}</td></tr>`;
   return `
     <table style="margin-left:auto;font-size:14px;">
-      ${r("Sous-total produits HT", fmt(t.subtotal_ht))}
-      ${t.discount_total > 0 ? r("Remise", `−${fmt(t.discount_total)}`) : ""}
-      ${t.delivery_fee > 0 ? r("Livraison", fmt(t.delivery_fee)) : ""}
-      ${t.setup_fee > 0 ? r("Installation", fmt(t.setup_fee)) : ""}
-      ${t.pickup_fee > 0 ? r("Reprise", fmt(t.pickup_fee)) : ""}
-      ${r("Total HT", fmt(t.total_ht))}
-      ${r("TVA 20%", fmt(t.vat))}
-      <tr><td style="padding:8px 12px;font-weight:700;border-top:2px solid #1a1a1a;">Total TTC</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:2px solid #1a1a1a;">${fmt(t.total_ttc)}</td></tr>
-      ${r("Caution, non incluse dans le total", fmt(t.total_deposit), "font-size:12px;")}
+      ${r(tr(lang, "Sous-total produits HT", "Products subtotal excl. VAT"), fmt(t.subtotal_ht))}
+      ${t.discount_total > 0 ? r(tr(lang, "Remise", "Discount"), `−${fmt(t.discount_total)}`) : ""}
+      ${t.delivery_fee > 0 ? r(tr(lang, "Livraison", "Delivery"), fmt(t.delivery_fee)) : ""}
+      ${t.setup_fee > 0 ? r(tr(lang, "Installation", "Setup"), fmt(t.setup_fee)) : ""}
+      ${t.pickup_fee > 0 ? r(tr(lang, "Reprise", "Pickup"), fmt(t.pickup_fee)) : ""}
+      ${r(tr(lang, "Total HT", "Total excl. VAT"), fmt(t.total_ht))}
+      ${r(tr(lang, "TVA 20%", "VAT 20%"), fmt(t.vat))}
+      <tr><td style="padding:8px 12px;font-weight:700;border-top:2px solid #1a1a1a;">${tr(lang, "Total TTC", "Total incl. VAT")}</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:2px solid #1a1a1a;">${fmt(t.total_ttc)}</td></tr>
+      ${r(tr(lang, "Caution, non incluse dans le total", "Deposit, not included in the total"), fmt(t.total_deposit), "font-size:12px;")}
     </table>`;
 }
 
@@ -327,34 +339,37 @@ function adminEmail(p: Payload, number: string, items: StoredItem[], t: Totals, 
 }
 
 /** « Bonjour Prénom, » when the first word looks like a first name, else « Bonjour, ». */
-function greeting(name: string): string {
+function greeting(name: string, lang: MailLang = "fr"): string {
   const first = name.trim().split(/\s+/)[0] ?? "";
-  return /^\p{L}{2,20}$/u.test(first) ? `Bonjour ${escapeHtml(first)},` : "Bonjour,";
+  const hello = tr(lang, "Bonjour", "Hello");
+  return /^\p{L}{2,20}$/u.test(first) ? `${hello} ${escapeHtml(first)},` : `${hello},`;
 }
 
 function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
+  const lang: MailLang = p.lang === "en" ? "en" : "fr";
+  const c = colon(lang);
   return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
-      <h1 style="font-size:22px;margin:0 0 8px;">${greeting(p.customer_name)}</h1>
-      <p style="font-size:14px;line-height:1.6;color:#555;margin:0;">Merci pour votre demande.</p>
+    <div lang="${lang}" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#fff;color:#1a1a1a;">
+      <h1 style="font-size:22px;margin:0 0 8px;">${greeting(p.customer_name, lang)}</h1>
+      <p style="font-size:14px;line-height:1.6;color:#555;margin:0;">${tr(lang, "Merci pour votre demande.", "Thank you for your request.")}</p>
       <p style="font-size:14px;line-height:1.6;color:#555;">
-        Nous avons bien reçu votre demande de devis <strong>${escapeHtml(number)}</strong>. ${items.length ? "Notre équipe revient vers vous sous 24 h ouvrées avec une proposition personnalisée." : ""}
-        ${customs.length ? "Pour le sur-mesure : prix et délai de fabrication confirmés sous 48 h ouvrées." : ""}
+        ${tr(lang, "Nous avons bien reçu votre demande de devis", "We have received your quote request")} <strong>${escapeHtml(number)}</strong>. ${items.length ? tr(lang, "Notre équipe revient vers vous sous 24 h ouvrées avec une proposition personnalisée.", "Our team will get back to you within one business day with a tailored proposal.") : ""}
+        ${customs.length ? tr(lang, "Pour le sur-mesure : prix et délai de fabrication confirmés sous 48 h ouvrées.", "Custom-made: price and production time confirmed within two business days.") : ""}
       </p>
       ${(p.delivery_time || p.pickup_time || p.event_date || p.event_location) ? `
       <div style="margin-top:16px;padding:14px 16px;background:#f9f9f9;border-radius:8px;font-size:14px;line-height:1.7;">
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#666;font-weight:600;margin-bottom:6px;">Logistique</div>
-        ${p.event_date ? `Date événement : <strong>${escapeHtml(fmtDate(p.event_date))}</strong><br/>` : ""}
-        ${p.event_location ? `Lieu : <strong>${escapeHtml(p.event_location)}</strong><br/>` : ""}
-        ${p.delivery_time ? `Créneau livraison souhaité : <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
-        ${p.pickup_time ? `Créneau reprise souhaité : <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#666;font-weight:600;margin-bottom:6px;">${tr(lang, "Logistique", "Logistics")}</div>
+        ${p.event_date ? `${tr(lang, "Date événement", "Event date")}${c} <strong>${escapeHtml(fmtDate(p.event_date))}</strong><br/>` : ""}
+        ${p.event_location ? `${tr(lang, "Lieu", "Venue")}${c} <strong>${escapeHtml(p.event_location)}</strong><br/>` : ""}
+        ${p.delivery_time ? `${tr(lang, "Créneau livraison souhaité", "Preferred delivery slot")}${c} <strong>${escapeHtml(p.delivery_time)}</strong><br/>` : ""}
+        ${p.pickup_time ? `${tr(lang, "Créneau reprise souhaité", "Preferred pickup slot")}${c} <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
       </div>` : ""}
-      <h2 style="font-size:16px;margin:24px 0 8px;">Récapitulatif de votre demande ${escapeHtml(number)}</h2>
-      ${rentalBlock(items, t)}
-      ${customBlock(p, customs)}
-      ${items.length ? `<p style="margin-top:24px;font-size:13px;color:#666;">Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.<br/>Estimation indicative. Le devis final dépend des disponibilités et de la logistique.</p>` : ""}
-      ${customs.length ? `<p style="margin-top:8px;font-size:13px;color:#666;">Livraison et pose du sur-mesure : sur devis.</p>` : ""}
-      <p style="margin-top:24px;font-size:14px;">— L'équipe Setup Paris</p>
+      <h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Récapitulatif de votre demande", "Summary of your request")} ${escapeHtml(number)}</h2>
+      ${rentalBlock(items, t, lang)}
+      ${customBlock(p, customs, undefined, lang)}
+      ${items.length ? `<p style="margin-top:24px;font-size:13px;color:#666;">${tr(lang, "Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.<br/>Estimation indicative. Le devis final dépend des disponibilités et de la logistique.", "Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.<br/>Indicative estimate. The final quote depends on availability and logistics.")}</p>` : ""}
+      ${customs.length ? `<p style="margin-top:8px;font-size:13px;color:#666;">${tr(lang, "Livraison et pose du sur-mesure : sur devis.", "Delivery and installation of custom pieces: on quote.")}</p>` : ""}
+      <p style="margin-top:24px;font-size:14px;">${tr(lang, "— L'équipe Setup Paris", "— The Setup Paris team")}</p>
     </div>`;
 }
 
@@ -604,7 +619,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
               configurator_recap: c.recap,
               custom_alerts: c.alerts,
               custom_weight_kg: c.weight_kg ?? null,
-              resume_url: configLink(piece.k, c.configuration as Record<string, unknown>, SITE_URL),
+              resume_url: configLink(piece.k, c.configuration as Record<string, unknown>, SITE_URL, p.lang),
               line_net: 0,
               line_gross: 0,
               line_discount: 0,
@@ -728,7 +743,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
             }),
             sendEmail({
               to: [p.email],
-              subject: `Votre demande de devis ${number} — Setup Paris`,
+              subject: p.lang === "en" ? `Your quote request ${number} — Setup Paris` : `Votre demande de devis ${number} — Setup Paris`,
               html: clientEmail(p, number, storedItems, totals, storedCustoms),
               replyTo: CLIENT_REPLY_TO,
             }),

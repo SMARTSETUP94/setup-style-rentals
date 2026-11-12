@@ -15,19 +15,29 @@ import { ProductImage } from "@/components/site/ProductImage";
 import { configLink } from "@/lib/sur-mesure";
 import { SITE_URL } from "@/lib/seo";
 import { trackSiteEvent } from "@/lib/track";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/site/LazyCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { canonicalLink, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/devis")({
-  head: () => ({
-    meta: [
-      { title: "Ma demande de devis — Setup Paris" },
-      { name: "description", content: "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis." },
-    ],
-    links: [canonicalLink("/devis"), ...hreflangLinks("/devis")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Ma demande de devis — Setup Paris", "My quote request — Setup Paris");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.", "My quote request: online quote request, reply within one business day. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Demande de devis en ligne, réponse sous 24 h ouvrées.", "Online quote request, reply within one business day.") },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/devis", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: seoLinks("/devis", lang),
+    };
+  },
   component: QuotePage,
 });
 
@@ -232,7 +242,7 @@ function QuotePage() {
           net: 0,
           custom: true,
           ref: i.customRef,
-          resumeUrl: configLink(i.customPiece ?? i.slug, i.customConfig, SITE_URL) ?? undefined,
+          resumeUrl: configLink(i.customPiece ?? i.slug, i.customConfig, SITE_URL, lang) ?? undefined,
         })),
       ],
       hasRental,
@@ -370,7 +380,7 @@ function QuotePage() {
                   return (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
                       <div className="size-20 sm:size-24 rounded-lg overflow-hidden bg-secondary shrink-0">
-                        <ProductImage name={pickLang(item, "name", lang)} category_slug={item.category_slug} image_url={item.image_url} />
+                        <ProductImage name={pickLang(item, "name", lang)} category_slug={item.category_slug} image_url={item.image_url} sizes="96px" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
@@ -445,7 +455,7 @@ function QuotePage() {
                             )}
                             {(item.configuratorRecapHtml || item.configuratorRecap) && (
                               <div className="mt-2 rounded-md border border-gold/30 bg-gold/5 p-2">
-                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold font-semibold mb-1">
+                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold-ink font-semibold mb-1">
                                   <Wand2 className="size-3" />
                                   {t("cart.configRecap")}
                                 </div>
@@ -521,7 +531,7 @@ function QuotePage() {
               {hasCustom && (
                 <div className="space-y-4">
                   <h2 className="font-display font-semibold text-xl flex items-center gap-2">
-                    <Hammer className="size-5 text-gold" /> {t("sm.blockCustom")}
+                    <Hammer className="size-5 text-gold-ink" /> {t("sm.blockCustom")}
                   </h2>
                   {customItems.map((item) => (
                     <div key={item.lineId} className="flex gap-4 p-4 rounded-lg border border-border bg-white">
@@ -554,7 +564,7 @@ function QuotePage() {
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin)!;
+                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin, lang)!;
                                   try {
                                     await navigator.clipboard.writeText(url);
                                     toast.success(lang === "fr" ? "Lien copié" : "Link copied");
@@ -614,7 +624,7 @@ function QuotePage() {
                 )}
                 {hasCustom && (
                   <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 space-y-3">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-gold">{t("sm.blockCustom")}</div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-gold-ink">{t("sm.blockCustom")}</div>
                     <Input label={t("sm.deliveryDate")} type="date" value={form.custom_delivery_date} onChange={(v) => setForm({ ...form, custom_delivery_date: v })} />
                     <fieldset>
                       <legend className="text-xs text-muted-foreground">{t("sm.afterEvent")}</legend>

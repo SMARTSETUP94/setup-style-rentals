@@ -1,7 +1,7 @@
 import { matchConfigToOptions, recapPairs, type ConfigChoices } from "@/lib/config-match";
 import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -11,11 +11,20 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
 import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
+import { PRODUCT_HERO_SIZES, responsiveImage } from "@/lib/image";
+
+/** Preload the main product photo with the same srcset the page renders. */
+function preloadFor(url: string) {
+  const r = responsiveImage(url);
+  return r.srcSet
+    ? { rel: "preload", as: "image", href: r.src, imageSrcSet: r.srcSet, imageSizes: PRODUCT_HERO_SIZES, fetchpriority: "high" }
+    : { rel: "preload", as: "image", href: url, fetchpriority: "high" };
+}
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
-import { canonicalUrl, SITE_URL, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/site/LazyCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PRODUCT_TO_PIECE } from "@/lib/sur-mesure";
 import {
@@ -107,19 +116,22 @@ export const Route = createFileRoute("/produit/$slug")({
       .maybeSingle();
     return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null; price_day: number; stock_total: number; category_slug: string } | null };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, match }) => {
+    const lang = headLang(match);
     const m = loaderData?.meta;
     if (!m) {
       return {
         meta: [
-          { title: "Produit — Setup Paris" },
-          { name: "description", content: "Location d'objets événementiels à Paris." },
+          { title: L(lang, "Produit — Setup Paris", "Product — Setup Paris") },
+          { name: "description", content: L(lang, "Location d'objets événementiels à Paris.", "Event object rentals in Paris.") },
         ],
       };
     }
-    const title = `${m.name_fr} — Setup Paris`;
-    const description = m.description_fr?.slice(0, 160) || `Louez ${m.name_fr} chez Setup Paris : configurateur 3D. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.`;
-    const productUrl = canonicalUrl(`/produit/${m.slug}`);
+    const name = lang === "en" ? m.name_en || m.name_fr : m.name_fr;
+    const desc = lang === "en" ? m.description_en || m.description_fr : m.description_fr;
+    const title = `${name} — Setup Paris`;
+    const description = desc?.slice(0, 160) || L(lang, `Louez ${name} chez Setup Paris : configurateur 3D. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.`, `Rent ${name} from Setup Paris with a 3D configurator. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.`);
+    const productUrl = canonicalUrl(`/produit/${m.slug}`, lang);
     const meta: Array<Record<string, string>> = [
       { title },
       { name: "description", content: description },
@@ -130,6 +142,7 @@ export const Route = createFileRoute("/produit/$slug")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
+      ...localeMeta(lang),
     ];
     if (m.image_url) {
       meta.push({ property: "og:image", content: m.image_url });
@@ -138,8 +151,9 @@ export const Route = createFileRoute("/produit/$slug")({
     const jsonLd: Record<string, unknown> = {
       "@context": "https://schema.org/",
       "@type": "Product",
-      name: m.name_fr,
+      name,
       description,
+      inLanguage: lang,
       sku: m.slug,
       category: m.category_slug,
       url: productUrl,
@@ -166,22 +180,22 @@ export const Route = createFileRoute("/produit/$slug")({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Accueil", item: `${SITE_URL}/` },
-        { "@type": "ListItem", position: 2, name: "Catalogue", item: `${SITE_URL}/catalogue` },
+        { "@type": "ListItem", position: 1, name: L(lang, "Accueil", "Home"), item: canonicalUrl("/", lang) },
+        { "@type": "ListItem", position: 2, name: "Catalogue", item: canonicalUrl("/catalogue", lang) },
         {
           "@type": "ListItem",
           position: 3,
           name: m.category_slug,
-          item: `${SITE_URL}/catalogue?categorie=${encodeURIComponent(m.category_slug)}`,
+          item: canonicalUrl(`/categorie/${encodeURIComponent(m.category_slug)}`, lang),
         },
-        { "@type": "ListItem", position: 4, name: m.name_fr, item: productUrl },
+        { "@type": "ListItem", position: 4, name, item: productUrl },
       ],
     };
     return {
       meta,
       links: [
-        { rel: "canonical", href: productUrl },
-        ...hreflangLinks(`/produit/${m.slug}`),
+        ...seoLinks(`/produit/${m.slug}`, lang),
+        ...(m.image_url ? [preloadFor(m.image_url)] : []),
       ],
       scripts: [
         {
@@ -226,6 +240,7 @@ function ProductPage() {
 
   // 3D configurator integration
   const inlineIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const close3DButtonRef = useRef<HTMLButtonElement | null>(null);
   /** Origin of the configurator iframe — target for outgoing postMessage. */
   const configuratorOrigin = (() => {
     try {
@@ -819,9 +834,15 @@ function ProductPage() {
 
   return (
     <div className="pt-20 md:pt-24">
+      <ConfiguratorFocus open={!!product.configurator_url && is3DMode} closeRef={close3DButtonRef} onEscape={() => close3DButtonRef.current?.click()} />
       {/* Immersive 3D mode — covers the page body, hides title/breadcrumbs/pricing */}
       {product.configurator_url && is3DMode && (
-        <div className="fixed inset-0 z-[60] bg-background animate-fade-in md:top-24">
+        <div
+          className="fixed inset-0 z-[60] bg-background animate-fade-in md:top-24"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
+        >
           <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)]">
             <iframe
               ref={inlineIframeRef}
@@ -839,6 +860,7 @@ function ProductPage() {
               }}
             />
             <button
+              ref={close3DButtonRef}
               type="button"
               onClick={() => {
                 // If the user has interacted with the configurator (we
@@ -863,7 +885,7 @@ function ProductPage() {
               className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 z-10 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
               aria-label={t("product.resetConfigTitle")}
             >
-              <RotateCcw className="size-4" />
+              <RotateCcw className="size-4" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -946,6 +968,7 @@ function ProductPage() {
               category_slug={product.category_slug}
               image_url={product.image_url}
               priority
+              sizes={PRODUCT_HERO_SIZES}
               className="w-full h-full object-cover"
             />
           </div>
@@ -954,7 +977,7 @@ function ProductPage() {
         {/* Details — 40% on desktop */}
         <div className="lg:col-span-2">
           {category && (
-            <div className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold border border-gold/20">
+            <div className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold-ink border border-gold/20">
               {pickLang(category, "name", lang)}
             </div>
           )}
@@ -1006,7 +1029,7 @@ function ProductPage() {
             <div className="mt-4 rounded-xl border border-gold/40 bg-gold/5 p-4 animate-fade-in">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold">
+                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-gold/20 text-gold-ink">
                     <Check className="size-4" />
                   </span>
                   <div className="text-sm font-semibold">
@@ -1052,7 +1075,7 @@ function ProductPage() {
                 <div key={i} className="rounded-lg bg-background border border-border p-4 text-center">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{p.label}</div>
                   {p.value != null ? (
-                    <div className="mt-2 font-display font-semibold text-xl text-gold">
+                    <div className="mt-2 font-display font-semibold text-xl text-gold-ink">
                       {formatPrice(p.value, lang)}
                     </div>
                   ) : (
@@ -1076,7 +1099,7 @@ function ProductPage() {
               </div>
               {autoSelectedCatIds.size > 0 && (
                 <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5 -mt-2">
-                  <Wand2 className="size-3.5 text-gold/80" />
+                  <Wand2 className="size-3.5 text-gold-ink/80" />
                   {t("product.optionsFrom3D")}
                 </p>
               )}
@@ -1149,13 +1172,13 @@ function ProductPage() {
                                 {active && autoSelectedCatIds.has(cat.id) && (
                                   <span
                                     title={t("product.autoSelectedHint")}
-                                    className="inline-flex items-center text-gold/80"
+                                    className="inline-flex items-center text-gold-ink/80"
                                   >
                                     <Wand2 className="size-3.5" />
                                   </span>
                                 )}
                               </span>
-                              {active && <Check className="size-4 text-gold shrink-0" />}
+                              {active && <Check className="size-4 text-gold-ink shrink-0" />}
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {o.price > 0
@@ -1305,7 +1328,7 @@ function ProductPage() {
               ))}
               {activeConfiguratorOptionsList.length > 0 && (
                 <div className="pt-1 border-t border-dashed border-border/60 mt-1">
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-gold/80 font-semibold mb-1 flex items-center gap-1">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-gold-ink/80 font-semibold mb-1 flex items-center gap-1">
                     <Wand2 className="size-3" />
                     {t("product.threeDConfiguration")}
                   </div>
@@ -1350,7 +1373,7 @@ function ProductPage() {
                       : qty > availableStock
                         ? "border-destructive/40 bg-destructive/5 text-destructive"
                         : availableStock <= 2
-                          ? "border-gold/40 bg-gold/5 text-gold"
+                          ? "border-gold/40 bg-gold/5 text-gold-ink"
                           : "border-accent/40 bg-accent/5 text-accent",
               )}
             >
@@ -1450,4 +1473,31 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
       <span className={cn(highlight && "text-accent font-medium")}>{value}</span>
     </div>
   );
+}
+
+/**
+ * Keyboard support for the full-screen 3D configurator: moves focus to the
+ * Close button when it opens, closes on Escape (when focus is outside the
+ * iframe), and returns focus to the element that opened it.
+ */
+function ConfiguratorFocus({ open, closeRef, onEscape }: { open: boolean; closeRef: RefObject<HTMLButtonElement | null>; onEscape: () => void }) {
+  const openerRef = useRef<HTMLElement | null>(null);
+  const escRef = useRef(onEscape);
+  escRef.current = onEscape;
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    const id = requestAnimationFrame(() => closeRef.current?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.querySelector('[role="alertdialog"]')) escRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(id);
+      document.removeEventListener("keydown", onKey);
+      const opener = openerRef.current;
+      if (opener && document.contains(opener)) requestAnimationFrame(() => opener.focus());
+    };
+  }, [open, closeRef]);
+  return null;
 }

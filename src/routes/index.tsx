@@ -1,3 +1,4 @@
+import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, seoLinks } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, MousePointerClick, Truck, Wand2, Zap, Ruler, Sparkles } from "lucide-react";
@@ -6,8 +7,8 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
 import { useReveal } from "@/hooks/use-reveal";
+import { responsiveImage } from "@/lib/image";
 import { ClientsBand } from "@/components/site/ClientsBand";
-import { canonicalLink, ogImageMeta, hreflangLinks } from "@/lib/seo";
 
 interface Category {
   id: string;
@@ -30,23 +31,28 @@ interface FeaturedProduct {
 }
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Setup Paris — Location d'objets événementiels" },
-      { name: "description", content: "Personnalisez, configurez, louez. Catalogue d'objets événementiels avec configurateur 3D : jeux, structures, signalétique, décoration, mobilier." },
-      { property: "og:title", content: "Setup Paris — Location d'objets événementiels" },
-      { property: "og:description", content: "Personnalisez, configurez, louez." },
-      ...ogImageMeta(
-        "https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg",
-        { alt: "Setup Paris — Location d'objets événementiels personnalisables" },
-      ),
-    ],
-    links: [
-      canonicalLink("/"),
-      ...hreflangLinks("/"),
-      { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
-    ],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Setup Paris — Location d'objets événementiels", "Setup Paris — Event object rentals in Paris");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Personnalisez, configurez, louez. Catalogue d'objets événementiels avec configurateur 3D : jeux, structures, signalétique, décoration, mobilier.", "Customize, configure, rent. A catalogue of event objects with a 3D configurator: games, structures, signage, decor and furniture in Paris.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Personnalisez, configurez, louez.", "Customize, configure, rent.") },
+        { property: "og:url", content: canonicalUrl("/", lang) },
+        ...localeMeta(lang),
+        ...ogImageMeta(
+          "https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg",
+          { alt: L(lang, "Setup Paris — Location d'objets événementiels personnalisables", "Setup Paris — Customizable event object rentals") },
+        ),
+      ],
+      links: [
+        ...seoLinks("/", lang),
+        { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
+      ],
+    };
+  },
   component: HomePage,
 });
 
@@ -135,7 +141,7 @@ function HomePage() {
           ].map((b, i) => {
             const inner = (
               <>
-                <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold">
+                <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold-ink">
                   <b.i className="size-4" strokeWidth={2} />
                 </span>
                 <span className="leading-tight">{b.label}</span>
@@ -199,7 +205,8 @@ function HomePage() {
               }}
             >
               <img
-                src={categoryImage(cat.slug)}
+                {...responsiveImage(categoryImage(cat.slug))}
+                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
                 alt={pickLang(cat, "name", lang)}
                 loading="lazy"
                 decoding="async"
@@ -243,7 +250,7 @@ function HomePage() {
             <SectionHeader num="04" title={t("featured.title")} sub={t("featured.sub")} />
             <Link
               to="/catalogue"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold transition-colors duration-300 shrink-0"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold-ink transition-colors duration-300 shrink-0"
             >
               {t("featured.all")}
               <ArrowRight className="size-4" />
@@ -295,10 +302,10 @@ function HomePage() {
               className="rounded-xl border border-border p-7 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-gold tracking-widest">0{idx + 1}</span>
-                <s.i className="size-5 text-gold" />
+                <span className="text-xs font-mono text-gold-ink tracking-widest">0{idx + 1}</span>
+                <s.i className="size-5 text-gold-ink" />
               </div>
-              <h4 className="mt-6 font-display font-semibold text-xl">{s.t}</h4>
+              <h3 className="mt-6 font-display font-semibold text-xl">{s.t}</h3>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.d}</p>
             </div>
           ))}

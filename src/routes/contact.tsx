@@ -8,24 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/lib/i18n";
-import { canonicalLink, hreflangLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
-  head: () => ({
-    meta: [
-      { title: "Contact — Setup Paris, location d'objets événementiels" },
-      {
-        name: "description",
-        content: "Contactez Setup Paris pour vos locations d'objets et jeux événementiels à Paris et en Île-de-France : téléphone, mail et formulaire.",
-      },
-      { property: "og:title", content: "Contact — Setup Paris" },
-      { property: "og:description", content: "Une question sur une location événementielle ? Écrivez-nous ou appelez-nous." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-    links: [canonicalLink("/contact"), ...hreflangLinks("/contact")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Contact — Setup Paris, location d'objets événementiels", "Contact — Setup Paris, event object rentals");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Contactez Setup Paris pour vos locations d'objets et jeux événementiels à Paris et en Île-de-France : téléphone, mail et formulaire.", "Contact Setup Paris about event object and game rentals in Paris and Île-de-France: phone, email and contact form.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Une question sur une location événementielle ? Écrivez-nous ou appelez-nous.", "A question about an event rental? Write to us or call us.") },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonicalUrl("/contact", lang) },
+        ...localeMeta(lang),
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: seoLinks("/contact", lang),
+    };
+  },
 });
 
 const TXT = {
@@ -111,23 +114,23 @@ function ContactPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
+      <div className="flex-1 container-x pt-28 pb-16 md:pt-32 md:pb-24">
         <div className="max-w-5xl mx-auto grid gap-12 md:grid-cols-[1fr_1.4fr]">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-gold font-medium">{tx.eyebrow}</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-gold-ink font-medium">{tx.eyebrow}</div>
             <h1 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">{tx.title}</h1>
             <p className="mt-4 text-muted-foreground">{tx.intro}</p>
             <ul className="mt-8 space-y-4 text-sm">
               <li className="flex items-start gap-3">
-                <Phone className="size-4 mt-0.5 text-gold shrink-0" />
+                <Phone className="size-4 mt-0.5 text-gold-ink shrink-0" />
                 <a href="tel:+33601416111" className="hover:underline">06 01 41 61 11</a>
               </li>
               <li className="flex items-start gap-3">
-                <Mail className="size-4 mt-0.5 text-gold shrink-0" />
+                <Mail className="size-4 mt-0.5 text-gold-ink shrink-0" />
                 <a href="mailto:smart@setup.paris" className="hover:underline">smart@setup.paris</a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin className="size-4 mt-0.5 text-gold shrink-0" />
+                <MapPin className="size-4 mt-0.5 text-gold-ink shrink-0" />
                 <span>8 avenue du Président Salvador Allende<br />Vitry-sur-Seine</span>
               </li>
             </ul>
@@ -184,7 +187,7 @@ function ContactPage() {
             )}
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

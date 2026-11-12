@@ -47,14 +47,14 @@ export function Navbar() {
             rel="noopener noreferrer"
             className={cn(
               "text-[9px] sm:text-[10px] font-medium tracking-wider uppercase whitespace-nowrap transition-opacity hover:opacity-100 leading-none self-end pb-0.5",
-              transparent ? "text-white/70" : "text-muted-foreground",
+              transparent ? "text-white/90" : "text-muted-foreground",
             )}
           >
             by setup.paris ↗
           </a>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+        <nav aria-label={lang === "en" ? "Main menu" : "Menu principal"} className="hidden md:flex items-center gap-8 text-sm font-medium">
           <Link to="/" className="hover:opacity-70 transition-opacity" activeProps={{ className: "opacity-100" }}>
             {t("nav.home")}
           </Link>
@@ -84,7 +84,9 @@ export function Navbar() {
             type="button"
             className="md:hidden p-2 -mr-2"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={open ? (lang === "en" ? "Close menu" : "Fermer le menu") : (lang === "en" ? "Open menu" : "Ouvrir le menu")}
+            aria-expanded={open}
+            aria-controls="menu-mobile"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -92,8 +94,8 @@ export function Navbar() {
       </div>
 
       {open && (
-        <div className="md:hidden bg-white border-t border-border text-foreground">
-          <nav className="container-x py-4 flex flex-col gap-3 text-sm font-medium">
+        <div id="menu-mobile" className="md:hidden bg-white border-t border-border text-foreground">
+          <nav aria-label={lang === "en" ? "Main menu" : "Menu principal"} className="container-x py-4 flex flex-col gap-3 text-sm font-medium">
             <Link to="/" className="py-2">{t("nav.home")}</Link>
             <Link to="/catalogue" className="py-2">{t("nav.catalog")}</Link>
             <Link to="/sur-mesure" className="py-2">{t("nav.custom")}</Link>
@@ -114,19 +116,27 @@ export function Navbar() {
 
 function LangSwitch({ lang, setLang, transparent }: { lang: Lang; setLang: (l: Lang) => void; transparent: boolean }) {
   return (
-    <div className={cn(
-      "flex items-center text-xs font-semibold rounded-full p-0.5 border",
-      transparent ? "border-white/30 text-white" : "border-border",
-    )}>
+    <div
+      role="group"
+      aria-label={lang === "en" ? "Language" : "Langue"}
+      className={cn(
+        "flex items-center text-xs font-semibold rounded-full p-0.5 border",
+        transparent ? "border-white/30 text-white" : "border-border",
+      )}
+    >
       {(["fr", "en"] as const).map((l) => (
         <button
           key={l}
+          type="button"
+          lang={l}
           onClick={() => setLang(l)}
+          aria-pressed={lang === l}
+          aria-label={l === "fr" ? "Français" : "English"}
           className={cn(
-            "px-2.5 py-1 rounded-full transition-colors",
+            "px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             lang === l
               ? (transparent ? "bg-white text-foreground" : "bg-foreground text-background")
-              : "opacity-70 hover:opacity-100",
+              : "opacity-90 hover:opacity-100",
           )}
         >
           {l.toUpperCase()}

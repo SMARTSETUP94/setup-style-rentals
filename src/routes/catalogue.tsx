@@ -1,3 +1,4 @@
+import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, seoLinks } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
@@ -9,9 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { cn } from "@/lib/utils";
-import { canonicalLink, ogImageMeta, hreflangLinks } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@/components/site/LazyCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -44,19 +44,25 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/catalogue")({
   validateSearch: zodValidator(searchSchema),
-  head: () => ({
-    meta: [
-      { title: "Catalogue — Setup Paris" },
-      { name: "description", content: "Découvrez notre catalogue de location : jeux, structures, signalétique, décoration et mobilier événementiel." },
-      { property: "og:title", content: "Catalogue — Setup Paris" },
-      { property: "og:description", content: "Notre catalogue d'objets événementiels." },
-      ...ogImageMeta(
-        "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&h=630&q=80",
-        { alt: "Catalogue Setup Paris — jeux, structures, signalétique, décoration, mobilier" },
-      ),
-    ],
-    links: [canonicalLink("/catalogue"), ...hreflangLinks("/catalogue")],
-  }),
+  head: ({ match }) => {
+    const lang = headLang(match);
+    const title = L(lang, "Catalogue — Setup Paris", "Catalogue — Setup Paris event rentals");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: L(lang, "Découvrez notre catalogue de location : jeux, structures, signalétique, décoration et mobilier événementiel.", "Browse our rental catalogue: games, structures, signage, decor and event furniture in Paris and Île-de-France.") },
+        { property: "og:title", content: title },
+        { property: "og:description", content: L(lang, "Notre catalogue d'objets événementiels.", "Our catalogue of event objects.") },
+        { property: "og:url", content: canonicalUrl("/catalogue", lang) },
+        ...localeMeta(lang),
+        ...ogImageMeta(
+          "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&h=630&q=80",
+          { alt: L(lang, "Catalogue Setup Paris — jeux, structures, signalétique, décoration, mobilier", "Setup Paris catalogue — games, structures, signage, decor, furniture") },
+        ),
+      ],
+      links: seoLinks("/catalogue", lang),
+    };
+  },
   component: CataloguePage,
 });
 
@@ -301,6 +307,7 @@ function CataloguePage() {
 
       {/* Grid */}
       <div className="container-x mt-6 pb-16">
+        <h2 className="sr-only">{lang === "en" ? "Products" : "Produits"}</h2>
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (

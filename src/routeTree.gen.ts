@@ -9,71 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
-import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
-import { Route as DevisRouteImport } from './routes/devis'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CglRouteImport } from './routes/cgl'
-import { Route as CatalogueRouteImport } from './routes/catalogue'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SurMesureIndexRouteImport } from './routes/sur-mesure.index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CatalogueRouteImport } from './routes/catalogue'
+import { Route as CglRouteImport } from './routes/cgl'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DevisRouteImport } from './routes/devis'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as SurMesurePieceRouteImport } from './routes/sur-mesure.$piece'
-import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
-import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
-import { Route as ApiTrackRouteImport } from './routes/api.track'
-import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
-import { Route as ApiLogoUploadRouteImport } from './routes/api.logo-upload'
-import { Route as ApiContactRouteImport } from './routes/api.contact'
-import { Route as AdminSurMesureRouteImport } from './routes/admin.sur-mesure'
-import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
-import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
-import { Route as AdminProductsRouteImport } from './routes/admin.products'
-import { Route as AdminDevisRouteImport } from './routes/admin.devis'
-import { Route as AdminClientsRouteImport } from './routes/admin.clients'
-import { Route as AdminChiffrageRouteImport } from './routes/admin.chiffrage'
-import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
-import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
 import { Route as AdminAuthRouteImport } from './routes/admin.auth'
-import { Route as ApiSurMesureEstimateRouteImport } from './routes/api.sur-mesure.estimate'
-import { Route as ApiQuotesSubmitRouteImport } from './routes/api.quotes.submit'
+import { Route as AdminCalendrierRouteImport } from './routes/admin.calendrier'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AdminChiffrageRouteImport } from './routes/admin.chiffrage'
+import { Route as AdminClientsRouteImport } from './routes/admin.clients'
+import { Route as AdminDevisRouteImport } from './routes/admin.devis'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSurMesureRouteImport } from './routes/admin.sur-mesure'
+import { Route as ApiContactRouteImport } from './routes/api.contact'
+import { Route as ApiLogoUploadRouteImport } from './routes/api.logo-upload'
+import { Route as ApiSendQuoteEmailsRouteImport } from './routes/api.send-quote-emails'
+import { Route as ApiTrackRouteImport } from './routes/api.track'
+import { Route as CategorieSlugRouteImport } from './routes/categorie.$slug'
+import { Route as ProduitSlugRouteImport } from './routes/produit.$slug'
+import { Route as SurMesureIndexRouteImport } from './routes/sur-mesure.index'
+import { Route as SurMesurePieceRouteImport } from './routes/sur-mesure.$piece'
 import { Route as ApiAdminChiffrageRouteImport } from './routes/api.admin.chiffrage'
+import { Route as ApiQuotesSubmitRouteImport } from './routes/api.quotes.submit'
+import { Route as ApiSurMesureEstimateRouteImport } from './routes/api.sur-mesure.estimate'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
-  id: '/robots.txt',
-  path: '/robots.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
-  id: '/mentions-legales',
-  path: '/mentions-legales',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DevisRoute = DevisRouteImport.update({
-  id: '/devis',
-  path: '/devis',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CglRoute = CglRouteImport.update({
-  id: '/cgl',
-  path: '/cgl',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CatalogueRoute = CatalogueRouteImport.update({
-  id: '/catalogue',
-  path: '/catalogue',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -81,14 +51,39 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CatalogueRoute = CatalogueRouteImport.update({
+  id: '/catalogue',
+  path: '/catalogue',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SurMesureIndexRoute = SurMesureIndexRouteImport.update({
-  id: '/sur-mesure/',
-  path: '/sur-mesure/',
+const CglRoute = CglRouteImport.update({
+  id: '/cgl',
+  path: '/cgl',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevisRoute = DevisRouteImport.update({
+  id: '/devis',
+  path: '/devis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -96,79 +91,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const SurMesurePieceRoute = SurMesurePieceRouteImport.update({
-  id: '/sur-mesure/$piece',
-  path: '/sur-mesure/$piece',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProduitSlugRoute = ProduitSlugRouteImport.update({
-  id: '/produit/$slug',
-  path: '/produit/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategorieSlugRoute = CategorieSlugRouteImport.update({
-  id: '/categorie/$slug',
-  path: '/categorie/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiTrackRoute = ApiTrackRouteImport.update({
-  id: '/api/track',
-  path: '/api/track',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
-  id: '/api/send-quote-emails',
-  path: '/api/send-quote-emails',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiLogoUploadRoute = ApiLogoUploadRouteImport.update({
-  id: '/api/logo-upload',
-  path: '/api/logo-upload',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiContactRoute = ApiContactRouteImport.update({
-  id: '/api/contact',
-  path: '/api/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSurMesureRoute = AdminSurMesureRouteImport.update({
-  id: '/sur-mesure',
-  path: '/sur-mesure',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRoadmapRoute = AdminRoadmapRouteImport.update({
-  id: '/roadmap',
-  path: '/roadmap',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProductsRoute = AdminProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDevisRoute = AdminDevisRouteImport.update({
-  id: '/devis',
-  path: '/devis',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminClientsRoute = AdminClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminChiffrageRoute = AdminChiffrageRouteImport.update({
-  id: '/chiffrage',
-  path: '/chiffrage',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
+const AdminAuthRoute = AdminAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCalendrierRoute = AdminCalendrierRouteImport.update({
@@ -176,14 +101,89 @@ const AdminCalendrierRoute = AdminCalendrierRouteImport.update({
   path: '/calendrier',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAuthRoute = AdminAuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
-const ApiSurMesureEstimateRoute = ApiSurMesureEstimateRouteImport.update({
-  id: '/api/sur-mesure/estimate',
-  path: '/api/sur-mesure/estimate',
+const AdminChiffrageRoute = AdminChiffrageRouteImport.update({
+  id: '/chiffrage',
+  path: '/chiffrage',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminClientsRoute = AdminClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDevisRoute = AdminDevisRouteImport.update({
+  id: '/devis',
+  path: '/devis',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRoadmapRoute = AdminRoadmapRouteImport.update({
+  id: '/roadmap',
+  path: '/roadmap',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSurMesureRoute = AdminSurMesureRouteImport.update({
+  id: '/sur-mesure',
+  path: '/sur-mesure',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiContactRoute = ApiContactRouteImport.update({
+  id: '/api/contact',
+  path: '/api/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLogoUploadRoute = ApiLogoUploadRouteImport.update({
+  id: '/api/logo-upload',
+  path: '/api/logo-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSendQuoteEmailsRoute = ApiSendQuoteEmailsRouteImport.update({
+  id: '/api/send-quote-emails',
+  path: '/api/send-quote-emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTrackRoute = ApiTrackRouteImport.update({
+  id: '/api/track',
+  path: '/api/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategorieSlugRoute = CategorieSlugRouteImport.update({
+  id: '/categorie/$slug',
+  path: '/categorie/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProduitSlugRoute = ProduitSlugRouteImport.update({
+  id: '/produit/$slug',
+  path: '/produit/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SurMesureIndexRoute = SurMesureIndexRouteImport.update({
+  id: '/sur-mesure/',
+  path: '/sur-mesure/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SurMesurePieceRoute = SurMesurePieceRouteImport.update({
+  id: '/sur-mesure/$piece',
+  path: '/sur-mesure/$piece',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminChiffrageRoute = ApiAdminChiffrageRouteImport.update({
+  id: '/api/admin/chiffrage',
+  path: '/api/admin/chiffrage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiQuotesSubmitRoute = ApiQuotesSubmitRouteImport.update({
@@ -191,9 +191,9 @@ const ApiQuotesSubmitRoute = ApiQuotesSubmitRouteImport.update({
   path: '/api/quotes/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminChiffrageRoute = ApiAdminChiffrageRouteImport.update({
-  id: '/api/admin/chiffrage',
-  path: '/api/admin/chiffrage',
+const ApiSurMesureEstimateRoute = ApiSurMesureEstimateRouteImport.update({
+  id: '/api/sur-mesure/estimate',
+  path: '/api/sur-mesure/estimate',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -422,53 +422,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/robots.txt': {
-      id: '/robots.txt'
-      path: '/robots.txt'
-      fullPath: '/robots.txt'
-      preLoaderRoute: typeof RobotsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mentions-legales': {
-      id: '/mentions-legales'
-      path: '/mentions-legales'
-      fullPath: '/mentions-legales'
-      preLoaderRoute: typeof MentionsLegalesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/devis': {
-      id: '/devis'
-      path: '/devis'
-      fullPath: '/devis'
-      preLoaderRoute: typeof DevisRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cgl': {
-      id: '/cgl'
-      path: '/cgl'
-      fullPath: '/cgl'
-      preLoaderRoute: typeof CglRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/catalogue': {
-      id: '/catalogue'
-      path: '/catalogue'
-      fullPath: '/catalogue'
-      preLoaderRoute: typeof CatalogueRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -478,18 +436,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/catalogue': {
+      id: '/catalogue'
+      path: '/catalogue'
+      fullPath: '/catalogue'
+      preLoaderRoute: typeof CatalogueRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sur-mesure/': {
-      id: '/sur-mesure/'
-      path: '/sur-mesure'
-      fullPath: '/sur-mesure/'
-      preLoaderRoute: typeof SurMesureIndexRouteImport
+    '/cgl': {
+      id: '/cgl'
+      path: '/cgl'
+      fullPath: '/cgl'
+      preLoaderRoute: typeof CglRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/devis': {
+      id: '/devis'
+      path: '/devis'
+      fullPath: '/devis'
+      preLoaderRoute: typeof DevisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -499,109 +492,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/sur-mesure/$piece': {
-      id: '/sur-mesure/$piece'
-      path: '/sur-mesure/$piece'
-      fullPath: '/sur-mesure/$piece'
-      preLoaderRoute: typeof SurMesurePieceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/produit/$slug': {
-      id: '/produit/$slug'
-      path: '/produit/$slug'
-      fullPath: '/produit/$slug'
-      preLoaderRoute: typeof ProduitSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/categorie/$slug': {
-      id: '/categorie/$slug'
-      path: '/categorie/$slug'
-      fullPath: '/categorie/$slug'
-      preLoaderRoute: typeof CategorieSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/track': {
-      id: '/api/track'
-      path: '/api/track'
-      fullPath: '/api/track'
-      preLoaderRoute: typeof ApiTrackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/send-quote-emails': {
-      id: '/api/send-quote-emails'
-      path: '/api/send-quote-emails'
-      fullPath: '/api/send-quote-emails'
-      preLoaderRoute: typeof ApiSendQuoteEmailsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/logo-upload': {
-      id: '/api/logo-upload'
-      path: '/api/logo-upload'
-      fullPath: '/api/logo-upload'
-      preLoaderRoute: typeof ApiLogoUploadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/contact': {
-      id: '/api/contact'
-      path: '/api/contact'
-      fullPath: '/api/contact'
-      preLoaderRoute: typeof ApiContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/sur-mesure': {
-      id: '/admin/sur-mesure'
-      path: '/sur-mesure'
-      fullPath: '/admin/sur-mesure'
-      preLoaderRoute: typeof AdminSurMesureRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/roadmap': {
-      id: '/admin/roadmap'
-      path: '/roadmap'
-      fullPath: '/admin/roadmap'
-      preLoaderRoute: typeof AdminRoadmapRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/products': {
-      id: '/admin/products'
-      path: '/products'
-      fullPath: '/admin/products'
-      preLoaderRoute: typeof AdminProductsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/devis': {
-      id: '/admin/devis'
-      path: '/devis'
-      fullPath: '/admin/devis'
-      preLoaderRoute: typeof AdminDevisRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/clients': {
-      id: '/admin/clients'
-      path: '/clients'
-      fullPath: '/admin/clients'
-      preLoaderRoute: typeof AdminClientsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/chiffrage': {
-      id: '/admin/chiffrage'
-      path: '/chiffrage'
-      fullPath: '/admin/chiffrage'
-      preLoaderRoute: typeof AdminChiffrageRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/categories': {
-      id: '/admin/categories'
-      path: '/categories'
-      fullPath: '/admin/categories'
-      preLoaderRoute: typeof AdminCategoriesRouteImport
+    '/admin/auth': {
+      id: '/admin/auth'
+      path: '/auth'
+      fullPath: '/admin/auth'
+      preLoaderRoute: typeof AdminAuthRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/calendrier': {
@@ -611,18 +506,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCalendrierRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/auth': {
-      id: '/admin/auth'
-      path: '/auth'
-      fullPath: '/admin/auth'
-      preLoaderRoute: typeof AdminAuthRouteImport
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/api/sur-mesure/estimate': {
-      id: '/api/sur-mesure/estimate'
-      path: '/api/sur-mesure/estimate'
-      fullPath: '/api/sur-mesure/estimate'
-      preLoaderRoute: typeof ApiSurMesureEstimateRouteImport
+    '/admin/chiffrage': {
+      id: '/admin/chiffrage'
+      path: '/chiffrage'
+      fullPath: '/admin/chiffrage'
+      preLoaderRoute: typeof AdminChiffrageRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/clients': {
+      id: '/admin/clients'
+      path: '/clients'
+      fullPath: '/admin/clients'
+      preLoaderRoute: typeof AdminClientsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/devis': {
+      id: '/admin/devis'
+      path: '/devis'
+      fullPath: '/admin/devis'
+      preLoaderRoute: typeof AdminDevisRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/roadmap': {
+      id: '/admin/roadmap'
+      path: '/roadmap'
+      fullPath: '/admin/roadmap'
+      preLoaderRoute: typeof AdminRoadmapRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/sur-mesure': {
+      id: '/admin/sur-mesure'
+      path: '/sur-mesure'
+      fullPath: '/admin/sur-mesure'
+      preLoaderRoute: typeof AdminSurMesureRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/contact': {
+      id: '/api/contact'
+      path: '/api/contact'
+      fullPath: '/api/contact'
+      preLoaderRoute: typeof ApiContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/logo-upload': {
+      id: '/api/logo-upload'
+      path: '/api/logo-upload'
+      fullPath: '/api/logo-upload'
+      preLoaderRoute: typeof ApiLogoUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/send-quote-emails': {
+      id: '/api/send-quote-emails'
+      path: '/api/send-quote-emails'
+      fullPath: '/api/send-quote-emails'
+      preLoaderRoute: typeof ApiSendQuoteEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/track': {
+      id: '/api/track'
+      path: '/api/track'
+      fullPath: '/api/track'
+      preLoaderRoute: typeof ApiTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/categorie/$slug': {
+      id: '/categorie/$slug'
+      path: '/categorie/$slug'
+      fullPath: '/categorie/$slug'
+      preLoaderRoute: typeof CategorieSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produit/$slug': {
+      id: '/produit/$slug'
+      path: '/produit/$slug'
+      fullPath: '/produit/$slug'
+      preLoaderRoute: typeof ProduitSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sur-mesure/': {
+      id: '/sur-mesure/'
+      path: '/sur-mesure'
+      fullPath: '/sur-mesure/'
+      preLoaderRoute: typeof SurMesureIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sur-mesure/$piece': {
+      id: '/sur-mesure/$piece'
+      path: '/sur-mesure/$piece'
+      fullPath: '/sur-mesure/$piece'
+      preLoaderRoute: typeof SurMesurePieceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/chiffrage': {
+      id: '/api/admin/chiffrage'
+      path: '/api/admin/chiffrage'
+      fullPath: '/api/admin/chiffrage'
+      preLoaderRoute: typeof ApiAdminChiffrageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/quotes/submit': {
@@ -632,11 +632,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiQuotesSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/admin/chiffrage': {
-      id: '/api/admin/chiffrage'
-      path: '/api/admin/chiffrage'
-      fullPath: '/api/admin/chiffrage'
-      preLoaderRoute: typeof ApiAdminChiffrageRouteImport
+    '/api/sur-mesure/estimate': {
+      id: '/api/sur-mesure/estimate'
+      path: '/api/sur-mesure/estimate'
+      fullPath: '/api/sur-mesure/estimate'
+      preLoaderRoute: typeof ApiSurMesureEstimateRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

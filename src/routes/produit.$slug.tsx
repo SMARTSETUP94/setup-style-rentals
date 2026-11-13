@@ -1008,7 +1008,7 @@ function ProductPage() {
             <button
               type="button"
               onClick={() => setIs3DMode(true)}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              className="mt-3 flex w-fit items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
               <Sparkles className="size-3.5" />
               {t("product.view3d")}
@@ -1328,7 +1328,7 @@ function ProductPage() {
                 <Row
                   key={o.optionId}
                   label={`+ ${pickLang(o, "name", lang)}`}
-                  value={`+${formatPrice(o.price * qty, lang)}`}
+                  value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : t("product.included")}
                 />
               ))}
               {activeConfiguratorOptionsList.length > 0 && (

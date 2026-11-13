@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { PublicNotFound } from "@/components/site/PublicNotFound";
 import { applyNotFoundStatus } from "@/lib/ssr-status";
 import { headLang, L } from "@/lib/seo";
 
 export const Route = createFileRoute("/$")({
-  loader: () => { applyNotFoundStatus(); return null; },
+  loader: () => { throw notFound(); },
   head: ({ match }) => {
     const lang = headLang(match);
     const title = L(lang, "Page introuvable — Setup Paris", "Page not found — Setup Paris");

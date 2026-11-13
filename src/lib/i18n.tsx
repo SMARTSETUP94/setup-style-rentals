@@ -195,8 +195,8 @@ const DICT: Dict = {
   "product.configReset": { fr: "Configuration réinitialisée", en: "Configuration reset" },
   "product.configuredPrice": { fr: "Prix configuré", en: "Configured price" },
   "product.configIncludedNote": {
-    fr: "Cette configuration sera incluse dans votre devis avec les dates et quantités ci-dessus.",
-    en: "This configuration will be included in your quote along with the dates and quantities above.",
+    fr: "Cette configuration sera incluse dans votre demande avec les dates et quantités ci-dessus.",
+    en: "This configuration will be included in your request along with the dates and quantities above.",
   },
   "product.addWithConfig": { fr: "Ajouter à ma demande", en: "Add to my request" },
   "product.configuredAdded": { fr: "Produit configuré ajouté à votre demande", en: "Configured product added to request" },
@@ -277,8 +277,8 @@ const DICT: Dict = {
     en: "Select your customization options",
   },
   "product.add3DToQuote": {
-    fr: "Ajouter cette configuration au devis",
-    en: "Add this configuration to quote",
+    fr: "Ajouter à ma demande",
+    en: "Add to my request",
   },
   "product.unitsAvailable": {
     fr: "unité(s) disponible(s) sur cette période",

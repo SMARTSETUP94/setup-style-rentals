@@ -118,11 +118,11 @@ export const Route = createFileRoute("/produit/$slug")({
   loader: async ({ params }) => {
     const { data } = await supabase
       .from("products")
-      .select("slug,name_fr,name_en,description_fr,description_en,image_url,price_day,stock_total,category_slug")
+      .select("slug,name_fr,name_en,description_fr,description_en,image_url,price_day,price_event,stock_total,category_slug")
       .eq("slug", params.slug)
       .eq("is_active", true)
       .maybeSingle();
-    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null; price_day: number; stock_total: number; category_slug: string } | null };
+    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null; price_day: number; price_event: number | null; stock_total: number; category_slug: string } | null };
   },
   head: ({ loaderData, match }) => {
     const lang = headLang(match);
@@ -170,10 +170,10 @@ export const Route = createFileRoute("/produit/$slug")({
         "@type": "Offer",
         url: productUrl,
         priceCurrency: "EUR",
-        price: m.price_day.toFixed(2),
+        price: Number(m.price_event ?? m.price_day).toFixed(2),
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: m.price_day.toFixed(2),
+          price: Number(m.price_event ?? m.price_day).toFixed(2),
           priceCurrency: "EUR",
           unitCode: "DAY",
           referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "DAY" },

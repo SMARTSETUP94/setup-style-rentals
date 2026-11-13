@@ -1127,7 +1127,7 @@ function ProductPage() {
                 />
                 <span className="text-sm">
                   <span className="font-medium">
-                    {t("product.customise")} : {pickLang(product, "custom_label", lang) || ""} (+ {formatPrice(Number(product.custom_price), lang)} {t("product.perUnit")})
+                    {t("product.customise")} : {pickLang(product, "custom_label", lang) || product.custom_label_fr || ""} (+ {formatPrice(Number(product.custom_price), lang)} {t("product.perUnit")})
                   </span>
                   <span className="block mt-1 text-xs text-muted-foreground">{t("product.customNote")}</span>
                 </span>

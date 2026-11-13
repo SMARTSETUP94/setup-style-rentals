@@ -290,6 +290,8 @@ function QuotePage() {
         lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
         formatPrice(lt.net, lang),
       ]);
+      if (lt.event && lt.event.extraDays > 0) body.push([`   + ${t("product.extraDays")}: ${lt.event.extraDays} × ${formatPrice(lt.event.priceExtraDay, lang)}`, "", "", "", "", formatPrice(lt.event.extraTotal, lang)]);
+      if (lt.event && lt.event.customTotal > 0) body.push([`   + ${t("product.customisation")}: ${pickLang(i, "customLabel", lang) || i.customLabel_fr || ""}`, "", "", formatPrice(lt.event.customUnit, lang), "", formatPrice(lt.event.customTotal, lang)]);
       (i.selectedOptions ?? []).forEach((o) => {
         body.push([
           `   • ${pickLang(o, "categoryName", lang)}: ${pickLang(o, "name", lang)}`,
@@ -397,7 +399,7 @@ function QuotePage() {
                             {lt.event && (lt.event.extraDays > 0 || lt.event.customTotal > 0) && (
                               <div className="text-xs text-muted-foreground" data-testid="event-detail">
                                 {lt.event.extraDays > 0 && <div>+ {t("product.extraDays")} : {lt.event.extraDays} × {formatPrice(lt.event.priceExtraDay, lang)} × {item.quantity} = {formatPrice(lt.event.extraTotal, lang)}</div>}
-                                {lt.event.customTotal > 0 && <div>+ {t("product.customisation")} ({pickLang(item, "customLabel", lang)}) : {formatPrice(lt.event.customUnit, lang)} × {item.quantity} = {formatPrice(lt.event.customTotal, lang)}</div>}
+                                {lt.event.customTotal > 0 && <div>+ {t("product.customisation")} ({pickLang(item, "customLabel", lang) || item.customLabel_fr}) : {formatPrice(lt.event.customUnit, lang)} × {item.quantity} = {formatPrice(lt.event.customTotal, lang)}</div>}
                               </div>
                             )}
                             <Popover>

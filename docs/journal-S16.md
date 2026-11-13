@@ -28,4 +28,4 @@ Les configurateurs ne contiennent aucun prix : les prix viennent des options de 
 
 ## Non vérifié
 - Mail interne/client : n'indique pas encore « Version standard » (aucun mail envoyé).
-- Podium réel : le nom exact de son option incluse n'a pas été relu en navigateur.
+- Podium vérifié : « Brut » présélectionné, 325 € HT, affichage « Inclus ».

@@ -1097,6 +1097,7 @@ function ProductPage() {
                     + {formatPrice(Number(product.price_extra_day), lang)} {t("product.perExtraDay")}
                   </div>
                 )}
+                <div className="mt-2 text-[11px] leading-snug text-muted-foreground">{t("product.stockNote")}</div>
               </div>
             ) : (
             <div className="grid grid-cols-1 gap-3 max-w-[200px]">

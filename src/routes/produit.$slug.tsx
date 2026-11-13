@@ -104,6 +104,12 @@ interface Product {
   stock_total: number;
   quantity_discounts: QuantityDiscountTier[] | null;
   duration_discounts: DurationDiscountTier[] | null;
+  price_event: number | null;
+  event_days_included: number;
+  price_extra_day: number | null;
+  custom_label_fr: string | null;
+  custom_label_en: string | null;
+  custom_price: number | null;
 }
 
 interface Category { id: string; name_fr: string; name_en: string; slug: string; color: string }
@@ -226,6 +232,7 @@ function ProductPage() {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [customChosen, setCustomChosen] = useState(false);
   const [days, setDays] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -303,7 +310,7 @@ function ProductPage() {
       .from("products")
       .select("*")
       .eq("slug", slug)
-      .eq("is_active", true)
+      // Public visitors only get active products (RLS); admins can preview inactive ones.
       .maybeSingle()
       .then(async ({ data }) => {
         const prod = data as Product | null;
@@ -710,12 +717,18 @@ function ProductPage() {
       optionPrices: [optionsUnitPrice],
       quantityDiscounts: product.quantity_discounts ?? undefined,
       durationDiscounts: product.duration_discounts ?? undefined,
+      priceEvent: product.price_event,
+      eventDaysIncluded: product.event_days_included,
+      priceExtraDay: product.price_extra_day,
+      customPrice: product.custom_price,
+      customChosen,
     });
+    const ev = l.event;
     const { gross, discount, net, deposit, qtyRate } = l;
     const durRate = l.durationRate;
     const discountRate = Math.min(0.5, qtyRate + durRate);
-    return { gross, discountRate, qtyRate, durRate, discount, net, deposit, optionsUnitPrice };
-  }, [product, days, qty, optionsUnitPrice]);
+    return { gross, discountRate, qtyRate, durRate, discount, net, deposit, optionsUnitPrice, ev };
+  }, [product, days, qty, optionsUnitPrice, customChosen]);
 
   if (loading) {
     return (
@@ -766,6 +779,8 @@ function ProductPage() {
     toast.success(t("product.configResetToast"), { icon: <RotateCcw className="size-4" /> });
   };
 
+  const hasCustomOffer = Number(product.custom_price) > 0;
+
   const handleAdd = () => {
     if (!calc) return;
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
@@ -812,6 +827,13 @@ function ProductPage() {
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
       configuratorData: configuratorData ?? undefined,
       standardVersion: product.configurator_url && !hasPendingConfig ? true : undefined,
+      priceEvent: product.price_event,
+      eventDaysIncluded: product.event_days_included,
+      priceExtraDay: product.price_extra_day,
+      customPrice: product.custom_price,
+      customLabel_fr: product.custom_label_fr,
+      customLabel_en: product.custom_label_en,
+      customChosen: hasCustomOffer && customChosen ? true : undefined,
     });
     trackSiteEvent("cart_add", product.slug);
     toast.success(
@@ -1062,6 +1084,21 @@ function ProductPage() {
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
               {t("product.rentalRates")}
             </div>
+            {product.price_event != null ? (
+              <div className="rounded-lg bg-background border border-border p-4" data-testid="event-price">
+                <div className="font-display font-semibold text-xl text-gold-ink">
+                  {formatPrice(Number(product.price_event), lang)}{" "}
+                  <span className="text-sm font-normal text-foreground">
+                    {t("product.perEventUpTo").replace("{n}", String(product.event_days_included))}
+                  </span>
+                </div>
+                {Number(product.price_extra_day) > 0 && (
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    + {formatPrice(Number(product.price_extra_day), lang)} {t("product.perExtraDay")}
+                  </div>
+                )}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 gap-3 max-w-[200px]">
               {[
                 { label: t("product.day"), value: product.price_day },
@@ -1078,6 +1115,24 @@ function ProductPage() {
                 </div>
               ))}
             </div>
+            )}
+            {hasCustomOffer && (
+              <label className="mt-4 flex items-start gap-3 rounded-lg bg-background border border-border p-4 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-4 accent-[var(--gold)]"
+                  checked={customChosen}
+                  onChange={(e) => setCustomChosen(e.target.checked)}
+                  data-testid="custom-checkbox"
+                />
+                <span className="text-sm">
+                  <span className="font-medium">
+                    {t("product.customise")} : {pickLang(product, "custom_label", lang) || ""} (+ {formatPrice(Number(product.custom_price), lang)} {t("product.perUnit")})
+                  </span>
+                  <span className="block mt-1 text-xs text-muted-foreground">{t("product.customNote")}</span>
+                </span>
+              </label>
+            )}
             <div className="mt-3 flex items-center justify-between text-sm pt-3 border-t border-border">
               <span className="text-muted-foreground">{t("product.deposit")}</span>
               <span className="font-semibold">{formatPrice(product.deposit, lang)}</span>
@@ -1320,10 +1375,31 @@ function ProductPage() {
           {/* Calc */}
           {calc && (
             <div className="mt-6 rounded-lg border border-border p-4 space-y-2 text-sm">
+              {calc.ev ? (
+                <>
+                  <Row
+                    label={`${t("product.eventPrice")} (${formatPrice(calc.ev.priceEvent, lang)} × ${qty})`}
+                    value={formatPrice(calc.ev.priceEvent * qty, lang)}
+                  />
+                  {calc.ev.extraDays > 0 && (
+                    <Row
+                      label={`${t("product.extraDays")} (${calc.ev.extraDays} × ${formatPrice(calc.ev.priceExtraDay, lang)} × ${qty})`}
+                      value={`+${formatPrice(calc.ev.extraTotal, lang)}`}
+                    />
+                  )}
+                  {calc.ev.customTotal > 0 && (
+                    <Row
+                      label={`${t("product.customisation")} (${formatPrice(calc.ev.customUnit, lang)} × ${qty})`}
+                      value={`+${formatPrice(calc.ev.customTotal, lang)}`}
+                    />
+                  )}
+                </>
+              ) : (
               <Row
                 label={`${t("product.subtotal")} (${formatPrice(product.price_day, lang)} ${t("catalog.perDay")})`}
                 value={formatPrice(product.price_day * days * qty, lang)}
               />
+              )}
               {activeSelectedOptionsList.map((o) => (
                 <Row
                   key={o.optionId}
@@ -1418,6 +1494,7 @@ function ProductPage() {
 
 
           {(() => {
+            if (product.price_event != null) return null;
             const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);
             const dTiers = [...(product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
             if (qTiers.length === 0 && dTiers.length === 0) return null;

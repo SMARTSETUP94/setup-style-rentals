@@ -50,6 +50,12 @@ type Product = {
   stock_total: number;
   quantity_discounts: QuantityDiscountTier[];
   duration_discounts: DurationDiscountTier[];
+  price_event: number | null;
+  event_days_included: number;
+  price_extra_day: number | null;
+  custom_label_fr: string | null;
+  custom_label_en: string | null;
+  custom_price: number | null;
 };
 
 type Category = { slug: string; name_fr: string; name_en: string };
@@ -74,6 +80,12 @@ const empty: Partial<Product> = {
   stock_total: 1,
   quantity_discounts: DEFAULT_QUANTITY_DISCOUNTS,
   duration_discounts: [],
+  price_event: null,
+  event_days_included: 3,
+  price_extra_day: null,
+  custom_label_fr: null,
+  custom_label_en: null,
+  custom_price: null,
 };
 
 function slugify(input: string): string {
@@ -189,6 +201,12 @@ function AdminProductsPage() {
       stock_total: Math.max(0, Number(editing.stock_total ?? 1) || 0),
       quantity_discounts: (editing.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS) as never,
       duration_discounts: (editing.duration_discounts ?? []) as never,
+      price_event: editing.price_event != null && String(editing.price_event) !== "" ? Number(editing.price_event) : null,
+      event_days_included: Math.max(1, Math.floor(Number(editing.event_days_included ?? 3) || 3)),
+      price_extra_day: editing.price_extra_day != null && String(editing.price_extra_day) !== "" ? Number(editing.price_extra_day) : null,
+      custom_label_fr: editing.custom_label_fr || null,
+      custom_label_en: editing.custom_label_en || null,
+      custom_price: editing.custom_price != null && String(editing.custom_price) !== "" ? Number(editing.custom_price) : null,
     };
     const res = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)
@@ -385,6 +403,45 @@ function AdminProductsPage() {
                 value={String(editing.stock_total ?? 1)}
                 onChange={(v) => setEditing({ ...editing, stock_total: Math.max(0, Number(v) || 0) })}
               />
+              <div className="col-span-2 rounded-lg border border-border p-3 grid grid-cols-3 gap-3">
+                <p className="col-span-3 text-xs text-muted-foreground">
+                  Prix par événement — si renseigné, remplace le prix/jour et désactive les remises.
+                </p>
+                <FieldInput
+                  label="Prix événement HT / unité"
+                  type="number"
+                  value={editing.price_event == null ? "" : String(editing.price_event)}
+                  onChange={(v) => setEditing({ ...editing, price_event: v === "" ? null : Number(v) })}
+                />
+                <FieldInput
+                  label="Jours inclus"
+                  type="number"
+                  value={String(editing.event_days_included ?? 3)}
+                  onChange={(v) => setEditing({ ...editing, event_days_included: Number(v) })}
+                />
+                <FieldInput
+                  label="Prix jour supp. HT / unité"
+                  type="number"
+                  value={editing.price_extra_day == null ? "" : String(editing.price_extra_day)}
+                  onChange={(v) => setEditing({ ...editing, price_extra_day: v === "" ? null : Number(v) })}
+                />
+                <FieldInput
+                  label="Personnalisation (FR)"
+                  value={editing.custom_label_fr ?? ""}
+                  onChange={(v) => setEditing({ ...editing, custom_label_fr: v })}
+                />
+                <FieldInput
+                  label="Customisation (EN)"
+                  value={editing.custom_label_en ?? ""}
+                  onChange={(v) => setEditing({ ...editing, custom_label_en: v })}
+                />
+                <FieldInput
+                  label="Prix personnalisation HT / unité"
+                  type="number"
+                  value={editing.custom_price == null ? "" : String(editing.custom_price)}
+                  onChange={(v) => setEditing({ ...editing, custom_price: v === "" ? null : Number(v) })}
+                />
+              </div>
               <FieldInput
                 label={t("prods.field.priceWeek")}
                 type="number"

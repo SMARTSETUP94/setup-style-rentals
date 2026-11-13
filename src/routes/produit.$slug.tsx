@@ -703,18 +703,16 @@ function ProductPage() {
 
   const calc = useMemo(() => {
     if (!product) return null;
-    const rentalGross = product.price_day * days * qty;
-    const optionsGross = optionsUnitPrice * qty; // fixed price, not per day
-    const gross = rentalGross + optionsGross;
-    const qtyTiers = product.quantity_discounts ?? undefined;
-    const durTiers = product.duration_discounts ?? undefined;
-    const qtyRate = volumeDiscount(qty, qtyTiers);
-    const durRate = durationDiscount(days, durTiers);
+    // Same pure function as the server (/api/quotes/submit) → identical price.
+    const l = computeLine({
+      price_day: product.price_day, deposit: product.deposit, quantity: qty, days,
+      optionPrices: [optionsUnitPrice],
+      quantityDiscounts: product.quantity_discounts ?? undefined,
+      durationDiscounts: product.duration_discounts ?? undefined,
+    });
+    const { gross, discount, net, deposit, qtyRate } = l;
+    const durRate = l.durationRate;
     const discountRate = Math.min(0.5, qtyRate + durRate);
-    // Discount applies only to rental, not to fixed options
-    const discount = rentalGross * discountRate;
-    const net = gross - discount;
-    const deposit = product.deposit * qty;
     return { gross, discountRate, qtyRate, durRate, discount, net, deposit, optionsUnitPrice };
   }, [product, days, qty, optionsUnitPrice]);
 

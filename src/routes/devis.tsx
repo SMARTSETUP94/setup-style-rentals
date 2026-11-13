@@ -453,6 +453,11 @@ function QuotePage() {
                                 ))}
                               </ul>
                             )}
+                            {item.standardVersion && !item.configuratorRecapHtml && !item.configuratorRecap && (
+                              <div className="mt-2 text-xs text-muted-foreground" data-testid="standard-version">
+                                {t("product.standardVersion")}
+                              </div>
+                            )}
                             {(item.configuratorRecapHtml || item.configuratorRecap) && (
                               <div className="mt-2 rounded-md border border-gold/30 bg-gold/5 p-2">
                                 <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-gold-ink font-semibold mb-1">

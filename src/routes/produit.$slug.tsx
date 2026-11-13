@@ -10,7 +10,8 @@ import { fr as dfFr, enUS as dfEn } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { formatPrice } from "@/lib/format";
-import { useCart, volumeDiscount, durationDiscount, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
+import { computeLine } from "@/lib/pricing";
+import { useCart, DEFAULT_QUANTITY_DISCOUNTS, type SelectedOption, type QuantityDiscountTier, type DurationDiscountTier } from "@/lib/cart";
 import { ProductImage } from "@/components/site/ProductImage";
 import { PRODUCT_HERO_SIZES, responsiveImage } from "@/lib/image";
 

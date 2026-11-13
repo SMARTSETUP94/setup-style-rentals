@@ -1014,11 +1014,6 @@ function ProductPage() {
               {t("product.view3d")}
             </button>
           ))}
-            >
-              {is3DMode ? <X className="size-4" /> : <Sparkles className="size-4" />}
-              {is3DMode ? `✕ ${t("product.close3D")}` : t("product.config3d")}
-            </button>
-          )}
 
           {/* "Configuration choisie" — shown right under the 3D CTA once the
               user has clicked "Enregistrer ma configuration" inside the iframe.

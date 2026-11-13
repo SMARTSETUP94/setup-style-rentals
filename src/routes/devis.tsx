@@ -1,3 +1,7 @@
+import { getPublicCatalogue } from "@/lib/catalogue.functions";
+import { ProductCard } from "@/components/site/ProductCard";
+import { PublicNotFound } from "@/components/site/PublicNotFound";
+import { rentalDates } from "@/lib/rental-dates";
 import { rangeShort } from "@/lib/custom-pricing";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
@@ -21,13 +25,16 @@ import { cn } from "@/lib/utils";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 
 export const Route = createFileRoute("/devis")({
+  loader: () => getPublicCatalogue(),
+  notFoundComponent: PublicNotFound,
+  errorComponent: () => <div role="alert" className="container-x pt-32">Page indisponible / Page unavailable</div>,
   head: ({ match }) => {
     const lang = headLang(match);
-    const title = L(lang, "Ma demande de devis — Setup Paris", "My quote request — Setup Paris");
+    const title = L(lang, "Ma demande — Setup Paris", "My request — Setup Paris");
     return {
       meta: [
         { title },
-        { name: "description", content: L(lang, "Ma demande de devis : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.", "My quote request: online quote request, reply within one business day. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.") },
+        { name: "description", content: L(lang, "Ma demande : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.", "My request: online quote request, reply within one business day. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.") },
         { property: "og:title", content: title },
         { property: "og:description", content: L(lang, "Demande de devis en ligne, réponse sous 24 h ouvrées.", "Online quote request, reply within one business day.") },
         { property: "og:type", content: "website" },
@@ -44,6 +51,7 @@ export const Route = createFileRoute("/devis")({
 function QuotePage() {
   const { t, lang } = useI18n();
   const { items, update, remove, clear } = useCart();
+  const catalogue = Route.useLoaderData();
 
   /** Available stock for a product over a date range; null if unknown/error. */
   const fetchStock = async (productId: string, start: string, end: string): Promise<number | null> => {
@@ -351,7 +359,7 @@ function QuotePage() {
   return (
     <div className="pt-24 md:pt-28 pb-16">
       <div className="container-x">
-        <div className="section-num">— 05 — Devis</div>
+        
         <h1 className="mt-3 font-display font-semibold text-[clamp(2.5rem,5vw,4rem)] leading-tight tracking-tight">
           {t("cart.title")}
         </h1>
@@ -361,7 +369,8 @@ function QuotePage() {
         ) : items.length === 0 ? (
           <div className="mt-10 text-center py-14 border border-dashed border-border rounded-2xl">
             <ShoppingBag className="size-12 text-muted-foreground mx-auto" />
-            <p className="mt-4 text-muted-foreground">{t("cart.empty")}</p>
+            <h2 className="mt-4 font-display text-xl">{t("cart.empty")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("cart.emptyHint")}</p>
             <Link to="/catalogue" className="mt-6 inline-flex items-center gap-2 bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-semibold hover:bg-foreground/90 transition-colors">
               {t("cart.continue")}
             </Link>
@@ -369,6 +378,9 @@ function QuotePage() {
               <Link to="/contact" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
                 {t("cart.emptyContact")}
               </Link>
+            </div>
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4 text-left px-4">
+              {catalogue.products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} category={catalogue.categories.find(c => c.slug === p.category_slug)} lang={lang} fromLabel={t("catalog.from")} perDayLabel={t("catalog.perDay")} />)}
             </div>
           </div>
         ) : (
@@ -586,7 +598,8 @@ function QuotePage() {
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin, lang)!;
+                                  const url = configLink(item.customPiece ?? item.slug, item.customConfig, window.location.origin, lang);
+                                  if (!url) return;
                                   try {
                                     await navigator.clipboard.writeText(url);
                                     toast.success(lang === "fr" ? "Lien copié" : "Link copied");
@@ -606,7 +619,7 @@ function QuotePage() {
                         </div>
                         {item.configuratorRecap && (
                           <pre className="mt-2 whitespace-pre-wrap break-words text-[11px] leading-snug text-foreground/80 font-mono rounded-md border border-gold/30 bg-gold/5 p-2">
-                            {item.configuratorRecap}
+                            {item.configuratorRecap.split("\n").filter(line => !item.customRef || !line.includes(item.customRef)).join("\n")}
                           </pre>
                         )}
                         <div className="mt-3 flex items-center justify-between gap-2">
@@ -625,11 +638,11 @@ function QuotePage() {
 
               <form onSubmit={handleSubmit} className="relative rounded-2xl border border-border p-6 bg-white space-y-3">
                 <div className="font-display font-semibold text-lg mb-2">{t("cart.formTitle")}</div>
-                <Input label={t("cart.name")} required value={form.customer_name} onChange={(v) => setForm({ ...form, customer_name: v })} maxLength={200} />
-                <Input label={t("cart.company")} value={form.company} onChange={(v) => setForm({ ...form, company: v })} maxLength={200} />
+                <Input name="name" autoComplete="name" label={t("cart.name")} required value={form.customer_name} onChange={(v) => setForm({ ...form, customer_name: v })} maxLength={200} />
+                <Input name="organization" autoComplete="organization" label={t("cart.company")} value={form.company} onChange={(v) => setForm({ ...form, company: v })} maxLength={200} />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input label={t("cart.email")} type="email" required value={form.email} onChange={(v) => setForm({ ...form, email: v })} maxLength={320} />
-                  <Input label={t("cart.phone")} type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} maxLength={50} />
+                  <Input name="email" autoComplete="email" label={t("cart.email")} type="email" required value={form.email} onChange={(v) => setForm({ ...form, email: v })} maxLength={320} />
+                  <Input name="tel" autoComplete="tel" label={t("cart.phone")} type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} maxLength={50} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Input label={t("cart.eventDate")} type="date" value={form.event_date} onChange={(v) => setForm({ ...form, event_date: v })} />
@@ -669,6 +682,7 @@ function QuotePage() {
                   <label htmlFor="quote-message" className="text-xs text-muted-foreground">{t("cart.message")}</label>
                   <textarea
                     id="quote-message"
+                    name="message"
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     maxLength={5000}
@@ -713,14 +727,7 @@ function QuotePage() {
                 ) : (<>
                 <Row label={t("cart.subtotalHT")} value={formatPrice(totals.gross, lang)} />
                 {totals.discount > 0 && <Row label={t("product.discount")} value={`-${formatPrice(totals.discount, lang)}`} highlight />}
-                {delivery > 0 && (
-                  <div>
-                    <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
-                    <div className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</div>
-                  </div>
-                )}
-                {setupFee > 0 && <Row label={t("cart.setup")} value={formatPrice(setupFee, lang)} />}
-                {pickupFee > 0 && <Row label={t("cart.pickup")} value={formatPrice(pickupFee, lang)} />}
+                <LogisticsSummary delivery={delivery} setup={setupFee} pickup={pickupFee} />
                 <Row label={t("cart.totalHT")} value={formatPrice(netWithDelivery, lang)} />
                 <Row label={t("cart.vat")} value={formatPrice(vat, lang)} />
                 <div className="border-t border-border pt-3 flex items-baseline justify-between">
@@ -764,14 +771,16 @@ function Row({ label, value, highlight }: { label: string; value: string; highli
 }
 
 function Input({
-  label, value, onChange, type = "text", required, maxLength,
-}: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; maxLength?: number }) {
+  label, value, onChange, type = "text", required, maxLength, name, autoComplete,
+}: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; maxLength?: number; name?: string; autoComplete?: string }) {
   const id = useId();
   return (
     <div>
       <label htmlFor={id} className="text-xs text-muted-foreground">{label}{required && " *"}</label>
       <input
         id={id}
+        name={name ?? id}
+        autoComplete={autoComplete}
         type={type}
         value={value}
         required={required}
@@ -913,9 +922,7 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
       <div className="mt-4 space-y-1 text-sm">
         <Row label={t("cart.subtotalHT")} value={formatPrice(tt.subtotal_ht, lang)} />
         {tt.discount_total > 0 && <Row label={t("product.discount")} value={`-${formatPrice(tt.discount_total, lang)}`} highlight />}
-        {tt.delivery_fee > 0 && <Row label={t("cart.delivery")} value={formatPrice(tt.delivery_fee, lang)} />}
-        {tt.setup_fee > 0 && <Row label={t("cart.setup")} value={formatPrice(tt.setup_fee, lang)} />}
-        {tt.pickup_fee > 0 && <Row label={t("cart.pickup")} value={formatPrice(tt.pickup_fee, lang)} />}
+        <LogisticsSummary delivery={tt.delivery_fee} setup={tt.setup_fee} pickup={tt.pickup_fee} />
         <Row label={t("cart.totalHT")} value={formatPrice(tt.total_ht, lang)} />
         <Row label={t("cart.vat")} value={formatPrice(tt.vat, lang)} />
         <div className="border-t border-border pt-2 flex justify-between font-semibold">
@@ -923,7 +930,7 @@ function ConfirmationScreen({ c }: { c: Confirmation }) {
           <span>{formatPrice(tt.total_ttc, lang)}</span>
         </div>
         <Row label={t("cart.deposits")} value={formatPrice(tt.total_deposit, lang)} />
-        <p className="pt-1 text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</p>
+
         <p className="text-[11px] text-muted-foreground">{t("cart.estimateNote")}</p>
       </div>
       )}

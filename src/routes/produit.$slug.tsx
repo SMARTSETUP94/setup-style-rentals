@@ -1,3 +1,4 @@
+import { defaultOptionSelection, BRAND_3D_SLUGS } from "@/lib/default-options";
 import { matchConfigToOptions, recapPairs, type ConfigChoices } from "@/lib/config-match";
 import { trackSiteEvent } from "@/lib/track";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -235,6 +236,8 @@ function ProductPage() {
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
   /** Categories the visitor picked/cleared by hand — never overridden by the 3D preselection. */
   const manualCatIdsRef = useRef<Set<string>>(new Set());
+  /** Required categories left empty on the last add attempt (inline error). */
+  const [missingCatIds, setMissingCatIds] = useState<Set<string>>(new Set());
   /** Uploaded client logo (when an option containing "logo" with a price > 0 is selected). */
   const [clientLogo, setClientLogo] = useState<{ url: string; filename: string } | null>(null);
 
@@ -324,7 +327,9 @@ function ProductPage() {
               .in("category_id", catList.map((c) => c.id))
               .eq("is_active", true)
               .order("sort_order");
-            setProductOptions((opts as ProductOptionRow[]) ?? []);
+            const optRows = (opts as ProductOptionRow[]) ?? [];
+            setProductOptions(optRows);
+            setSelectedOptionIds((prev) => ({ ...defaultOptionSelection(catList, optRows), ...prev }));
           } else {
             setProductOptions([]);
           }
@@ -764,27 +769,12 @@ function ProductPage() {
 
   const handleAdd = () => {
     if (!calc) return;
-    // Products with a 3D configurator must be configured first.
-    if (product?.configurator_url && !hasPendingConfig) {
-      // Single, dedup'd toast — clicking the disabled-looking button
-      // multiple times must not stack notifications.
-      toast.error(t("product.configRequiredFirst"), {
-        id: "config-required",
-        icon: <Sparkles className="size-4" />,
-        duration: 3500,
-      });
-      // Reopen (or open) the immersive 3D iframe and scroll it into view.
-      setIs3DMode(true);
-      requestAnimationFrame(() => {
-        inlineIframeRef.current?.focus();
-        inlineIframeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      return;
-    }
     const missing = optionCategories.filter((c) => c.is_required && !selectedOptionIds[c.id]);
     if (missing.length > 0) {
-      const labels = missing.map((c) => pickLang(c, "name", lang)).join(", ");
-      toast.error(`${t("product.selectRequired")} ${labels}`);
+      setMissingCatIds(new Set(missing.map((c) => c.id)));
+      requestAnimationFrame(() =>
+        document.getElementById(`optcat-${missing[0].id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      );
       return;
     }
     if (logoRequired && !clientLogo) {
@@ -822,6 +812,7 @@ function ProductPage() {
       logoUrl: logoRequired && clientLogo ? clientLogo.url : undefined,
       logoFilename: logoRequired && clientLogo ? clientLogo.filename : undefined,
       configuratorData: configuratorData ?? undefined,
+      standardVersion: product.configurator_url && !hasPendingConfig ? true : undefined,
     });
     trackSiteEvent("cart_add", product.slug);
     toast.success(
@@ -1005,16 +996,25 @@ function ProductPage() {
             </Link>
           )}
 
-          {product.configurator_url && (
+          {product.configurator_url && (BRAND_3D_SLUGS.has(product.slug) ? (
             <button
               type="button"
               onClick={() => setIs3DMode((prev) => !prev)}
-              className={cn(
-                "mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3.5 text-sm font-semibold transition-all duration-300",
-                is3DMode
-                  ? "border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40"
-                  : "bg-gold text-gold-foreground hover:bg-gold/90 shadow-md shadow-gold/20 hover:shadow-lg hover:shadow-gold/30",
-              )}
+              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold border border-gold/60 text-gold-ink hover:bg-gold/10 transition-colors"
+            >
+              <Sparkles className="size-4" />
+              {t("product.customize3d")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIs3DMode(true)}
+              className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              <Sparkles className="size-3.5" />
+              {t("product.view3d")}
+            </button>
+          ))}
             >
               {is3DMode ? <X className="size-4" /> : <Sparkles className="size-4" />}
               {is3DMode ? `✕ ${t("product.close3D")}` : t("product.config3d")}
@@ -1110,7 +1110,7 @@ function ProductPage() {
                 if (opts.length === 0) return null;
                 const selected = selectedOptionIds[cat.id];
                 return (
-                  <div key={cat.id}>
+                  <div key={cat.id} id={`optcat-${cat.id}`} className="scroll-mt-28">
                     <div className="flex items-center gap-2 mb-2">
                       <label className="text-sm font-medium">{pickLang(cat, "name", lang)}</label>
                       {cat.is_required ? (
@@ -1151,6 +1151,12 @@ function ProductPage() {
                             onClick={() => {
                               manualCatIdsRef.current.add(cat.id);
                               setSelectedOptionIds((prev) => ({ ...prev, [cat.id]: o.id }));
+                              setMissingCatIds((prev) => {
+                                if (!prev.has(cat.id)) return prev;
+                                const next = new Set(prev);
+                                next.delete(cat.id);
+                                return next;
+                              });
                               setAutoSelectedCatIds((prev) => {
                                 if (!prev.has(cat.id)) return prev;
                                 const next = new Set(prev);
@@ -1189,6 +1195,11 @@ function ProductPage() {
                         );
                       })}
                     </div>
+                    {missingCatIds.has(cat.id) && !selected && (
+                      <p role="alert" className="mt-1.5 text-xs text-destructive">
+                        {t("product.requiredFieldError")}
+                      </p>
+                    )}
                     {(() => {
                       const selectedOpt = opts.find((o) => o.id === selected) ?? null;
                       if (!optionRequiresLogo(selectedOpt)) return null;
@@ -1403,15 +1414,12 @@ function ProductPage() {
           <button
             onClick={handleAdd}
             disabled={
-              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock)) ||
-              !!(product.configurator_url && !hasPendingConfig)
+              !!(startDate && endDate && availableStock !== null && (availableStock === 0 || qty > availableStock))
             }
             className="mt-6 w-full inline-flex items-center justify-center gap-2.5 bg-gold text-gold-foreground rounded-md px-6 py-5 text-base font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold animate-fade-in"
           >
             <ShoppingBag className="size-5" />
-            {product.configurator_url && !hasPendingConfig
-              ? t("product.configRequiredFirst")
-              : t("product.addToQuote")}
+            {t("product.addToQuote")}
           </button>
 
 

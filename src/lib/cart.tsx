@@ -51,6 +51,8 @@ export interface CartItem {
   logoFilename?: string;
   /** Structured configuration received from the 3D configurator. */
   configuratorData?: Record<string, unknown>;
+  /** True when the product has a 3D configurator that was not used (default configuration). */
+  standardVersion?: boolean;
   /** Line kind — absent means "rental". */
   kind?: "rental" | "custom";
   /** Made-to-measure fields (kind === "custom"). */

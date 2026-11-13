@@ -147,16 +147,29 @@ function AdminQuotesPage() {
       .some((v) => (v ?? "").toLowerCase().includes(needle));
   });
 
+  const linesDetail = (q: Quote) =>
+    (Array.isArray(q.items) ? (q.items as any[]) : [])
+      .filter((it) => it?.kind !== "custom")
+      .map((it) => {
+        const base = `${it.name_fr || it.slug} x${it.quantity} ${it.days}j`;
+        if (it.pricing_model !== "event") return `${base} ${Number(it.price_day ?? 0).toFixed(2)}/j = ${Number(it.line_net ?? 0).toFixed(2)}`;
+        const parts = [`evenement ${Number(it.price_event).toFixed(2)}`];
+        if (Number(it.extra_days) > 0) parts.push(`+${it.extra_days}j supp ${Number(it.extra_total).toFixed(2)}`);
+        if (Number(it.custom_unit) > 0) parts.push(`perso ${it.custom_label_fr || ""} ${Number(it.custom_total).toFixed(2)}`);
+        return `${base} ${parts.join(" ")} = ${Number(it.line_net ?? 0).toFixed(2)}`;
+      })
+      .join(" | ");
+
   const exportCsv = () => {
     const esc = (v: unknown) => {
       const str = v == null ? "" : String(v);
       return /[",;\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
     };
     const kindLabel = { rental: "location", custom: "sur mesure", mixed: "mixte" } as Record<string, string>;
-    const headers = ["numero", "date", "client", "societe", "email", "telephone", "type", "statut", "total_ht", "total_ttc", "date_evenement", "source"];
+    const headers = ["numero", "date", "client", "societe", "email", "telephone", "type", "statut", "total_ht", "total_ttc", "date_evenement", "source", "detail_lignes"];
     const rows = visible.map((q) =>
       [quoteNumber(q), q.created_at.slice(0, 10), q.customer_name, q.company, q.email, q.phone, kindLabel[quoteKind(q)] ?? quoteKind(q), q.status,
-        Number(q.total_ht ?? 0).toFixed(2), Number(q.total_ttc ?? 0).toFixed(2), q.event_date, q.source].map(esc).join(","),
+        Number(q.total_ht ?? 0).toFixed(2), Number(q.total_ttc ?? 0).toFixed(2), q.event_date, q.source, linesDetail(q)].map(esc).join(","),
     );
     const blob = new Blob(["\uFEFF" + [headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -475,7 +488,13 @@ function AdminQuotesPage() {
                           </div>
                         )}
                         <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
-                          {it.price_day != null && <span>{t("quotes.item.perDay")} : {formatPrice(Number(it.price_day))}</span>}
+                          {it.pricing_model === "event" ? (
+                            <>
+                              <span>{lang === "en" ? "Event price" : "Prix événement"} ({lang === "en" ? "up to" : "jusqu'à"} {it.event_days_included} {lang === "en" ? "days" : "j"}) : {formatPrice(Number(it.price_event))} × {it.quantity}</span>
+                              {Number(it.extra_days) > 0 && <span>{lang === "en" ? "Extra days" : "Jours supp."} : {it.extra_days} × {formatPrice(Number(it.price_extra_day))} × {it.quantity} = {formatPrice(Number(it.extra_total))}</span>}
+                              {Number(it.custom_unit) > 0 && <span>{lang === "en" ? "Customisation" : "Personnalisation"} ({(lang === "en" ? it.custom_label_en : it.custom_label_fr) || it.custom_label_fr || ""}) : {formatPrice(Number(it.custom_unit))} × {it.quantity} = {formatPrice(Number(it.custom_total))}</span>}
+                            </>
+                          ) : it.price_day != null && <span>{t("quotes.item.perDay")} : {formatPrice(Number(it.price_day))}</span>}
                           {Number(it.line_discount) > 0 && <span>{t("quotes.item.lineDiscount")} : −{formatPrice(Number(it.line_discount))}</span>}
                           {it.line_net != null && <span>{t("quotes.item.net")} : {formatPrice(Number(it.line_net))}</span>}
                         </div>

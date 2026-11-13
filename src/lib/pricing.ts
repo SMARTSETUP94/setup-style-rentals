@@ -50,6 +50,23 @@ export interface LineInput {
   optionPrices: number[];
   quantityDiscounts?: QuantityDiscountTier[];
   durationDiscounts?: DurationDiscountTier[];
+  /** Event pricing model: when set (not null), replaces price_day and disables discounts. */
+  priceEvent?: number | null;
+  eventDaysIncluded?: number | null;
+  priceExtraDay?: number | null;
+  /** Per-unit customisation price, applied once per event when `customChosen`. */
+  customPrice?: number | null;
+  customChosen?: boolean;
+}
+
+export interface EventBreakdown {
+  priceEvent: number;
+  daysIncluded: number;
+  extraDays: number;
+  priceExtraDay: number;
+  extraTotal: number;
+  customUnit: number;
+  customTotal: number;
 }
 
 export interface LineResult {
@@ -61,9 +78,31 @@ export interface LineResult {
   optionsTotal: number;
   qtyRate: number;
   durationRate: number;
+  event?: EventBreakdown;
+}
+
+export function isEventPriced(p: { price_event?: number | string | null }): boolean {
+  return p.price_event !== null && p.price_event !== undefined && p.price_event !== "" && Number.isFinite(Number(p.price_event));
 }
 
 export function computeLine(l: LineInput): LineResult {
+  if (l.priceEvent !== null && l.priceEvent !== undefined && Number.isFinite(Number(l.priceEvent))) {
+    const optsUnit = l.optionPrices.reduce((s, p) => s + (p || 0), 0);
+    const priceEvent = Number(l.priceEvent) || 0;
+    const daysIncluded = Math.max(0, Math.floor(Number(l.eventDaysIncluded ?? 3)));
+    const priceExtraDay = Number(l.priceExtraDay) || 0;
+    const extraDays = Math.max(0, l.days - daysIncluded);
+    const extraTotal = l.quantity * extraDays * priceExtraDay;
+    const customUnit = l.customChosen && Number(l.customPrice) > 0 ? Number(l.customPrice) : 0;
+    const customTotal = l.quantity * customUnit;
+    const optionsGross = optsUnit * l.quantity;
+    const gross = l.quantity * priceEvent + extraTotal + customTotal + optionsGross;
+    return {
+      gross, discount: 0, net: gross, deposit: l.deposit * l.quantity,
+      optionsPerUnit: optsUnit, optionsTotal: optionsGross, qtyRate: 0, durationRate: 0,
+      event: { priceEvent, daysIncluded, extraDays, priceExtraDay, extraTotal, customUnit, customTotal },
+    };
+  }
   const optsUnit = l.optionPrices.reduce((s, p) => s + (p || 0), 0);
   const rentalGross = l.price_day * l.days * l.quantity;
   const optionsGross = optsUnit * l.quantity; // fixed, not per day

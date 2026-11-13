@@ -53,6 +53,14 @@ export interface CartItem {
   configuratorData?: Record<string, unknown>;
   /** True when the product has a 3D configurator that was not used (default configuration). */
   standardVersion?: boolean;
+  /** Event pricing (copied from product at add time; server recomputes). */
+  priceEvent?: number | null;
+  eventDaysIncluded?: number | null;
+  priceExtraDay?: number | null;
+  customPrice?: number | null;
+  customLabel_fr?: string | null;
+  customLabel_en?: string | null;
+  customChosen?: boolean;
   /** Line kind — absent means "rental". */
   kind?: "rental" | "custom";
   /** Made-to-measure fields (kind === "custom"). */
@@ -168,12 +176,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   // Two cart lines are considered the same only if same product, same options, AND same dates
-  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap" | "logoUrl">) => {
+  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap" | "logoUrl" | "customChosen">) => {
     const opts = (item.selectedOptions ?? [])
       .map((o) => o.optionId)
       .sort()
       .join("|");
-    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? "", item.logoUrl ?? ""].join("¦");
+    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? "", item.logoUrl ?? "", item.customChosen ? "C" : ""].join("¦");
   };
 
   const add = (item: NewCartItem) => {
@@ -241,5 +249,10 @@ export function lineTotal(item: CartItem): LineResult {
     optionPrices: (item.selectedOptions ?? []).map((o) => o.price || 0),
     quantityDiscounts: item.quantityDiscounts,
     durationDiscounts: item.durationDiscounts,
+    priceEvent: item.priceEvent,
+    eventDaysIncluded: item.eventDaysIncluded,
+    priceExtraDay: item.priceExtraDay,
+    customPrice: item.customPrice,
+    customChosen: item.customChosen,
   });
 }

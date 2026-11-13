@@ -177,6 +177,7 @@ function QuotePage() {
         endDate: i.endDate ?? null,
         days: Math.min(365, Math.max(1, Math.round(i.days || 1))),
         option_ids: (i.selectedOptions ?? []).map((o) => o.optionId).filter((id) => UUID_RE.test(id)),
+        custom_chosen: !!i.customChosen,
         configurator_recap: i.configuratorRecap ? i.configuratorRecap.slice(0, 5000) : null,
         configurator_data: i.configuratorData ?? null,
         logo_path: logoPathFromUrl(i.logoUrl),
@@ -285,10 +286,12 @@ function QuotePage() {
         pickLang(i, "name", lang),
         i.quantity,
         i.days,
-        formatPrice(i.price_day, lang),
+        lt.event ? `${formatPrice(lt.event.priceEvent, lang)} ${t("catalog.perEvent")}` : formatPrice(i.price_day, lang),
         lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
         formatPrice(lt.net, lang),
       ]);
+      if (lt.event && lt.event.extraDays > 0) body.push([`   + ${t("product.extraDays")}: ${lt.event.extraDays} × ${formatPrice(lt.event.priceExtraDay, lang)}`, "", "", "", "", formatPrice(lt.event.extraTotal, lang)]);
+      if (lt.event && lt.event.customTotal > 0) body.push([`   + ${t("product.customisation")}: ${pickLang(i, "customLabel", lang) || i.customLabel_fr || ""}`, "", "", formatPrice(lt.event.customUnit, lang), "", formatPrice(lt.event.customTotal, lang)]);
       (i.selectedOptions ?? []).forEach((o) => {
         body.push([
           `   • ${pickLang(o, "categoryName", lang)}: ${pickLang(o, "name", lang)}`,
@@ -389,8 +392,16 @@ function QuotePage() {
                               {pickLang(item, "name", lang)}
                             </Link>
                             <div className="text-xs text-muted-foreground mt-0.5">
-                              {t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}
+                              {lt.event
+                                ? `${formatPrice(lt.event.priceEvent, lang)} ${t("catalog.perEvent")} • ${item.days} ${t("product.days")}`
+                                : <>{t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}</>}
                             </div>
+                            {lt.event && (lt.event.extraDays > 0 || lt.event.customTotal > 0) && (
+                              <div className="text-xs text-muted-foreground" data-testid="event-detail">
+                                {lt.event.extraDays > 0 && <div>+ {t("product.extraDays")} : {lt.event.extraDays} × {formatPrice(lt.event.priceExtraDay, lang)} × {item.quantity} = {formatPrice(lt.event.extraTotal, lang)}</div>}
+                                {lt.event.customTotal > 0 && <div>+ {t("product.customisation")} ({pickLang(item, "customLabel", lang) || item.customLabel_fr}) : {formatPrice(lt.event.customUnit, lang)} × {item.quantity} = {formatPrice(lt.event.customTotal, lang)}</div>}
+                              </div>
+                            )}
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button

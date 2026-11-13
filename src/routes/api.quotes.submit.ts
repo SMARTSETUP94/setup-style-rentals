@@ -231,9 +231,9 @@ function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string
     ${estimates ? `<p style="font-size:13px;color:#a07c00;font-weight:600;">Prix et délai de fabrication confirmés sous 48 h ouvrées.</p>` : ""}`;
 }
 
-function rentalBlock(items: StoredItem[], t: Totals, lang: MailLang = "fr") {
+function rentalBlock(items: StoredItem[], t: Totals, lang: MailLang = "fr", showStockNote = false) {
   if (!items.length) return `<p style="font-size:14px;color:#555;">${tr(lang, "Votre demande sera chiffrée par notre équipe.", "Our team will price your request.")}</p>`;
-  return `<h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Location", "Rental")}</h2>${itemsTable(items, lang)}<p style="font-size:12px;color:#666;margin:4px 0 12px;">${tr(lang, "Objet tel qu'en stock. Finitions et personnalisation en supplément ; livraison, installation et reprise en sus.", "Item as in stock. Finishes and customisation extra; delivery, setup and pickup extra.")}</p>${totalsBlock(t, lang)}`;
+  return `<h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Location", "Rental")}</h2>${itemsTable(items, lang)}${showStockNote ? `<p style="font-size:12px;color:#666;margin:4px 0 12px;">${tr(lang, "Objet tel qu'en stock. Finitions et personnalisation en supplément ; livraison, installation et reprise en sus.", "Item as in stock. Finishes and customisation extra; delivery, setup and pickup extra.")}</p>` : ""}${totalsBlock(t, lang)}`;
 }
 
 /* ------------------------------------------------------------------ */

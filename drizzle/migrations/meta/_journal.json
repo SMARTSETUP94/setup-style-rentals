@@ -50,6 +50,13 @@
       "when": 1794505258146,
       "tag": "0006_restrict_site_settings_and_logo_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794597874917,
+      "tag": "0007_event_pricing_and_image_imports",
+      "breakpoints": true
     }
   ]
 }

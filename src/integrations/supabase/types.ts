@@ -238,6 +238,42 @@ export type Database = {
         }
         Relationships: []
       }
+      image_imports: {
+        Row: {
+          alt_en: string | null
+          alt_fr: string | null
+          created_at: string | null
+          error: string | null
+          id: string
+          is_main: boolean | null
+          slug: string
+          status: string | null
+          url: string
+        }
+        Insert: {
+          alt_en?: string | null
+          alt_fr?: string | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          is_main?: boolean | null
+          slug: string
+          status?: string | null
+          url: string
+        }
+        Update: {
+          alt_en?: string | null
+          alt_fr?: string | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          is_main?: boolean | null
+          slug?: string
+          status?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       product_option_categories: {
         Row: {
           created_at: string
@@ -329,11 +365,15 @@ export type Database = {
           configurator_options: Json
           configurator_url: string | null
           created_at: string
+          custom_label_en: string | null
+          custom_label_fr: string | null
+          custom_price: number | null
           deposit: number
           description_en: string | null
           description_fr: string | null
           dimensions: string | null
           duration_discounts: Json
+          event_days_included: number
           id: string
           image_url: string | null
           is_active: boolean
@@ -341,6 +381,8 @@ export type Database = {
           name_fr: string
           options: Json
           price_day: number
+          price_event: number | null
+          price_extra_day: number | null
           price_month: number | null
           price_week: number | null
           quantity_discounts: Json
@@ -354,11 +396,15 @@ export type Database = {
           configurator_options?: Json
           configurator_url?: string | null
           created_at?: string
+          custom_label_en?: string | null
+          custom_label_fr?: string | null
+          custom_price?: number | null
           deposit?: number
           description_en?: string | null
           description_fr?: string | null
           dimensions?: string | null
           duration_discounts?: Json
+          event_days_included?: number
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -366,6 +412,8 @@ export type Database = {
           name_fr: string
           options?: Json
           price_day?: number
+          price_event?: number | null
+          price_extra_day?: number | null
           price_month?: number | null
           price_week?: number | null
           quantity_discounts?: Json
@@ -379,11 +427,15 @@ export type Database = {
           configurator_options?: Json
           configurator_url?: string | null
           created_at?: string
+          custom_label_en?: string | null
+          custom_label_fr?: string | null
+          custom_price?: number | null
           deposit?: number
           description_en?: string | null
           description_fr?: string | null
           dimensions?: string | null
           duration_discounts?: Json
+          event_days_included?: number
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -391,6 +443,8 @@ export type Database = {
           name_fr?: string
           options?: Json
           price_day?: number
+          price_event?: number | null
+          price_extra_day?: number | null
           price_month?: number | null
           price_week?: number | null
           quantity_discounts?: Json

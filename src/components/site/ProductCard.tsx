@@ -11,6 +11,7 @@ interface ProductCardData {
   name_en: string;
   category_slug: string;
   price_day: number;
+  price_event?: number | null;
   image_url: string | null;
 }
 
@@ -82,15 +83,26 @@ export function ProductCard({
           {pickLang(product, "name", lang)}
         </h3>
         <div className="mt-3">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {fromLabel}
-          </div>
-          <div className="mt-0.5 flex items-baseline gap-1.5">
-            <span className="font-display font-semibold text-lg text-gold-ink">
-              {formatPrice(product.price_day, lang)}
-            </span>
-            <span className="text-xs text-muted-foreground">{perDayLabel}</span>
-          </div>
+          {product.price_event != null ? (
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+              <span className="font-display font-semibold text-lg text-gold-ink">
+                {formatPrice(Number(product.price_event), lang)}
+              </span>
+              <span className="text-xs text-muted-foreground">{lang === "en" ? "excl. VAT / event" : "HT / événement"}</span>
+            </div>
+          ) : (
+            <>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {fromLabel}
+              </div>
+              <div className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="font-display font-semibold text-lg text-gold-ink">
+                  {formatPrice(product.price_day, lang)}
+                </span>
+                <span className="text-xs text-muted-foreground">{perDayLabel}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </Link>

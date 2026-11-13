@@ -26,6 +26,7 @@ interface FeaturedProduct {
   name_en: string;
   category_slug: string;
   price_day: number;
+  price_event?: number | null;
   image_url: string | null;
   sort_order: number;
 }
@@ -70,7 +71,7 @@ function HomePage() {
 
     supabase
       .from("products")
-      .select("id, slug, name_fr, name_en, category_slug, price_day, image_url, sort_order")
+      .select("id, slug, name_fr, name_en, category_slug, price_day, price_event, image_url, sort_order")
       .eq("is_active", true)
       .order("sort_order")
       .limit(8)

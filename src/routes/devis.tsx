@@ -286,7 +286,7 @@ function QuotePage() {
         pickLang(i, "name", lang),
         i.quantity,
         i.days,
-        formatPrice(i.price_day, lang),
+        lt.event ? `${formatPrice(lt.event.priceEvent, lang)} ${t("catalog.perEvent")}` : formatPrice(i.price_day, lang),
         lt.discount > 0 ? `-${formatPrice(lt.discount, lang)}` : "—",
         formatPrice(lt.net, lang),
       ]);
@@ -390,8 +390,16 @@ function QuotePage() {
                               {pickLang(item, "name", lang)}
                             </Link>
                             <div className="text-xs text-muted-foreground mt-0.5">
-                              {t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}
+                              {lt.event
+                                ? `${formatPrice(lt.event.priceEvent, lang)} ${t("catalog.perEvent")} • ${item.days} ${t("product.days")}`
+                                : <>{t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}</>}
                             </div>
+                            {lt.event && (lt.event.extraDays > 0 || lt.event.customTotal > 0) && (
+                              <div className="text-xs text-muted-foreground" data-testid="event-detail">
+                                {lt.event.extraDays > 0 && <div>+ {t("product.extraDays")} : {lt.event.extraDays} × {formatPrice(lt.event.priceExtraDay, lang)} × {item.quantity} = {formatPrice(lt.event.extraTotal, lang)}</div>}
+                                {lt.event.customTotal > 0 && <div>+ {t("product.customisation")} ({pickLang(item, "customLabel", lang)}) : {formatPrice(lt.event.customUnit, lang)} × {item.quantity} = {formatPrice(lt.event.customTotal, lang)}</div>}
+                              </div>
+                            )}
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button

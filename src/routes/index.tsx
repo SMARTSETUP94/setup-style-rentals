@@ -162,7 +162,7 @@ function HomePage() {
       {/* VIDEO PRESENTATION */}
       <RevealSection className="container-x py-16 md:py-24">
         <div className="text-center max-w-3xl mx-auto">
-          <div className="section-num">— 02</div>
+
           <h2 className="mt-4 font-display font-semibold text-balance text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight">
             {lang === "fr" ? "Configurez votre événement en 3D" : "Design your event in 3D"}
           </h2>
@@ -402,10 +402,10 @@ function PresentationVideo({ lang }: { lang: "fr" | "en" }) {
   );
 }
 
-function SectionHeader({ num, title, sub }: { num: string; title: string; sub?: string }) {
+function SectionHeader({ title, sub }: { num: string; title: string; sub?: string }) {
   return (
     <div>
-      <div className="section-num">— {num}</div>
+
       <h2 className="mt-4 font-display font-semibold text-balance text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight max-w-3xl">
         {title}
       </h2>

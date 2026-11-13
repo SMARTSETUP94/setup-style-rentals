@@ -1,6 +1,6 @@
+import { getPublicCatalogue } from "@/lib/catalogue.functions";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, SITE_URL, seoLinks } from "@/lib/seo";
@@ -41,14 +41,10 @@ interface Product {
 
 export const Route = createFileRoute("/categorie/$slug")({
   loader: async ({ params }) => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("slug", params.slug)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (error || !data) throw notFound();
-    return { category: data as unknown as Category };
+    const data = await getPublicCatalogue();
+    const category = data.categories.find(c => c.slug === params.slug);
+    if (!category) throw notFound();
+    return { category: category as unknown as Category, products: data.products.filter(p => p.category_slug === category.slug) };
   },
   head: ({ loaderData, params, match }) => {
     const lang = headLang(match);
@@ -94,23 +90,11 @@ export const Route = createFileRoute("/categorie/$slug")({
 });
 
 function CategoryPage() {
-  const { category } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  const category = data.category;
+  const products = data.products as Product[];
+  const loading = false;
   const { t, lang } = useI18n();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase
-      .from("products")
-      .select("*")
-      .eq("is_active", true)
-      .eq("category_slug", category.slug)
-      .order("sort_order")
-      .then(({ data }) => {
-        setProducts((data as Product[]) ?? []);
-        setLoading(false);
-      });
-  }, [category.slug]);
 
   const name = pickLang(category, "name", lang);
 

@@ -9,7 +9,7 @@ Captures : `/tmp/browser/audit/shots/` (temporaire, dans le bac à sable). Elles
 | Gravité | Nombre |
 |---|---|
 | Bloquant | 2 |
-| Important | 9 |
+| Important | 10 (dont le badge Lovable, voir plus bas) |
 | Mineur | 12 |
 
 Points positifs : pas d'erreur console ni de requête en échec sur les pages publiques (sauf le 404 voulu), pas de défilement horizontal à 390 px, un seul h1 par page, toutes les images ont un attribut alt, et un lien « Aller au contenu » visible au clavier. Le sous-titrage de la vidéo s'affiche, et la version EN est servie en anglais (title et lang="en").

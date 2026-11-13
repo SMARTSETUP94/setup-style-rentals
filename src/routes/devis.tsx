@@ -443,11 +443,10 @@ function QuotePage() {
                                       : undefined
                                   }
                                   onSelect={(range) => {
-                                    if (!range?.from || !range?.to) return;
+                                    if (!range?.from) return;
                                     const start = format(range.from, "yyyy-MM-dd");
-                                    const end = format(range.to, "yyyy-MM-dd");
-                                    const days = Math.max(1, differenceInCalendarDays(range.to, range.from) + 1);
-                                    void changeDates(item, start, end, days);
+                                    const dates = rentalDates(start, range.to ? format(range.to, "yyyy-MM-dd") : undefined);
+                                    if (dates.startDate && dates.endDate && dates.days) void changeDates(item, dates.startDate, dates.endDate, dates.days);
                                   }}
                                   disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                                   className={cn("p-3 pointer-events-auto")}
@@ -759,6 +758,20 @@ function QuotePage() {
       </div>
     </div>
   );
+}
+
+function LogisticsSummary({ delivery, setup, pickup }: { delivery: number; setup: number; pickup: number }) {
+  const { t, lang } = useI18n();
+  if (delivery + setup + pickup <= 0) return null;
+  return <div className="border-y border-border py-3 space-y-1" data-testid="logistics-summary">
+    <div className="font-semibold"><Row label={t("cart.logistics")} value={formatPrice(delivery + setup + pickup, lang)} /></div>
+    <div className="text-xs space-y-1">
+      <Row label={t("cart.delivery")} value={formatPrice(delivery, lang)} />
+      <Row label={t("cart.setup")} value={formatPrice(setup, lang)} />
+      <Row label={t("cart.pickup")} value={formatPrice(pickup, lang)} />
+    </div>
+    <p className="text-[11px] text-muted-foreground">{t("cart.deliveryNote")}</p>
+  </div>;
 }
 
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {

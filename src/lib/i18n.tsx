@@ -99,6 +99,10 @@ const DICT: Dict = {
   "catalog.perEvent": { fr: "HT / événement", en: "excl. VAT / event" },
   "product.perEventUpTo": { fr: "HT par événement (jusqu'à {n} jours)", en: "excl. VAT per event (up to {n} days)" },
   "product.perExtraDay": { fr: "HT par jour supplémentaire", en: "excl. VAT per extra day" },
+  "product.stockNote": {
+    fr: "Objet tel qu'en stock. Finitions et personnalisation en supplément ; livraison, installation et reprise en sus.",
+    en: "Item as in stock. Finishes and customisation extra; delivery, setup and pickup extra.",
+  },
   "product.customise": { fr: "Personnaliser", en: "Customise" },
   "product.perUnit": { fr: "HT / unité", en: "excl. VAT / unit" },
   "product.customNote": { fr: "Couleur ou visuel à préciser dans votre demande ; délai confirmé dans le devis.", en: "Colour or artwork to be specified in your request; lead time confirmed in the quote." },

@@ -544,6 +544,12 @@ function QuotePage() {
               </div>
               )}
 
+              {hasRental && (
+                <div className="text-[11px] leading-snug text-muted-foreground" data-testid="stock-note">
+                  {t("product.stockNote")}
+                </div>
+              )}
+
               {hasCustom && (
                 <div className="space-y-4">
                   <h2 className="font-display font-semibold text-xl flex items-center gap-2">

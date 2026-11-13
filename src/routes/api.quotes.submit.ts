@@ -231,9 +231,9 @@ function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string
     ${estimates ? `<p style="font-size:13px;color:#a07c00;font-weight:600;">Prix et délai de fabrication confirmés sous 48 h ouvrées.</p>` : ""}`;
 }
 
-function rentalBlock(items: StoredItem[], t: Totals, lang: MailLang = "fr") {
+function rentalBlock(items: StoredItem[], t: Totals, lang: MailLang = "fr", showStockNote = false) {
   if (!items.length) return `<p style="font-size:14px;color:#555;">${tr(lang, "Votre demande sera chiffrée par notre équipe.", "Our team will price your request.")}</p>`;
-  return `<h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Location", "Rental")}</h2>${itemsTable(items, lang)}${totalsBlock(t, lang)}`;
+  return `<h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Location", "Rental")}</h2>${itemsTable(items, lang)}${showStockNote ? `<p style="font-size:12px;color:#666;margin:4px 0 12px;">${tr(lang, "Objet tel qu'en stock. Finitions et personnalisation en supplément ; livraison, installation et reprise en sus.", "Item as in stock. Finishes and customisation extra; delivery, setup and pickup extra.")}</p>` : ""}${totalsBlock(t, lang)}`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -382,7 +382,7 @@ function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals,
         ${p.pickup_time ? `${tr(lang, "Créneau reprise souhaité", "Preferred pickup slot")}${c} <strong>${escapeHtml(p.pickup_time)}</strong><br/>` : ""}
       </div>` : ""}
       <h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Récapitulatif de votre demande", "Summary of your request")} ${escapeHtml(number)}</h2>
-      ${rentalBlock(items, t, lang)}
+      ${rentalBlock(items, t, lang, true)}
       ${customBlock(p, customs, undefined, lang)}
       ${items.length ? `<p style="margin-top:24px;font-size:13px;color:#666;">${tr(lang, "Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.<br/>Estimation indicative. Le devis final dépend des disponibilités et de la logistique.", "Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.<br/>Indicative estimate. The final quote depends on availability and logistics.")}</p>` : ""}
       ${customs.length ? `<p style="margin-top:8px;font-size:13px;color:#666;">${tr(lang, "Livraison et pose du sur-mesure : sur devis.", "Delivery and installation of custom pieces: on quote.")}</p>` : ""}

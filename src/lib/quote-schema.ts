@@ -17,6 +17,7 @@ export const ItemSchema = z
     endDate: dateStr.optional().nullable(),
     days: z.number().int().min(1).max(365).optional().nullable(),
     option_ids: z.array(z.string().uuid()).max(50).default([]),
+    custom_chosen: z.boolean().optional().nullable(),
     configurator_recap: z.string().max(5000).optional().nullable(),
     configurator_data: z
       .record(z.string(), z.unknown())

@@ -177,6 +177,7 @@ function QuotePage() {
         endDate: i.endDate ?? null,
         days: Math.min(365, Math.max(1, Math.round(i.days || 1))),
         option_ids: (i.selectedOptions ?? []).map((o) => o.optionId).filter((id) => UUID_RE.test(id)),
+        custom_chosen: !!i.customChosen,
         configurator_recap: i.configuratorRecap ? i.configuratorRecap.slice(0, 5000) : null,
         configurator_data: i.configuratorData ?? null,
         logo_path: logoPathFromUrl(i.logoUrl),

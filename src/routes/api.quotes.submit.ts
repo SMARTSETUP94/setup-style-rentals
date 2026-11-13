@@ -124,6 +124,17 @@ interface StoredItem {
   configurator_recap_html: null;
   logo_url: string | null;
   logo_filename: string | null;
+  /** Event pricing breakdown (products with price_event). */
+  pricing_model?: "event";
+  price_event?: number;
+  event_days_included?: number;
+  extra_days?: number;
+  price_extra_day?: number;
+  extra_total?: number;
+  custom_label_fr?: string | null;
+  custom_label_en?: string | null;
+  custom_unit?: number;
+  custom_total?: number;
 }
 
 interface StoredCustom {
@@ -249,6 +260,12 @@ function itemsTable(items: StoredItem[], lang: MailLang = "fr") {
         </tr>`,
         )
         .join("");
+      const evRows =
+        i.pricing_model === "event"
+          ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Prix événement", "Event price")} (${tr(lang, "jusqu'à", "up to")} ${i.event_days_included} ${tr(lang, "jours", "days")})${colon(lang)} ${fmt(i.price_event ?? 0)} × ${i.quantity}</td><td style="padding:2px 8px;text-align:right;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${fmt((i.price_event ?? 0) * i.quantity)}</td></tr>`
+            + ((i.extra_days ?? 0) > 0 ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Jours supplémentaires", "Extra days")}${colon(lang)} ${i.extra_days} × ${fmt(i.price_extra_day ?? 0)} × ${i.quantity}</td><td style="padding:2px 8px;text-align:right;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${fmt(i.extra_total ?? 0)}</td></tr>` : "")
+            + ((i.custom_unit ?? 0) > 0 ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Personnalisation", "Customisation")}${colon(lang)} ${escapeHtml((lang === "en" ? i.custom_label_en || i.custom_label_fr : i.custom_label_fr) || "")} — ${fmt(i.custom_unit ?? 0)} × ${i.quantity}</td><td style="padding:2px 8px;text-align:right;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${fmt(i.custom_total ?? 0)}</td></tr>` : "")
+          : "";
       const discountRow =
         i.line_discount > 0
           ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Remise", "Discount")}</td><td style="padding:2px 8px;text-align:right;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">−${fmt(i.line_discount)}</td></tr>`
@@ -278,10 +295,10 @@ function itemsTable(items: StoredItem[], lang: MailLang = "fr") {
           <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(lang === "en" ? i.name_en || i.name_fr : i.name_fr)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${i.days}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${fmt(i.price_day)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${i.pricing_model === "event" ? `${fmt(i.price_event ?? 0)} ${tr(lang, "/ évén.", "/ event")}` : fmt(i.price_day)}</td>
           <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">${fmt(i.line_net)}</td>
         </tr>
-        ${datesRow}${optionsRows}${discountRow}${recapRow}${logoRow}`;
+        ${datesRow}${evRows}${optionsRows}${discountRow}${recapRow}${logoRow}`;
     })
     .join("");
   return `
@@ -472,7 +489,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
           const { data: products, error: prodErr } = productIds.length
             ? await supabaseAdmin
                 .from("products")
-                .select("id,slug,name_fr,name_en,price_day,deposit,quantity_discounts,duration_discounts,is_active")
+                .select("id,slug,name_fr,name_en,price_day,deposit,quantity_discounts,duration_discounts,is_active,price_event,event_days_included,price_extra_day,custom_label_fr,custom_label_en,custom_price")
                 .in("id", productIds)
                 .eq("is_active", true)
             : { data: [], error: null };
@@ -533,7 +550,13 @@ export const Route = createFileRoute("/api/quotes/submit")({
               optionPrices: opts.map((o) => o.price),
               quantityDiscounts: asTiers<QuantityDiscountTier>(pr.quantity_discounts) ?? DEFAULT_QUANTITY_DISCOUNTS,
               durationDiscounts: asTiers<DurationDiscountTier>(pr.duration_discounts) ?? [],
+              priceEvent: pr.price_event == null ? null : Number(pr.price_event),
+              eventDaysIncluded: pr.event_days_included,
+              priceExtraDay: pr.price_extra_day == null ? null : Number(pr.price_extra_day),
+              customPrice: pr.custom_price == null ? null : Number(pr.custom_price),
+              customChosen: !!i.custom_chosen,
             });
+            const ev = lr.event;
             lineResults.push(lr);
             const logo_url =
               i.logo_path && storageBase
@@ -571,6 +594,20 @@ export const Route = createFileRoute("/api/quotes/submit")({
               configurator_recap_html: null,
               logo_url,
               logo_filename: i.logo_filename ?? null,
+              ...(ev
+                ? {
+                    pricing_model: "event" as const,
+                    price_event: ev.priceEvent,
+                    event_days_included: ev.daysIncluded,
+                    extra_days: ev.extraDays,
+                    price_extra_day: ev.priceExtraDay,
+                    extra_total: ev.extraTotal,
+                    custom_label_fr: ev.customUnit > 0 ? pr.custom_label_fr : null,
+                    custom_label_en: ev.customUnit > 0 ? pr.custom_label_en : null,
+                    custom_unit: ev.customUnit,
+                    custom_total: ev.customTotal,
+                  }
+                : {}),
             };
           });
           const totals = computeTotals(lineResults, logistics);

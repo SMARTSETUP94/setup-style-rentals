@@ -176,12 +176,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   // Two cart lines are considered the same only if same product, same options, AND same dates
-  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap" | "logoUrl">) => {
+  const lineKey = (item: Pick<CartItem, "selectedOptions" | "startDate" | "endDate" | "configuratorRecap" | "logoUrl" | "customChosen">) => {
     const opts = (item.selectedOptions ?? [])
       .map((o) => o.optionId)
       .sort()
       .join("|");
-    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? "", item.logoUrl ?? ""].join("¦");
+    return [opts, item.startDate ?? "", item.endDate ?? "", item.configuratorRecap ?? "", item.logoUrl ?? "", item.customChosen ? "C" : ""].join("¦");
   };
 
   const add = (item: NewCartItem) => {

@@ -88,7 +88,7 @@ function HomePage() {
         <div className="mt-8 grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5">
           {categories.map(cat => <Link key={cat.id} to="/categorie/$slug" params={{ slug: cat.slug }} className="group block min-w-0 rounded-lg overflow-hidden border border-border bg-card hover:shadow-soft transition-shadow">
             <div className="aspect-[4/3] bg-secondary overflow-hidden">
-              {cat.image_url && <img {...responsiveImage(cat.image_url)} sizes="(min-width: 1024px) 20vw, 50vw" alt={pickLang(cat, "name", lang)} loading="lazy" width={600} height={450} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />}
+              {cat.image_url && <img {...responsiveImage(cat.image_url)} onError={e => { const image = e.currentTarget; if (cat.image_url && image.src !== cat.image_url) { image.removeAttribute("srcset"); image.src = cat.image_url; } }} sizes="(min-width: 1024px) 20vw, 50vw" alt={pickLang(cat, "name", lang)} loading="lazy" width={600} height={450} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />}
             </div>
             <div className="p-4"><h3 className="font-semibold text-base md:text-lg leading-snug tracking-normal">{pickLang(cat, "name", lang)}</h3><p className="mt-2 text-sm text-muted-foreground">{data.products.filter(p => p.category_slug === cat.slug).length} {copy("objets", "items")}</p><ArrowRight className="mt-4 size-4 text-gold-ink" /></div>
           </Link>)}

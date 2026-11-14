@@ -318,7 +318,7 @@ function AdminProductsPage() {
                       {(!Number(p.deposit) ? [lang === "fr" ? "Sans caution" : "No deposit"] : []).concat(!p.dimensions?.trim() ? [lang === "fr" ? "Sans dimensions" : "No dimensions"] : []).concat(importedProductImage(p.slug, p.image_url) ? [lang === "fr" ? "Image générée · à vérifier" : "Generated image · check"] : []).map(label => <span key={label} className="rounded border border-gold/40 bg-gold/10 text-gold-ink px-1.5 py-0.5 text-[10px]">{label}</span>)}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{categories.find(c => c.slug === p.category_slug) ? categoryName(categories.find(c => c.slug === p.category_slug) as Category) : p.category_slug}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{categories.filter(c => c.slug === p.category_slug).map(categoryName)[0] ?? p.category_slug}</td>
                   <td className="px-4 py-3 text-right font-medium"><div>{formatPrice(p.price_event ?? p.price_day)} {p.price_event != null ? (lang === "fr" ? "HT / événement" : "excl. VAT / event") : (lang === "fr" ? "HT / jour" : "excl. VAT / day")}</div>{p.price_event != null && <div className="text-xs font-normal text-muted-foreground">+ {formatPrice(p.price_extra_day ?? 0)} {lang === "fr" ? "HT / jour supplémentaire" : "excl. VAT / extra day"}</div>}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground">{formatPrice(p.deposit)}</td>
                   <td className="px-4 py-3 text-center">

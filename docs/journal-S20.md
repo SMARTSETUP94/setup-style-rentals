@@ -1,0 +1,13 @@
+# S20 — Corrections admin
+- Aucune écriture dans les demandes, clients ou produits ; aucune publication. Tests avec l'accès admin existant, requêtes d'écriture bloquées dans le navigateur.
+- Devis : confirmation avant tout changement, depuis liste ou détail ; testé sur W-00002 : « Passer W-00002 de En attente à Acceptée ? », puis Annuler, sur 1440 et 390 px.
+- Demandes 100 % sur mesure : « Sur devis », estimation interne HT entre parenthèses si enregistrée ; liste, cartes et total du détail. Mails : « Admin ✓ / Client ✓ », ✗ et message d'erreur en info-bulle en cas d'échec.
+- Ligne entière cliquable, bouton Voir conservé ; cartes mobiles avec numéro/date/client/montant/statut/Voir. W-00002 ouvert sans enregistrer.
+- Tableau de bord : ratio envoi/ajout supprimé (compteurs conservés) ; estimation interne HT convertie en TTC pour les montants TTC, demandes non chiffrées affichées « Sur devis » et exclues des moyennes chiffrées ; singulier « 1 unité » corrigé.
+- Clients : encart demandé, 3 e-mails distincts en attente regroupant les 6 demandes actuelles ; liens lecture seule vers chaque détail, ouverture d'une demande vérifiée.
+- /admin/produits redirige vers /admin/products ; 9 destinations du menu + alias vérifiées : aucune 404.
+- Produits : prix événement et jour supplémentaire, repli prix/jour pour anciens modèles ; badges sans caution, sans dimensions et image générée à vérifier (détection du nom slug-horodatage S17 uniquement, sans prétendre analyser l'image).
+- Tests : **53 réussis, 0 échec, 94 assertions, 10 fichiers** ; compilation OK. Nouveaux tests : montants sur mesure/TTC, modèle mixte, noms d'images importées, demandeurs distincts.
+- Navigateur : tableau de bord/devis/clients/produits + détail W-00002 à **1440/390 px**, **0 erreur JavaScript, 0 débordement**, confirmations annulées. Aucune tentative PATCH/INSERT/DELETE sur les données ; POST de recalcul interne automatiquement déclenché à l'ouverture du détail volontairement bloqué dans le test.
+- Captures : [devis ordinateur](captures-S20/1440-devis.png), [cartes mobile](captures-S20/390-devis.png), [confirmation](captures-S20/390-confirmation.png), [W-00002](captures-S20/390-W-00002.png), [clients](captures-S20/390-clients.png), [produits](captures-S20/1440-products.png), [tableau de bord](captures-S20/390-dashboard.png).
+- Limites : aucune confirmation réelle, sauvegarde, suppression, activation ou publication testée ; aucun recalcul interne exécuté pendant l'audit. Les estimations déjà enregistrées sont lues uniquement.

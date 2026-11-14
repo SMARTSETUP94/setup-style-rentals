@@ -1,3 +1,5 @@
+import { isCustomOnly } from "@/lib/admin-display";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { SITE_URL } from "@/lib/seo";
 import { configLink } from "@/lib/sur-mesure";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -23,6 +25,7 @@ import { useAdminI18n } from "@/lib/admin-i18n";
 import { ScrollableTable } from "@/components/admin/ScrollableTable";
 
 export const Route = createFileRoute("/admin/devis")({
+  validateSearch: (search: Record<string, unknown>): { request?: string } => ({ request: typeof search.request === "string" ? search.request : undefined }),
   component: AdminQuotesPage,
 });
 
@@ -123,6 +126,8 @@ function AdminQuotesPage() {
   const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
   const statusLabel = (s: string) => t(`quotes.status.${s}`);
 
+  const { request } = Route.useSearch();
+  const [statusChange, setStatusChange] = useState<{ quote: Quote; status: string } | null>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Quote | null>(null);
@@ -228,10 +233,22 @@ function AdminQuotesPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (request && quotes.length) {
+      const quote = quotes.find(q => q.id === request);
+      if (quote) openDetail(quote);
+    }
+  }, [request, quotes.length]);
+
+  const requestStatus = (q: Quote, status: string) => {
+    if (q.status !== status) setStatusChange({ quote: q, status });
+  };
+  const quoteTotal = (q: Quote) => isCustomOnly(q.items) ? (lang === "fr" ? "Sur devis" : "On quote") : formatPrice(finalTotal(q));
+
   const updateStatus = async (id: string, status: string) => {
     if (status === "confirmed") {
       const q = quotes.find((x) => x.id === id);
-      const lines = Array.isArray(q?.items) ? (q!.items as any[]) : [];
+      const lines = Array.isArray(q?.items) ? (q?.items as any[]) : [];
       for (const it of lines) {
         if (!it?.productId || !it?.startDate || !it?.endDate) continue;
         const { data, error } = await supabase.rpc("get_available_stock", {
@@ -300,7 +317,7 @@ function AdminQuotesPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t("quotes.title")}</h1>
@@ -345,19 +362,36 @@ function AdminQuotesPage() {
         </select>
       </div>
 
-      <ScrollableTable minWidth={1000}>
-        <table className="w-full text-sm">
+      <div className="md:hidden space-y-3" data-testid="quote-cards">
+        {loading ? <p>{t("layout.loading")}</p> : visible.length === 0 ? <p>{t("quotes.empty")}</p> : visible.map(q => (
+          <article key={q.id} className="border border-border rounded-lg bg-card p-4 space-y-3">
+            <div className="flex justify-between gap-3"><span className="font-mono font-semibold">{quoteNumber(q)}</span><span className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString(dateLocale)}</span></div>
+            <div className="font-medium break-words">{q.customer_name}</div>
+            <div className="font-semibold">{quoteTotal(q)}{estimateByQuote[q.id] != null && <span className="block text-xs font-normal text-muted-foreground">({formatPrice(estimateByQuote[q.id] ?? 0)} HT · {lang === "fr" ? "estimation interne" : "internal estimate"})</span>}</div>
+            <EmailStatusBadge q={q} title={t("quotes.emails.failed")} />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <select aria-label={`Statut ${quoteNumber(q)}`} value={q.status} onChange={e => requestStatus(q, e.target.value)} className="max-w-full border border-border rounded-md bg-background text-foreground px-2 py-2 text-sm">
+                {STATUSES.map(status => <option key={status} value={status}>{statusLabel(status)}</option>)}
+              </select>
+              <Button variant="outline" size="sm" onClick={() => openDetail(q)}><Eye className="size-4" />{lang === "fr" ? "Voir" : "View"}</Button>
+            </div>
+          </article>
+        ))}
+      </div>
+      <div className="hidden md:block">
+      <ScrollableTable minWidth={1100}>
+        <table className="w-full text-xs">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.number")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.date")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.client")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.email")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.event")}</th>
-              <th className="text-right px-4 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.emails")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.status")}</th>
-              <th className="px-4 py-3"></th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.number")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.date")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.client")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.email")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.event")}</th>
+              <th className="text-right px-2 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.emails")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.status")}</th>
+              <th className="px-2 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -367,40 +401,41 @@ function AdminQuotesPage() {
               <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">{t("quotes.empty")}</td></tr>
             ) : (
               visible.map((q) => (
-                <tr key={q.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
+                <tr key={q.id} onClick={() => openDetail(q)} className="border-t border-border cursor-pointer hover:bg-muted/30">
+                  <td className="px-2 py-3 font-mono text-xs whitespace-nowrap">
                     {quoteNumber(q)}
                     {q.source && <span className="block text-[10px] text-muted-foreground">{q.source}</span>}
                     <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-sans font-medium ${KIND_COLORS[quoteKind(q)]}`}>
                       {t(`quotes.kind.${quoteKind(q)}`)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-2 py-3 text-muted-foreground">
                     {new Date(q.created_at).toLocaleDateString(dateLocale)}
                   </td>
-                  <td className="px-4 py-3 font-medium">
+                  <td className="px-2 py-3 font-medium">
                     {q.customer_name}
                     {q.company && <span className="block text-xs text-muted-foreground">{q.company}</span>}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{q.email}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-2 py-3 text-muted-foreground max-w-40 break-all">{q.email}</td>
+                  <td className="px-2 py-3 text-muted-foreground">
                     {q.event_date ? new Date(q.event_date).toLocaleDateString(dateLocale) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="font-semibold">{formatPrice(finalTotal(q))}</div>
+                  <td className="px-2 py-3 text-right">
+                    <div className="font-semibold">{quoteTotal(q)}</div>
                     {estimateByQuote[q.id] != null && (
                       <div className="text-[11px] text-muted-foreground whitespace-nowrap" title="Estimation sur-mesure (interne)">
-                        Estimation sur-mesure : {formatPrice(estimateByQuote[q.id]!)} HT · interne
+                        ({formatPrice(estimateByQuote[q.id] ?? 0)} HT · {lang === "fr" ? "estimation interne" : "internal estimate"})
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-3">
                     <EmailStatusBadge q={q} title={t("quotes.emails.failed")} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-3">
                     <select
                       value={q.status}
-                      onChange={(e) => updateStatus(q.id, e.target.value)}
+                      aria-label={`Statut ${quoteNumber(q)}`}
+                      onChange={(e) => requestStatus(q, e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                       className={`h-8 rounded-md border px-2 text-xs font-medium shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
                         STATUS_COLORS[q.status] || "border-input bg-transparent"
@@ -422,12 +457,12 @@ function AdminQuotesPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openDetail(q)} aria-label={`Voir la demande ${quoteNumber(q)}`}>
-                        <Eye className="size-4" />
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openDetail(q); }} aria-label={`Voir la demande ${quoteNumber(q)}`}>
+                        <Eye className="size-4" /> {lang === "fr" ? "Voir" : "View"}
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(q.id)}>
+                      <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); void remove(q.id); }}>
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
                     </div>
@@ -438,7 +473,17 @@ function AdminQuotesPage() {
           </tbody>
         </table>
       </ScrollableTable>
+      </div>
 
+      <AlertDialog open={!!statusChange} onOpenChange={open => !open && setStatusChange(null)}>
+        <AlertDialogContent className="z-[80] w-[calc(100%-2rem)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{statusChange && (lang === "fr" ? `Passer ${quoteNumber(statusChange.quote)} de ${statusLabel(statusChange.quote.status)} à ${statusLabel(statusChange.status)} ?` : `Change ${quoteNumber(statusChange.quote)} from ${statusLabel(statusChange.quote.status)} to ${statusLabel(statusChange.status)}?`)}</AlertDialogTitle>
+            <AlertDialogDescription>{lang === "fr" ? "Le statut ne sera modifié qu'après confirmation." : "The status will only change after confirmation."}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>{lang === "fr" ? "Annuler" : "Cancel"}</AlertDialogCancel><AlertDialogAction onClick={() => { if (statusChange) void updateStatus(statusChange.quote.id, statusChange.status); }}>{lang === "fr" ? "Confirmer" : "Confirm"}</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-2xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 [&>*]:min-w-0 [&_button]:whitespace-normal [&_button]:max-w-full">
           {selected && (
@@ -690,7 +735,8 @@ function AdminQuotesPage() {
                   )}
                   <Row label={t("quotes.totals.ht")} value={formatPrice(selected.total_ht)} />
                   <Row label={t("quotes.totals.vat")} value={formatPrice(selected.vat)} />
-                  <Row label={t("quotes.totals.ttc")} value={formatPrice(finalTotal(selected))} bold />
+                  <Row label={t("quotes.totals.ttc")} value={quoteTotal(selected)} bold />
+                  {estimateByQuote[selected.id] != null && <p className="text-xs text-muted-foreground text-right">({formatPrice(estimateByQuote[selected.id] ?? 0)} HT · {lang === "fr" ? "estimation interne" : "internal estimate"})</p>}
                   <Row label={`${t("quotes.totals.deposit")} (${t("quotes.totals.depositNote")})`} value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>
@@ -699,7 +745,7 @@ function AdminQuotesPage() {
                     {STATUSES.map((s) => (
                       <button
                         key={s}
-                        onClick={() => updateStatus(selected.id, s)}
+                        onClick={() => requestStatus(selected, s)}
                         className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
                           selected.status === s
                             ? STATUS_COLORS[s] || "bg-foreground text-background border-foreground"
@@ -740,12 +786,9 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
 }
 
 function EmailStatusBadge({ q, title }: { q: Quote; title: string }) {
-  const failed = hasEmailFailure(q);
   return (
-    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground" title={failed ? title : undefined}>
-      <span className={`inline-block size-2 rounded-full ${failed ? "bg-destructive" : "bg-muted-foreground/40"}`} />
-      <span>A: {q.email_admin_status || "—"}</span>
-      <span>C: {q.email_client_status || "—"}</span>
+    <div className="flex items-center gap-1.5 whitespace-nowrap text-xs">
+      {([["Admin", q.email_admin_status], ["Client", q.email_client_status]] as const).map(([label, status], i) => <span key={label} className={isFailed(status) ? "text-destructive" : "text-muted-foreground"} title={isFailed(status) ? `${title} : ${status}` : status ?? undefined}>{i > 0 && "/ "}{label} {status === "sent" ? "✓" : isFailed(status) ? "✗" : "—"}</span>)}
     </div>
   );
 }

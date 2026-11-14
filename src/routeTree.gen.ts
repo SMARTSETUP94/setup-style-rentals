@@ -27,6 +27,7 @@ import { Route as AdminChiffrageRouteImport } from './routes/admin.chiffrage'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
 import { Route as AdminDevisRouteImport } from './routes/admin.devis'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminProduitsRouteImport } from './routes/admin.produits'
 import { Route as AdminRoadmapRouteImport } from './routes/admin.roadmap'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminSurMesureRouteImport } from './routes/admin.sur-mesure'
@@ -132,6 +133,11 @@ const AdminProductsRoute = AdminProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminProduitsRoute = AdminProduitsRouteImport.update({
+  id: '/produits',
+  path: '/produits',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminRoadmapRoute = AdminRoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/produits': typeof AdminProduitsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sur-mesure': typeof AdminSurMesureRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/produits': typeof AdminProduitsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sur-mesure': typeof AdminSurMesureRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/admin/clients': typeof AdminClientsRoute
   '/admin/devis': typeof AdminDevisRoute
   '/admin/products': typeof AdminProductsRoute
+  '/admin/produits': typeof AdminProduitsRoute
   '/admin/roadmap': typeof AdminRoadmapRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sur-mesure': typeof AdminSurMesureRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
+    | '/admin/produits'
     | '/admin/roadmap'
     | '/admin/settings'
     | '/admin/sur-mesure'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
+    | '/admin/produits'
     | '/admin/roadmap'
     | '/admin/settings'
     | '/admin/sur-mesure'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/devis'
     | '/admin/products'
+    | '/admin/produits'
     | '/admin/roadmap'
     | '/admin/settings'
     | '/admin/sur-mesure'
@@ -561,6 +573,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/produits': {
+      id: '/admin/produits'
+      path: '/produits'
+      fullPath: '/admin/produits'
+      preLoaderRoute: typeof AdminProduitsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/roadmap': {
       id: '/admin/roadmap'
       path: '/roadmap'
@@ -670,6 +689,7 @@ interface AdminRouteChildren {
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDevisRoute: typeof AdminDevisRoute
   AdminProductsRoute: typeof AdminProductsRoute
+  AdminProduitsRoute: typeof AdminProduitsRoute
   AdminRoadmapRoute: typeof AdminRoadmapRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSurMesureRoute: typeof AdminSurMesureRoute
@@ -684,6 +704,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminClientsRoute: AdminClientsRoute,
   AdminDevisRoute: AdminDevisRoute,
   AdminProductsRoute: AdminProductsRoute,
+  AdminProduitsRoute: AdminProduitsRoute,
   AdminRoadmapRoute: AdminRoadmapRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSurMesureRoute: AdminSurMesureRoute,

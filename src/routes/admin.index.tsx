@@ -1,3 +1,4 @@
+import { dashboardAmount } from "@/lib/admin-display";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { FileText, TrendingUp, TrendingDown, Package, CheckCircle2, Clock } from "lucide-react";
@@ -45,6 +46,7 @@ function AdminDashboardPage() {
   const { t, lang } = useAdminI18n();
   const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [estimates, setEstimates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +57,10 @@ function AdminDashboardPage() {
         .select("id, customer_name, status, total_ttc, delivery_fee, setup_fee, pickup_fee, created_at, items, has_custom")
         .order("created_at", { ascending: false });
       if (!error) setQuotes((data as Quote[]) ?? []);
+      const { data: rows } = await supabase.from("custom_configs").select("quote_id,estimate_total_ht").not("estimate_total_ht", "is", null);
+      const sums: Record<string, number> = {};
+      for (const row of rows ?? []) if (row.quote_id) sums[row.quote_id] = (sums[row.quote_id] ?? 0) + Number(row.estimate_total_ht);
+      setEstimates(sums);
       setLoading(false);
     })();
   }, []);
@@ -78,15 +84,15 @@ function AdminDashboardPage() {
 
     for (const q of quotes) {
       const created = new Date(q.created_at);
-      const total = finalTotal(q);
+      const total = dashboardAmount(q.items, q.total_ttc, estimates[q.id]);
       const inCur = inRange(created, curStart, curEnd);
       const inPrev = inRange(created, prevStart, prevEnd);
       if (inCur) {
         curCount++;
-        if (total > 0) { curPricedSum += total; curPricedCount++; }
+        if (total != null && total > 0) { curPricedSum += total; curPricedCount++; }
         if (q.has_custom) curCustom++;
-        if (PIPELINE_STATUSES.has(q.status)) curPipeline += total;
-        if (ENGAGED_STATUSES.has(q.status)) curEngaged += total;
+        if (PIPELINE_STATUSES.has(q.status)) curPipeline += total ?? 0;
+        if (ENGAGED_STATUSES.has(q.status)) curEngaged += total ?? 0;
         const items = Array.isArray(q.items) ? q.items : [];
         for (const it of items) {
           const slug = String(it.slug || "");
@@ -100,9 +106,9 @@ function AdminDashboardPage() {
       }
       if (inPrev) {
         prevCount++;
-        if (total > 0) { prevPricedSum += total; prevPricedCount++; }
-        if (PIPELINE_STATUSES.has(q.status)) prevPipeline += total;
-        if (ENGAGED_STATUSES.has(q.status)) prevEngaged += total;
+        if (total != null && total > 0) { prevPricedSum += total; prevPricedCount++; }
+        if (PIPELINE_STATUSES.has(q.status)) prevPipeline += total ?? 0;
+        if (ENGAGED_STATUSES.has(q.status)) prevEngaged += total ?? 0;
       }
     }
 
@@ -120,7 +126,7 @@ function AdminDashboardPage() {
       prevAvg: prevPricedCount ? prevPricedSum / prevPricedCount : 0,
       curCustom,
     };
-  }, [quotes, lang]);
+  }, [quotes, lang, estimates]);
 
   const monthLabel = new Date().toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
 
@@ -131,7 +137,7 @@ function AdminDashboardPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("dash.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1 capitalize">{monthLabel}</p>
@@ -171,8 +177,8 @@ function AdminDashboardPage() {
           label={lang === "fr" ? "Panier moyen TTC" : "Average basket incl. VAT"}
           value={formatPrice(stats.curAvg)}
           subLabel={lang === "fr"
-            ? `Demandes chiffrées uniquement · ${stats.curCustom} avec sur-mesure`
-            : `Priced requests only · ${stats.curCustom} with custom-made`}
+            ? `Montants TTC, estimations internes incluses · ${stats.curCustom} avec sur-mesure`
+            : `Incl. VAT, internal estimates included · ${stats.curCustom} with custom-made`}
           previousLabel={t("dash.vsLastMonth")}
           change={pctChange(stats.curAvg, stats.prevAvg)}
           previousValue={formatPrice(stats.prevAvg)}
@@ -199,7 +205,7 @@ function AdminDashboardPage() {
                     <div className="flex items-baseline justify-between gap-2 mb-1">
                       <span className="text-sm font-medium truncate">{p.name}</span>
                       <span className="text-xs text-muted-foreground shrink-0">
-                        {p.qty} {t("dash.units")}
+                        {p.qty} {lang === "fr" ? (p.qty === 1 ? "unité" : "unités") : (p.qty === 1 ? "unit" : "units")}
                       </span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -233,7 +239,7 @@ function AdminDashboardPage() {
                     {new Date(q.created_at).toLocaleDateString(dateLocale)} • {t(`quotes.status.${q.status}`)}
                   </div>
                 </div>
-                <div className="font-semibold shrink-0">{formatPrice(finalTotal(q))}</div>
+                <div className="font-semibold shrink-0">{dashboardAmount(q.items, q.total_ttc, estimates[q.id]) == null ? (lang === "fr" ? "Sur devis" : "On quote") : formatPrice(dashboardAmount(q.items, q.total_ttc, estimates[q.id]) ?? 0)}</div>
               </li>
             ))}
           </ul>
@@ -307,22 +313,17 @@ function ConversionBlock() {
       }),
     ).then((pairs) => setCounts(Object.fromEntries(pairs)));
   }, []);
-  const adds = counts?.cart_add ?? 0;
-  const rate = adds > 0 ? ((counts?.quote_submit ?? 0) / adds) * 100 : null;
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="text-sm font-semibold">{lang === "fr" ? "30 derniers jours" : "Last 30 days"}</div>
-      <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-7">
+      <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         {EVENT_NAMES.map((n) => (
           <div key={n}>
             <div className="text-[11px] text-muted-foreground">{EVENT_LABELS[n][lang]}</div>
             <div className="text-xl font-semibold">{counts ? counts[n] : "…"}</div>
           </div>
         ))}
-        <div>
-          <div className="text-[11px] text-muted-foreground">{lang === "fr" ? "Taux envoi / ajout panier" : "Sent / cart-add rate"}</div>
-          <div className="text-xl font-semibold">{rate == null ? "—" : `${rate.toFixed(1)} %`}</div>
-        </div>
+
       </div>
     </div>
   );

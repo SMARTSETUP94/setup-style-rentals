@@ -1,3 +1,4 @@
+import { importedProductImage } from "@/lib/admin-display";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -289,7 +290,7 @@ function AdminProductsPage() {
             <tr>
               <th className="text-left px-4 py-3 font-medium">{t("prods.col.name")}</th>
               <th className="text-left px-4 py-3 font-medium">{t("prods.col.category")}</th>
-              <th className="text-right px-4 py-3 font-medium">{t("prods.col.priceDay")}</th>
+              <th className="text-right px-4 py-3 font-medium">{lang === "fr" ? "Prix HT / événement" : "Price excl. VAT / event"}</th>
               <th className="text-right px-4 py-3 font-medium">{t("prods.col.deposit")}</th>
               <th className="text-center px-4 py-3 font-medium">{t("common.active")}</th>
               <th className="px-4 py-3"></th>
@@ -313,9 +314,12 @@ function AdminProductsPage() {
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">{p.slug}</div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {(!Number(p.deposit) ? [lang === "fr" ? "Sans caution" : "No deposit"] : []).concat(!p.dimensions?.trim() ? [lang === "fr" ? "Sans dimensions" : "No dimensions"] : []).concat(importedProductImage(p.slug, p.image_url) ? [lang === "fr" ? "Image générée · à vérifier" : "Generated image · check"] : []).map(label => <span key={label} className="rounded border border-gold/40 bg-gold/10 text-gold-ink px-1.5 py-0.5 text-[10px]">{label}</span>)}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.category_slug}</td>
-                  <td className="px-4 py-3 text-right font-medium">{formatPrice(p.price_day)}</td>
+                  <td className="px-4 py-3 text-right font-medium"><div>{formatPrice(p.price_event ?? p.price_day)} {p.price_event != null ? (lang === "fr" ? "HT / événement" : "excl. VAT / event") : (lang === "fr" ? "HT / jour" : "excl. VAT / day")}</div>{p.price_event != null && <div className="text-xs font-normal text-muted-foreground">+ {formatPrice(p.price_extra_day ?? 0)} {lang === "fr" ? "HT / jour supplémentaire" : "excl. VAT / extra day"}</div>}</td>
                   <td className="px-4 py-3 text-right text-muted-foreground">{formatPrice(p.deposit)}</td>
                   <td className="px-4 py-3 text-center">
                     <Switch checked={p.is_active} onCheckedChange={() => toggleActive(p)} />

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { optionCharge } from "./rental-customisation";
 
 export interface SelectedOption {
   categoryId: string;
@@ -246,7 +247,7 @@ export function lineTotal(item: CartItem): LineResult {
     deposit: item.deposit,
     quantity: item.quantity,
     days: item.days,
-    optionPrices: (item.selectedOptions ?? []).map((o) => o.price || 0),
+    optionPrices: (item.selectedOptions ?? []).map((o) => optionCharge(o.price || 0, o.name_fr, item.days)),
     quantityDiscounts: item.quantityDiscounts,
     durationDiscounts: item.durationDiscounts,
     priceEvent: item.priceEvent,

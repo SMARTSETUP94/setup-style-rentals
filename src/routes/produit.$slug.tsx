@@ -1,3 +1,5 @@
+import { isPersonalisedConfiguration, isDailyService, optionCharge } from "@/lib/rental-customisation";
+import { Button } from "@/components/ui/button";
 import { getPublicCatalogue, getPublicProductOptions } from "@/lib/catalogue.functions";
 import { PublicNotFound } from "@/components/site/PublicNotFound";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -243,8 +245,11 @@ function ProductPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [is3DMode, setIs3DMode] = useState(false);
-  const optionCategories = loaded.optionCategories as OptionCategory[];
-  const productOptions = loaded.productOptions as ProductOptionRow[];
+  const unified3D = Number(product.custom_price) > 0 && Boolean(product.configurator_url);
+  const unknown3DPrice = ["lettres-geantes", "table-de-blackjack", "pouf", "auvent", "triporteur"].includes(slug);
+  const productOptions = useMemo(() => (loaded.productOptions as ProductOptionRow[]).filter(o =>
+    (!unified3D && !unknown3DPrice) || isDailyService(o.name_fr) || /LED|coussin/i.test(o.name_fr)), [loaded.productOptions, unified3D, unknown3DPrice]);
+  const optionCategories = useMemo(() => (loaded.optionCategories as OptionCategory[]).filter(c => productOptions.some(o => o.category_id === c.id)), [loaded.optionCategories, productOptions]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>(() => defaultOptionSelection(optionCategories, productOptions));
   /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
@@ -261,6 +266,7 @@ function ProductPage() {
   /** Origin of the configurator iframe — target for outgoing postMessage. */
   const configuratorOrigin = (() => {
     try {
+      if (slug === "stele") return typeof window !== "undefined" ? window.location.origin : "https://catalogue.setup.paris";
       return product?.configurator_url
         ? new URL(product.configurator_url, typeof window !== "undefined" ? window.location.href : "https://catalogue.setup.paris").origin
         : null;
@@ -429,7 +435,7 @@ function ProductPage() {
         // Newer Pro configurators send `configuration` (preferred) alongside
         // `recap_html` (styled HTML) and `recap` (plain text fallback).
         const cfg = d.configuration ?? d.data;
-        if (cfg) setConfiguratorData(cfg);
+        setConfiguratorData(cfg ?? null);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
@@ -596,6 +602,11 @@ function ProductPage() {
     }
   }, [is3DMode]);
 
+  useEffect(() => {
+    if (!configuratorData && !configuratorRecap) return;
+    if (Number(product.custom_price) > 0) setCustomChosen(isPersonalisedConfiguration(configuratorData, configuratorRecap));
+  }, [configuratorData, configuratorRecap, product.custom_price]);
+
   // Preselect DB options matching the 3D configuration (unique match only,
   // never over a manual choice). Prices stay those of the DB options.
   useEffect(() => {
@@ -675,9 +686,9 @@ function ProductPage() {
 
   const optionsUnitPrice = useMemo(
     () =>
-      activeSelectedOptionsList.reduce((s, o) => s + o.price, 0) +
+      activeSelectedOptionsList.reduce((s, o) => s + optionCharge(o.price, o.name_fr, days), 0) +
       activeConfiguratorOptionsList.reduce((s, o) => s + o.price, 0),
-    [activeSelectedOptionsList, activeConfiguratorOptionsList],
+    [activeSelectedOptionsList, activeConfiguratorOptionsList, days],
   );
 
   const calc = useMemo(() => {
@@ -733,6 +744,7 @@ function ProductPage() {
     setConfiguratorData(null);
     setConfiguratorRecap("");
     setConfiguratorRecapHtml("");
+    setCustomChosen(false);
     [inlineIframeRef.current].forEach((frame) => {
       if (!frame) return;
       try {
@@ -825,10 +837,14 @@ function ProductPage() {
           aria-modal="true"
           aria-label={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
         >
-          <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)]">
+          <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)] pt-20 sm:pt-16">
+            <div className="absolute top-0 inset-x-0 min-h-16 bg-background border-b border-border px-16 py-2 text-xs sm:text-sm" aria-live="polite" data-testid="3d-price">
+              <div>{t("product.customisation")} : {hasCustomOffer ? `+ ${formatPrice(Number(product.custom_price), lang)} ${t("product.perUnit")}` : slug === "stele-miroir" ? (lang === "fr" ? "Non personnalisable" : "Not customisable") : (lang === "fr" ? "sur devis" : "on quotation")}</div>
+              <div>{customChosen ? pickLang(product, "custom_label", lang) : (lang === "fr" ? "Objet tel qu'en stock — aucune option" : "Item as in stock — no option")} · Total HT : {formatPrice(calc?.net ?? 0, lang)}</div>
+            </div>
             <iframe
               ref={inlineIframeRef}
-              src={product.configurator_url}
+              src={slug === "stele" ? "/configurators/rental-stele.html" : product.configurator_url}
               title={`${t("product.threeDConfig")} — ${pickLang(product, "name", lang)}`}
               className="block w-full h-full border-0"
               allow="clipboard-write; fullscreen"
@@ -987,7 +1003,7 @@ function ProductPage() {
             </Link>
           )}
 
-          {product.configurator_url && (BRAND_3D_SLUGS.has(product.slug) ? (
+          {product.configurator_url && slug !== "stele-miroir" && (BRAND_3D_SLUGS.has(product.slug) ? (
             <button
               type="button"
               onClick={() => setIs3DMode((prev) => !prev)}
@@ -1087,6 +1103,19 @@ function ProductPage() {
               ))}
             </div>
             )}
+            <div className="mt-3 flex items-center justify-between text-sm pt-3 border-t border-border">
+              <span className="text-muted-foreground">{t("product.deposit")}</span>
+              <span className="font-semibold">{formatPrice(product.deposit, lang)}</span>
+            </div>
+          </div>
+
+          {/* 3D configurator recap (informational, sent as comment with the quote) */}
+          {/* Customization options — always visible (also in 3D mode, with notice) */}
+          {(optionCategories.length > 0 || hasCustomOffer || unknown3DPrice) && (
+            <div className="mt-8 space-y-5 animate-fade-in">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {t("product.customisation")}
+              </div>
             {hasCustomOffer && (
               <label className="mt-4 flex items-start gap-3 rounded-lg bg-background border border-border p-4 cursor-pointer">
                 <input
@@ -1104,28 +1133,18 @@ function ProductPage() {
                 </span>
               </label>
             )}
-            <div className="mt-3 flex items-center justify-between text-sm pt-3 border-t border-border">
-              <span className="text-muted-foreground">{t("product.deposit")}</span>
-              <span className="font-semibold">{formatPrice(product.deposit, lang)}</span>
-            </div>
-          </div>
-
-          {/* 3D configurator recap (informational, sent as comment with the quote) */}
-          {/* Customization options — always visible (also in 3D mode, with notice) */}
-          {optionCategories.length > 0 && (
-            <div className="mt-8 space-y-5 animate-fade-in">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {is3DMode ? t("product.optionsStillRequired") : t("product.customize")}
-              </div>
+              {unknown3DPrice && <p className="text-sm text-muted-foreground">{lang === "fr" ? "Personnalisation : sur devis" : "Customisation: on quotation"}</p>}
               {autoSelectedCatIds.size > 0 && (
                 <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5 -mt-2">
                   <Wand2 className="size-3.5 text-gold-ink/80" />
                   {t("product.optionsFrom3D")}
                 </p>
               )}
+              {[false, true].map(serviceGroup => <div key={String(serviceGroup)} className="space-y-4">
+              {serviceGroup && productOptions.some(o => isDailyService(o.name_fr)) && <h2 className="text-sm font-semibold">Services</h2>}
               {optionCategories.map((cat) => {
                 const opts = productOptions
-                  .filter((o) => o.category_id === cat.id)
+                  .filter((o) => o.category_id === cat.id && isDailyService(o.name_fr) === serviceGroup)
                   .sort((a, b) => a.sort_order - b.sort_order);
                 if (opts.length === 0) return null;
                 const selected = selectedOptionIds[cat.id];
@@ -1165,7 +1184,8 @@ function ProductPage() {
                       {opts.map((o) => {
                         const active = selected === o.id;
                         return (
-                          <button
+                          <Button
+                            variant="outline"
                             key={o.id}
                             type="button"
                             onClick={() => {
@@ -1186,7 +1206,7 @@ function ProductPage() {
                               syncSelectionToIframe(cat.id, o.id);
                             }}
                             className={cn(
-                              "text-left rounded-lg border p-3 transition-all",
+                              "h-auto block w-full text-left whitespace-normal rounded-lg border p-3 transition-all",
                               active
                                 ? "border-gold bg-gold/5 ring-1 ring-gold"
                                 : "border-border hover:border-foreground/30",
@@ -1208,10 +1228,10 @@ function ProductPage() {
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {o.price > 0
-                                ? `+${formatPrice(o.price, lang)}`
+                                ? `+ ${formatPrice(o.price, lang)} ${isDailyService(o.name_fr) ? (lang === "fr" ? "HT / jour / unité" : "excl. VAT / day / unit") : t("product.perUnit")}`
                                 : t("product.included")}
                             </div>
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -1233,6 +1253,7 @@ function ProductPage() {
                   </div>
                 );
               })}
+              </div>)}
             </div>
           )}
 
@@ -1377,7 +1398,7 @@ function ProductPage() {
                 <Row
                   key={o.optionId}
                   label={`+ ${pickLang(o, "name", lang)}`}
-                  value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : t("product.included")}
+                  value={o.price > 0 ? `+${formatPrice(optionCharge(o.price, o.name_fr, days) * qty, lang)}` : t("product.included")}
                 />
               ))}
               {activeConfiguratorOptionsList.length > 0 && (
@@ -1390,7 +1411,7 @@ function ProductPage() {
                     <Row
                       key={o.optionId}
                       label={`+ ${o.categoryName_fr ? `${pickLang(o, "categoryName", lang)} : ` : ""}${pickLang(o, "name", lang)}`}
-                      value={o.price > 0 ? `+${formatPrice(o.price * qty, lang)}` : t("product.included")}
+                      value={o.price > 0 ? `+${formatPrice(optionCharge(o.price, o.name_fr, days) * qty, lang)}` : t("product.included")}
                     />
                   ))}
                 </div>
@@ -1467,9 +1488,9 @@ function ProductPage() {
 
 
           {(() => {
-            if (product.price_event != null) return null;
+
             const qTiers = [...(product.quantity_discounts ?? [])].sort((a, b) => a.min_qty - b.min_qty);
-            const dTiers = [...(product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
+            const dTiers = [...(product.price_event != null ? [] : product.duration_discounts ?? [])].sort((a, b) => a.min_days - b.min_days);
             if (qTiers.length === 0 && dTiers.length === 0) return null;
             const fmtQ = qTiers
               .map((tier) => `-${Math.round(tier.rate * 100)}% ${t("product.from")} ${tier.min_qty}`)

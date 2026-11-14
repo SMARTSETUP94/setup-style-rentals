@@ -1,3 +1,4 @@
+import { isPersonalisedConfiguration, optionCharge, eventDetailRows } from "@/lib/rental-customisation";
 import { SITE_URL } from "@/lib/seo";
 import { splitNonChiffre, stripRecapHeader } from "@/lib/chiffrage-split";
 import { createFileRoute } from "@tanstack/react-router";
@@ -255,17 +256,12 @@ function itemsTable(items: StoredItem[], lang: MailLang = "fr") {
             • <strong style="color:#1a1a1a;">${escapeHtml(lang === "en" ? o.categoryName_en || o.categoryName_fr : o.categoryName_fr)}${colon(lang)}</strong> ${escapeHtml(lang === "en" ? o.name_en || o.name_fr : o.name_fr)}
           </td>
           <td style="padding:4px 8px;border-bottom:1px solid #f5f5f5;text-align:right;color:#666;font-size:13px;">
-            ${o.price > 0 ? `+${fmt(o.price)}` : tr(lang, "inclus", "included")}
+            ${o.price > 0 ? `+ ${fmt(o.price)} × ${i.quantity}${/par jour|per day/i.test(o.name_fr) ? ` × ${i.days}` : ""} = ${fmt(o.line_total)}` : tr(lang, "inclus", "included")}
           </td>
         </tr>`,
         )
         .join("");
-      const evRows =
-        i.pricing_model === "event"
-          ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Prix événement", "Event price")} (${tr(lang, "jusqu'à", "up to")} ${i.event_days_included} ${tr(lang, "jours", "days")})${colon(lang)} ${fmt(i.price_event ?? 0)} × ${i.quantity}</td><td style="padding:2px 8px;text-align:right;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${fmt((i.price_event ?? 0) * i.quantity)}</td></tr>`
-            + ((i.extra_days ?? 0) > 0 ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Jours supplémentaires", "Extra days")}${colon(lang)} ${i.extra_days} × ${fmt(i.price_extra_day ?? 0)} × ${i.quantity}</td><td style="padding:2px 8px;text-align:right;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${fmt(i.extra_total ?? 0)}</td></tr>` : "")
-            + ((i.custom_unit ?? 0) > 0 ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Personnalisation", "Customisation")}${colon(lang)} ${escapeHtml((lang === "en" ? i.custom_label_en || i.custom_label_fr : i.custom_label_fr) || "")} — ${fmt(i.custom_unit ?? 0)} × ${i.quantity}</td><td style="padding:2px 8px;text-align:right;color:#666;font-size:12px;border-bottom:1px solid #f5f5f5;">${fmt(i.custom_total ?? 0)}</td></tr>` : "")
-          : "";
+      const evRows = i.pricing_model === "event" ? eventDetailRows({ priceEvent:i.price_event ?? 0, extraDays:i.extra_days ?? 0, priceExtraDay:i.price_extra_day ?? 0, customUnit:i.custom_unit ?? 0 }, i.quantity, lang, fmt).map(row => `<tr><td colspan="5" style="padding:4px 24px;font-size:12px;">${escapeHtml(row)}</td></tr>`).join("") : "";
       const discountRow =
         i.line_discount > 0
           ? `<tr><td colspan="4" style="padding:2px 8px 4px 24px;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">${tr(lang, "Remise", "Discount")}</td><td style="padding:2px 8px;text-align:right;color:#a07c00;font-size:12px;border-bottom:1px solid #f5f5f5;">−${fmt(i.line_discount)}</td></tr>`
@@ -547,14 +543,14 @@ export const Route = createFileRoute("/api/quotes/submit")({
               deposit: Number(pr.deposit) || 0,
               quantity: i.quantity,
               days,
-              optionPrices: opts.map((o) => o.price),
+              optionPrices: opts.map((o) => optionCharge(o.price, o.name_fr, days)),
               quantityDiscounts: asTiers<QuantityDiscountTier>(pr.quantity_discounts) ?? DEFAULT_QUANTITY_DISCOUNTS,
               durationDiscounts: asTiers<DurationDiscountTier>(pr.duration_discounts) ?? [],
               priceEvent: pr.price_event == null ? null : Number(pr.price_event),
               eventDaysIncluded: pr.event_days_included,
               priceExtraDay: pr.price_extra_day == null ? null : Number(pr.price_extra_day),
               customPrice: pr.custom_price == null ? null : Number(pr.custom_price),
-              customChosen: !!i.custom_chosen,
+              customChosen: !!i.custom_chosen || isPersonalisedConfiguration(i.configurator_data, i.configurator_recap ?? ""),
             });
             const ev = lr.event;
             lineResults.push(lr);
@@ -584,7 +580,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
                 name_fr: o.name_fr,
                 name_en: o.name_en,
                 price: o.price,
-                line_total: o.price * i.quantity,
+                line_total: optionCharge(o.price, o.name_fr, days) * i.quantity,
               })),
               option_ids: i.option_ids,
               options_per_unit_per_day: lr.optionsPerUnit,

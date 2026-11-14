@@ -5,3 +5,5 @@
 - Keep the product SSR HTTP integration test runnable against local or published origins via `SSR_TEST_BASE_URL`, asserting actual H1 and visible tariff outside scripts. Why: metadata alone cannot detect an empty server-rendered product page.
 
 - Admin presentation helpers classify custom-only totals and imported image filenames without updating records; internal HT estimates are converted to TTC only for TTC dashboard aggregates. Why: avoid false zero prices and mixing tax bases.
+- Rental customisation detection, service units and event detail rows live in a pure shared helper; server repricing also derives branding from configuration. Why: prevent visual choices and client totals from bypassing the same pricing rule.
+- The local rental stèle visualiser emits configuration on every choice; other hosted visualisers retain their origin-checked message bridge and a host-owned price strip. Why: show the authoritative price during visualisation without editing third-party deployments.

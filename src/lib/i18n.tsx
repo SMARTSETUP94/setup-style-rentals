@@ -31,7 +31,7 @@ const DICT: Dict = {
   "sm.heroCta": { fr: "Faire fabriquer sur mesure", en: "Have it custom-made" },
   "sm.twoWaysTitle": { fr: "Deux façons de faire : louer ou faire fabriquer", en: "Two ways to go: rent or have it made" },
   "sm.rentTitle": { fr: "Louer", en: "Rent" },
-  "sm.rentText": { fr: "Les objets du catalogue, selon stock, à la journée.", en: "Items from our catalogue, subject to stock, by the day." },
+  "sm.rentText": { fr: "Les objets du catalogue, selon stock : prix par événement, jusqu'à 3 jours.", en: "Items from our catalogue, subject to stock: price per event, up to 3 days." },
   "sm.makeTitle": { fr: "Faire fabriquer", en: "Have it made" },
   "sm.makeText": { fr: "À vos cotes et finitions, configuré en 3D : la pièce vous appartient.", en: "To your dimensions and finishes, configured in 3D: the piece is yours." },
   "sm.productLink": { fr: "Besoin d'autres dimensions ? Le faire fabriquer sur mesure", en: "Need other dimensions? Have it custom-made" },
@@ -99,7 +99,7 @@ const DICT: Dict = {
   "product.customize3d": { fr: "Personnaliser en 3D", en: "Customise in 3D" },
   "product.view3d": { fr: "Voir en 3D", en: "View in 3D" },
   "catalog.perEvent": { fr: "HT / événement", en: "excl. VAT / event" },
-  "product.perEventUpTo": { fr: "HT par événement (jusqu'à {n} jours)", en: "excl. VAT per event (up to {n} days)" },
+  "product.perEventUpTo": { fr: "HT par unité et par événement (jusqu'à {n} jours, de la livraison à la reprise)", en: "excl. VAT per unit and per event (up to {n} days, from delivery to collection)" },
   "product.perExtraDay": { fr: "HT par jour supplémentaire", en: "excl. VAT per extra day" },
   "product.stockNote": {
     fr: "Objet tel qu'en stock. Finitions et personnalisation en supplément ; livraison, installation et reprise en sus.",

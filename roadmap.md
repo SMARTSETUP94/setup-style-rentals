@@ -1,3 +1,8 @@
+# S22
+- [ ] Crawl curl complet du site publié et rapport par URL.
+- [ ] Corrections sitemap, catégories, fiches et sur-mesure sans changer les données métier.
+- [ ] Tests HTML initiaux FR/EN, bun test et rapport final ; ne pas publier.
+
 # S21
 - [x] Unifier personnalisation et services, choix 3D et tarifs en base.
 - [x] Remises sur location seule, détails fiche/demande/mail et CGL FR/EN.

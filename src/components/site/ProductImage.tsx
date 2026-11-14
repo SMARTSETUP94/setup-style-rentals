@@ -5,6 +5,7 @@ import { CARD_SIZES, responsiveImage } from "@/lib/image";
 interface Props {
   name: string;
   category_slug: string;
+  categoryName?: string;
   image_url?: string | null;
   className?: string;
   /** First visible image (LCP): eager + high priority. */
@@ -18,7 +19,7 @@ interface Props {
  * Falls back to the original file if the resized version fails to load,
  * and to a neutral placeholder when no image is set.
  */
-export function ProductImage({ name, category_slug: _category_slug, image_url, className, priority = false, sizes = CARD_SIZES }: Props) {
+export function ProductImage({ name, category_slug, categoryName, image_url, className, priority = false, sizes = CARD_SIZES }: Props) {
   const [failed, setFailed] = useState(false);
   if (image_url) {
     const r = failed ? { src: image_url } : responsiveImage(image_url);
@@ -27,7 +28,7 @@ export function ProductImage({ name, category_slug: _category_slug, image_url, c
         src={r.src}
         srcSet={r.srcSet}
         sizes={r.srcSet ? sizes : undefined}
-        alt={name}
+        alt={`${name} — ${categoryName || category_slug}`}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}

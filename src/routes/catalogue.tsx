@@ -52,7 +52,7 @@ export const Route = createFileRoute("/catalogue")({
   errorComponent: () => <div role="alert" className="container-x pt-32">Catalogue indisponible / Catalogue unavailable</div>,
   head: ({ match }) => {
     const lang = headLang(match);
-    const title = L(lang, "Catalogue — Setup Paris", "Catalogue — Setup Paris event rentals");
+    const title = L(lang, "Catalogue de location événementielle — Setup Paris", "Catalogue — Setup Paris event rentals");
     return {
       meta: [
         { title },
@@ -60,11 +60,9 @@ export const Route = createFileRoute("/catalogue")({
         { property: "og:title", content: title },
         { property: "og:description", content: L(lang, "Notre catalogue d'objets événementiels.", "Our catalogue of event objects.") },
         { property: "og:url", content: canonicalUrl("/catalogue", lang) },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
         ...localeMeta(lang),
-        ...ogImageMeta(
-          "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&h=630&q=80",
-          { alt: L(lang, "Catalogue Setup Paris — jeux, structures, signalétique, décoration, mobilier", "Setup Paris catalogue — games, structures, signage, decor, furniture") },
-        ),
       ],
       links: seoLinks("/catalogue", lang),
     };
@@ -157,6 +155,9 @@ function CataloguePage() {
         <h1 className="mt-3 font-display font-semibold text-[clamp(2.5rem,5vw,4rem)] leading-tight tracking-tight">
           {t("catalog.title")}
         </h1>
+        <nav aria-label={lang === "fr" ? "Catégories du catalogue" : "Catalogue categories"} className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {categories.map(c => <Link key={c.id} to="/categorie/$slug" params={{ slug: c.slug }} className="text-gold-ink underline underline-offset-4">{pickLang(c, "name", lang)}</Link>)}
+        </nav>
 
         {/* Filters */}
         <div className="mt-6 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between border-y border-border py-4">

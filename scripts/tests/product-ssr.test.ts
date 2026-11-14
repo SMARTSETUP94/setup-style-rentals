@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { rentalTitle } from "../../src/lib/seo";
 
 // HTTP integration test: no browser or JavaScript execution. Run against the
 // deployed site with SSR_TEST_BASE_URL=https://catalogue.setup.paris bun test scripts/tests/product-ssr.test.ts
@@ -21,7 +22,7 @@ for (const prefix of ["", "/en"]) {
     const heading = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
     expect(heading).not.toBeNull();
     expect(visibleText(heading?.[1] ?? "")).toBe(product.name);
-    expect(html).toContain(`<title>${product.name} — Setup Paris</title>`);
+    expect(html).toContain(`<title>${rentalTitle(product.name, prefix ? "en" : "fr")}</title>`);
     // Inspect the actual visible tariff, not a price hidden in JSON-LD or
     // hydration data. Derive the amount from the same public product DTO.
     const tariff = html.match(/<div\b[^>]*data-testid="event-price"[^>]*>([\s\S]*?)<\/div>/i);

@@ -50,7 +50,7 @@ export const Route = createFileRoute("/categorie/$slug")({
     const lang = headLang(match);
     const cat = loaderData?.category;
     const name = (lang === "en" ? cat?.name_en || cat?.name_fr : cat?.name_fr) ?? params.slug;
-    const title = rentalTitle(name, lang);
+    const title = L(lang, `${name} — Location événementielle | Setup Paris`, `${name} — Event rentals | Setup Paris`);
     const longDescription = lang === "en" ? cat?.description_long_en || cat?.description_long_fr : cat?.description_long_fr || cat?.description_long_en;
     const description = seoDescription(longDescription || L(lang, `Location de ${name.toLowerCase()} à Paris et en Île-de-France. Découvrez notre sélection Setup Paris.`, `${name} for hire in Paris and Île-de-France. Discover the Setup Paris selection.`));
     const path = `/categorie/${params.slug}`;

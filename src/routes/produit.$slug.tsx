@@ -145,7 +145,7 @@ export const Route = createFileRoute("/produit/$slug")({
     }
     const name = lang === "en" ? m.name_en || m.name_fr : m.name_fr;
     const desc = lang === "en" ? m.description_en || m.description_fr : m.description_fr;
-    const title = rentalTitle(name, lang);
+    const title = rentalTitle(name, lang); // Public rental title, shared with HTTP tests.
     const description = seoDescription(desc || L(lang, `Location de ${name} pour vos événements à Paris et en Île-de-France. Disponibilité et logistique confirmées sur devis.`, `Hire ${name} for events in Paris and Île-de-France. Availability and delivery arrangements confirmed in your quotation.`));
     const productUrl = canonicalUrl(`/produit/${m.slug}`, lang);
     const meta: Array<Record<string, string>> = [

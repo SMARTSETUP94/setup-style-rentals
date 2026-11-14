@@ -8,7 +8,11 @@ export function isPersonalisedConfiguration(data: unknown, recap = ""): boolean 
       }
     }
   }
-  return /(?:finition|fond|logo|structure|panneau|adhésif)\s*:\s*(?!sans|blanc(?:\s|$)|standard|origine)[^\n]*(?:personnalis|peinture|adhésif|logo|placage|stratifié)/i.test(recap);
+  return recap.split("\n").some(line => {
+    const match = line.match(/^(?:finition|fond|logo|structure|panneau|adhésif)\s*:\s*(.*)$/i);
+    const value = match?.[1]?.trim() ?? "";
+    return !/^(?:sans|blanc|standard|origine)\b/i.test(value) && /personnalis|peinture|adhésif|logo|placage|stratifié/i.test(value);
+  });
 }
 
 export function isDailyService(name: string): boolean {

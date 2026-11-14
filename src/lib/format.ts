@@ -12,9 +12,9 @@ export function formatPrice(value: number, lang: Lang = "fr"): string {
 export function categoryColor(slug: string): string {
   switch (slug) {
     case "jeux": return "#FF6B6B";
-    case "structures": return "#4ECDC4";
-    case "signaletique": return "#FFE66D";
-    case "decoration": return "#A08CFF";
+    case "scenes-podiums": return "var(--color-cat-scenes-podiums)";
+    case "decor-signaletique": return "var(--color-cat-decor-signaletique)";
+    case "accueil-presentation": return "var(--color-cat-accueil-presentation)";
     case "mobilier": return "#95E1D3";
     default: return "#A08CFF";
   }

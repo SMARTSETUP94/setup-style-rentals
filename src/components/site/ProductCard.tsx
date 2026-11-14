@@ -86,7 +86,7 @@ export function ProductCard({
           {product.price_event != null ? (
             <div className="mt-0.5 flex items-baseline gap-1.5">
               <span className="font-display font-semibold text-lg text-gold-ink">
-                {formatPrice(Number(product.price_event), lang)}
+                {formatPrice(Number(product.price_event), lang)}{"\u00a0"}
               </span>
               <span className="text-xs text-muted-foreground">{lang === "en" ? "excl. VAT / event" : "HT / événement"}</span>
             </div>
@@ -97,7 +97,7 @@ export function ProductCard({
               </div>
               <div className="mt-0.5 flex items-baseline gap-1.5">
                 <span className="font-display font-semibold text-lg text-gold-ink">
-                  {formatPrice(product.price_day, lang)}
+                  {formatPrice(product.price_day, lang)}{"\u00a0"}
                 </span>
                 <span className="text-xs text-muted-foreground">{perDayLabel}</span>
               </div>

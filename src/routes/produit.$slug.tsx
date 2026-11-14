@@ -1057,7 +1057,7 @@ function ProductPage() {
             {product.price_event != null ? (
               <div className="rounded-lg bg-background border border-border p-4" data-testid="event-price">
                 <div className="font-display font-semibold text-xl text-gold-ink">
-                  {formatPrice(Number(product.price_event), lang)}{" "}
+                  {formatPrice(Number(product.price_event), lang)}{"\u00a0"}
                   <span className="text-sm font-normal text-foreground">
                     {t("product.perEventUpTo").replace("{n}", String(product.event_days_included))}
                   </span>

@@ -40,8 +40,8 @@ function CGLPage() {
           {lang === "fr" ? <ContentFR /> : <ContentEN />}
           <p className="mt-12 text-sm text-muted-foreground italic">
             {lang === "fr"
-              ? "Dernière mise à jour : Avril 2026"
-              : "Last updated: April 2026"}
+              ? "Dernière mise à jour : novembre 2026"
+              : "Last updated: November 2026"}
           </p>
         </div>
       </div>
@@ -104,6 +104,7 @@ function ContentFR() {
         s'applique au taux légal. La location est due pour la totalité de la durée prévue, que le
         matériel soit utilisé ou non.
       </P>
+      <P>Sauf mention contraire, les prix de location s'entendent par unité et par événement. Le prix par événement couvre une durée de location de trois (3) jours consécutifs au plus, de la livraison ou mise à disposition jusqu'à la reprise ou restitution. Au-delà, chaque jour supplémentaire entamé est facturé au prix par jour supplémentaire indiqué pour chaque article. Les prix s'entendent pour le matériel tel qu'en stock : les finitions et personnalisations sont facturées en supplément, par unité, selon le devis. Des remises sur quantité peuvent s'appliquer ; elles sont indiquées sur le site et sur le devis. La livraison, l'installation et la reprise sont facturées en sus.</P>
       <P>
         Le règlement de l'intégralité du montant est exigible à la commande, avant toute mise à
         disposition du matériel. Les moyens de paiement acceptés sont le virement bancaire et le
@@ -115,6 +116,9 @@ function ContentFR() {
         L.441-10 du Code de commerce. Une indemnité forfaitaire de 40 euros pour frais de recouvrement
         sera également due.
       </P>
+
+      <H2>Article 3 bis — Personnalisation</H2>
+      <P>Les personnalisations (peinture, adhésif, impression, habillage) sont réalisées exclusivement par Setup Paris sur le matériel loué, après validation écrite par le Client de la teinte ou du visuel. Le délai de réalisation est indiqué sur le devis. Le prix de la personnalisation comprend la remise en état du matériel après l'événement. Le Client garantit disposer des droits sur les visuels et marques qu'il fournit et garantit Setup Paris contre toute réclamation à ce titre.</P>
 
       <H2>Article 4 — Dépôt de garantie (caution)</H2>
       <P>
@@ -132,8 +136,7 @@ function ContentFR() {
       <H2>Article 5 — Durée de la location</H2>
       <P>
         La durée de la location est celle indiquée sur le devis. Elle débute à la mise à disposition
-        ou à la livraison du matériel et se termine à sa restitution effective. Toute journée
-        supplémentaire entamée sera facturée au tarif journalier en vigueur.
+        ou à la livraison du matériel et se termine à sa restitution effective. Toute journée supplémentaire entamée au-delà de la durée couverte par le prix par événement est facturée au prix par jour supplémentaire de chaque article indiqué sur le devis.
       </P>
       <P>
         Le Client peut demander une prolongation sous réserve d'accord préalable écrit de Setup
@@ -162,8 +165,7 @@ function ContentFR() {
       </P>
       <P>
         <strong>Restitution :</strong> Le matériel doit être restitué dans son état d'origine, propre
-        et complet, dans les emballages d'origine le cas échéant. Tout retard de restitution sera
-        facturé au tarif journalier par jour de retard.
+        et complet, dans les emballages d'origine le cas échéant. Tout retard de restitution est facturé, par jour de retard, au prix par jour supplémentaire de chaque article.
       </P>
 
       <H2>Article 7 — État du matériel et obligations du Client</H2>
@@ -173,7 +175,7 @@ function ContentFR() {
       </P>
       <UL>
         <li>Protéger le matériel contre toute dégradation, vol, intempérie ou vandalisme ;</li>
-        <li>Ne pas modifier, peindre, percer, coller ou altérer le matériel de quelque manière que ce soit ;</li>
+        <li>Ne pas modifier, peindre, percer, coller ou altérer le matériel de quelque manière que ce soit, les personnalisations prévues au devis étant réalisées par Setup Paris ;</li>
         <li>Ne pas sous-louer, prêter ou céder le matériel à un tiers ;</li>
         <li>Signaler immédiatement tout incident, panne ou dommage à Setup Paris par téléphone et confirmer par écrit (email) dans les 24 heures ;</li>
         <li>Veiller à la sécurité du matériel pendant toute la durée de la location.</li>
@@ -316,6 +318,7 @@ function ContentEN() {
         is added at the legal rate. The rental fee is due for the entire planned duration, whether
         or not the equipment is used.
       </P>
+      <P>Unless otherwise stated, rental prices are per unit and per event. The event price covers a rental period of up to three (3) consecutive days, from delivery or availability until collection or return. Beyond this period, each additional day started is charged at the extra-day price indicated for each item. Prices apply to equipment as in stock: finishes and customisation are charged extra, per unit, according to the quotation. Quantity discounts may apply; they are indicated on the website and quotation. Delivery, installation and collection are charged separately.</P>
       <P>
         Full payment is required at the time of order, prior to any equipment being made available.
         Accepted payment methods are bank transfer and credit card payment.
@@ -326,6 +329,9 @@ function ContentEN() {
         French Commercial Code. A fixed compensation of 40 euros for recovery costs shall also be
         due.
       </P>
+
+      <H2>Article 3 bis — Customisation</H2>
+      <P>Customisation (painting, adhesive graphics, printing, wrapping) is carried out exclusively by Setup Paris on the rented equipment, after the Client has approved the colour or artwork in writing. The completion time is stated in the quotation. The customisation price includes restoring the equipment after the event. The Client warrants that they hold the rights to the visuals and trademarks they supply and indemnifies Setup Paris against any claim in this respect.</P>
 
       <H2>Article 4 — Security deposit</H2>
       <P>
@@ -343,8 +349,7 @@ function ContentEN() {
       <H2>Article 5 — Rental duration</H2>
       <P>
         The rental duration is that indicated on the quotation. It begins when the equipment is
-        made available or delivered and ends upon its effective return. Any additional day started
-        shall be invoiced at the applicable daily rate.
+        made available or delivered and ends upon its effective return. Any additional day started beyond the period covered by the event price is charged at the extra-day price for each item indicated in the quotation.
       </P>
       <P>
         The Client may request an extension subject to prior written agreement from Setup Paris and
@@ -371,8 +376,7 @@ function ContentEN() {
       </P>
       <P>
         <strong>Return:</strong> The equipment must be returned in its original condition, clean
-        and complete, in the original packaging where applicable. Any delay in return shall be
-        invoiced at the daily rate per day of delay.
+        and complete, in the original packaging where applicable. Any delay in return is charged, per day of delay, at the extra-day price for each item.
       </P>
 
       <H2>Article 7 — Equipment condition and Client obligations</H2>
@@ -382,7 +386,7 @@ function ContentEN() {
       </P>
       <UL>
         <li>Protect the equipment against any damage, theft, weather conditions or vandalism;</li>
-        <li>Not modify, paint, drill, glue or alter the equipment in any way;</li>
+        <li>Not modify, paint, drill, glue or alter the equipment in any way, customisation specified in the quotation being carried out by Setup Paris;</li>
         <li>Not sublease, lend or transfer the equipment to any third party;</li>
         <li>Immediately report any incident, malfunction or damage to Setup Paris by phone and confirm in writing (email) within 24 hours;</li>
         <li>Ensure the safety of the equipment throughout the rental period.</li>

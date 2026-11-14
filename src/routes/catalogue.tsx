@@ -1,3 +1,6 @@
+import { getPublicCatalogue } from "@/lib/catalogue.functions";
+import { cataloguePrice, cataloguePriceBounds, withinPriceRange } from "@/lib/catalogue-filter";
+import { PublicNotFound } from "@/components/site/PublicNotFound";
 import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, seoLinks } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -27,7 +30,7 @@ interface Category { id: string; name_fr: string; name_en: string; slug: string;
 interface Product {
   id: string; slug: string; name_fr: string; name_en: string;
   description_fr: string | null; description_en: string | null;
-  category_slug: string; price_day: number; price_week: number | null;
+  category_slug: string; price_event: number | null; price_day: number; price_week: number | null;
   price_month: number | null; deposit: number; image_url: string | null;
   configurator_url: string | null; sort_order: number;
 }
@@ -44,6 +47,9 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/catalogue")({
   validateSearch: zodValidator(searchSchema),
+  loader: () => getPublicCatalogue(),
+  notFoundComponent: PublicNotFound,
+  errorComponent: () => <div role="alert" className="container-x pt-32">Catalogue indisponible / Catalogue unavailable</div>,
   head: ({ match }) => {
     const lang = headLang(match);
     const title = L(lang, "Catalogue — Setup Paris", "Catalogue — Setup Paris event rentals");
@@ -70,31 +76,13 @@ function CataloguePage() {
   const { t, lang } = useI18n();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const data = Route.useLoaderData();
+  const categories = data.categories as Category[];
+  const products = data.products as Product[];
+  const loading = false;
   const [availability, setAvailability] = useState<Record<string, number>>({});
   const [checkingAvail, setCheckingAvail] = useState(false);
-
-  useEffect(() => {
-    Promise.all([
-      supabase.from("categories").select("*").order("sort_order"),
-      supabase.from("products").select("*").eq("is_active", true).order("sort_order"),
-    ]).then(([c, p]) => {
-      setCategories((c.data as Category[]) ?? []);
-      setProducts((p.data as Product[]) ?? []);
-      setLoading(false);
-    });
-  }, []);
-
-  // Compute price bounds from products
-  const priceBounds = useMemo(() => {
-    if (products.length === 0) return { min: 0, max: 1000 };
-    const prices = products.map((p) => Number(p.price_day) || 0);
-    const min = Math.floor(Math.min(...prices));
-    const max = Math.ceil(Math.max(...prices));
-    return { min, max: Math.max(max, min + 1) };
-  }, [products]);
+  const priceBounds = useMemo(() => cataloguePriceBounds(products), [products]);
 
   // Bulk availability check when dates change
   useEffect(() => {
@@ -128,11 +116,10 @@ function CataloguePage() {
         p.name_fr.toLowerCase().includes(q) || p.name_en.toLowerCase().includes(q),
       );
     }
-    if (typeof search.pmin === "number") list = list.filter((p) => Number(p.price_day) >= search.pmin!);
-    if (typeof search.pmax === "number") list = list.filter((p) => Number(p.price_day) <= search.pmax!);
+    list = list.filter((p) => withinPriceRange(p, search.pmin, search.pmax));
     switch (search.sort) {
-      case "priceAsc": list.sort((a, b) => a.price_day - b.price_day); break;
-      case "priceDesc": list.sort((a, b) => b.price_day - a.price_day); break;
+      case "priceAsc": list.sort((a, b) => cataloguePrice(a) - cataloguePrice(b)); break;
+      case "priceDesc": list.sort((a, b) => cataloguePrice(b) - cataloguePrice(a)); break;
       case "name": list.sort((a, b) => pickLang(a, "name", lang).localeCompare(pickLang(b, "name", lang))); break;
       default: list.sort((a, b) => a.sort_order - b.sort_order);
     }
@@ -166,7 +153,7 @@ function CataloguePage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="section-num">— 02 — Catalogue</div>
+        
         <h1 className="mt-3 font-display font-semibold text-[clamp(2.5rem,5vw,4rem)] leading-tight tracking-tight">
           {t("catalog.title")}
         </h1>
@@ -282,7 +269,8 @@ function CataloguePage() {
             <Slider
               min={priceBounds.min}
               max={priceBounds.max}
-              step={5}
+              step={1}
+              thumbLabels={[lang === "fr" ? "Prix minimum" : "Minimum price", lang === "fr" ? "Prix maximum" : "Maximum price"]}
               value={[currentPmin, currentPmax]}
               onValueChange={(v) => setSearch({ pmin: v[0] === priceBounds.min ? undefined : v[0], pmax: v[1] === priceBounds.max ? undefined : v[1] })}
               className="mt-2"

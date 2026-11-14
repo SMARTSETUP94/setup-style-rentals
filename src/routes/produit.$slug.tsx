@@ -1,7 +1,11 @@
+import { getPublicCatalogue, getPublicProductOptions } from "@/lib/catalogue.functions";
+import { PublicNotFound } from "@/components/site/PublicNotFound";
+import { ProductCard } from "@/components/site/ProductCard";
+import { rentalDates } from "@/lib/rental-dates";
 import { defaultOptionSelection, BRAND_3D_SLUGS } from "@/lib/default-options";
 import { matchConfigToOptions, recapPairs, type ConfigChoices } from "@/lib/config-match";
 import { trackSiteEvent } from "@/lib/track";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ArrowLeft, Sparkles, Plus, Minus, X, Check, ShoppingBag, Wand2, CalendarIcon, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -116,21 +120,22 @@ interface Category { id: string; name_fr: string; name_en: string; slug: string;
 
 export const Route = createFileRoute("/produit/$slug")({
   loader: async ({ params }) => {
-    const { data } = await supabase
-      .from("products")
-      .select("slug,name_fr,name_en,description_fr,description_en,image_url,price_day,price_event,stock_total,category_slug")
-      .eq("slug", params.slug)
-      .eq("is_active", true)
-      .maybeSingle();
-    return { meta: data as { slug: string; name_fr: string; name_en: string; description_fr: string | null; description_en: string | null; image_url: string | null; price_day: number; price_event: number | null; stock_total: number; category_slug: string } | null };
+    const catalogue = await getPublicCatalogue();
+    const product = catalogue.products.find(p => p.slug === params.slug);
+    if (!product) throw notFound();
+    const options = await getPublicProductOptions({ data: { productId: product.id } });
+    return { meta: product, product, category: catalogue.categories.find(c => c.slug === product.category_slug) ?? null,
+      related: catalogue.products.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4), ...options };
   },
+  notFoundComponent: PublicNotFound,
+  errorComponent: () => <div role="alert" className="container-x pt-32">Produit indisponible / Product unavailable</div>,
   head: ({ loaderData, match }) => {
     const lang = headLang(match);
     const m = loaderData?.meta;
     if (!m) {
       return {
         meta: [
-          { title: L(lang, "Produit — Setup Paris", "Product — Setup Paris") },
+          { title: L(lang, "Page introuvable — Setup Paris", "Page not found — Setup Paris") },
           { name: "description", content: L(lang, "Location d'objets événementiels à Paris.", "Event object rentals in Paris.") },
         ],
       };
@@ -175,8 +180,8 @@ export const Route = createFileRoute("/produit/$slug")({
           "@type": "UnitPriceSpecification",
           price: Number(m.price_event ?? m.price_day).toFixed(2),
           priceCurrency: "EUR",
-          unitCode: "DAY",
-          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "DAY" },
+          unitCode: m.price_event != null ? "C62" : "DAY",
+          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: m.price_event != null ? "C62" : "DAY" },
         },
         availability: m.stock_total > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         businessFunction: "https://schema.org/LeaseOut",
@@ -224,22 +229,23 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const { add } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
+  const loaded = Route.useLoaderData();
+  const product = loaded.product as unknown as Product;
   const viewedSlug = product?.slug;
   useEffect(() => {
     if (viewedSlug) trackSiteEvent("product_view", viewedSlug);
   }, [viewedSlug]);
-  const [category, setCategory] = useState<Category | null>(null);
-  const [loading, setLoading] = useState(true);
+  const category = loaded.category as Category | null;
+  const loading = false;
   const [qty, setQty] = useState(1);
   const [customChosen, setCustomChosen] = useState(false);
   const [days, setDays] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [is3DMode, setIs3DMode] = useState(false);
-  const [optionCategories, setOptionCategories] = useState<OptionCategory[]>([]);
-  const [productOptions, setProductOptions] = useState<ProductOptionRow[]>([]);
-  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>({});
+  const optionCategories = loaded.optionCategories as OptionCategory[];
+  const productOptions = loaded.productOptions as ProductOptionRow[];
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>(() => defaultOptionSelection(optionCategories, productOptions));
   /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
   /** Categories the visitor picked/cleared by hand — never overridden by the 3D preselection. */
@@ -305,45 +311,10 @@ function ProductPage() {
   }, [is3DMode]);
 
   useEffect(() => {
-    setLoading(true);
-    supabase
-      .from("products")
-      .select("*")
-      .eq("slug", slug)
-      // Public visitors only get active products (RLS); admins can preview inactive ones.
-      .maybeSingle()
-      .then(async ({ data }) => {
-        const prod = data as Product | null;
-        setProduct(prod);
-        if (prod) {
-          const [{ data: cat }, { data: cats }] = await Promise.all([
-            supabase.from("categories").select("*").eq("slug", prod.category_slug).maybeSingle(),
-            supabase
-              .from("product_option_categories")
-              .select("*")
-              .eq("product_id", prod.id)
-              .order("sort_order"),
-          ]);
-          setCategory(cat as Category | null);
-          const catList = (cats as OptionCategory[]) ?? [];
-          setOptionCategories(catList);
-
-          if (catList.length > 0) {
-            const { data: opts } = await supabase
-              .from("product_options")
-              .select("*")
-              .in("category_id", catList.map((c) => c.id))
-              .eq("is_active", true)
-              .order("sort_order");
-            const optRows = (opts as ProductOptionRow[]) ?? [];
-            setProductOptions(optRows);
-            setSelectedOptionIds((prev) => ({ ...defaultOptionSelection(catList, optRows), ...prev }));
-          } else {
-            setProductOptions([]);
-          }
-        }
-        setLoading(false);
-      });
+    setSelectedOptionIds(defaultOptionSelection(optionCategories, productOptions));
+    setConfiguratorData(null); setConfiguratorRecap(""); setConfiguratorRecapHtml("");
+    setCustomChosen(false); setIs3DMode(false); setMissingCatIds(new Set());
+    manualCatIdsRef.current.clear();
   }, [slug]);
 
   // auto-compute days from dates
@@ -815,9 +786,8 @@ function ProductPage() {
       price_day: product.price_day,
       deposit: product.deposit,
       quantity: qty,
-      days,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
+      ...rentalDates(startDate, endDate),
+      days: rentalDates(startDate, endDate).days ?? days,
       selectedOptions: mergedOptions.length > 0 ? mergedOptions : undefined,
       quantityDiscounts: product.quantity_discounts ?? DEFAULT_QUANTITY_DISCOUNTS,
       durationDiscounts: product.duration_discounts ?? [],
@@ -1277,6 +1247,7 @@ function ProductPage() {
                       type="button"
                       id="product-start-date"
                       data-testid="start-date-trigger"
+                      aria-label={startDate ? format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn }) : t("product.pickDate")}
                       className={cn(
                         "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
                         !startDate && "text-muted-foreground",
@@ -1295,7 +1266,7 @@ function ProductPage() {
                       onSelect={(d) => {
                         if (!d) return;
                         setStartDate(format(d, "yyyy-MM-dd"));
-                        if (endDate && parseISO(endDate) < d) {
+                        if (!endDate || parseISO(endDate) < d) {
                           setEndDate(format(d, "yyyy-MM-dd"));
                         }
                       }}
@@ -1314,6 +1285,7 @@ function ProductPage() {
                       type="button"
                       id="product-end-date"
                       data-testid="end-date-trigger"
+                      aria-label={endDate ? format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn }) : t("product.pickDate")}
                       className={cn(
                         "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
                         !endDate && "text-muted-foreground",
@@ -1349,25 +1321,25 @@ function ProductPage() {
               <div>
                 <label htmlFor="product-qty" className="text-xs text-muted-foreground">{t("product.qty")}</label>
                 <div className="mt-1 flex items-center border border-border rounded-lg">
-                  <button type="button" aria-label={t("product.qtyDecrease")} onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.qtyDecrease")} onClick={() => setQty((q) => Math.max(1, q - 1))} className="shrink-0 p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
                   <input
                     id="product-qty"
                     type="number"
                     min={1}
                     value={qty}
                     onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="flex-1 text-center bg-transparent text-sm focus:outline-none"
+                    className="min-w-0 w-0 flex-1 text-center bg-transparent text-sm focus:outline-none"
                     aria-label={t("product.qty")}
                   />
-                  <button type="button" aria-label={t("product.qtyIncrease")} onClick={() => setQty((q) => q + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.qtyIncrease")} onClick={() => setQty((q) => q + 1)} className="shrink-0 p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
                 </div>
               </div>
               <div>
                 <span className="text-xs text-muted-foreground">{t("product.duration")}</span>
                 <div className="mt-1 flex items-center border border-border rounded-lg" role="group" aria-label={t("product.duration")}>
-                  <button type="button" aria-label={t("product.daysDecrease")} onClick={() => setDays((d) => Math.max(1, d - 1))} className="p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
-                  <div className="flex-1 text-center text-sm">{days} {t("product.days")}</div>
-                  <button type="button" aria-label={t("product.daysIncrease")} onClick={() => setDays((d) => d + 1)} className="p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
+                  <button type="button" aria-label={t("product.daysDecrease")} onClick={() => setDays((d) => Math.max(1, d - 1))} className="shrink-0 p-2.5 hover:bg-secondary"><Minus className="size-4" /></button>
+                  <div className="min-w-0 flex-1 text-center text-sm">{days} {t("product.days")}</div>
+                  <button type="button" aria-label={t("product.daysIncrease")} onClick={() => setDays((d) => d + 1)} className="shrink-0 p-2.5 hover:bg-secondary"><Plus className="size-4" /></button>
                 </div>
               </div>
             </div>
@@ -1541,6 +1513,13 @@ function ProductPage() {
           </aside>
         </section>
       )}
+
+      {loaded.related.length > 0 && <section className="container-x pb-16" data-testid="related-products">
+        <h2 className="font-display text-2xl font-semibold mb-6">{lang === "fr" ? "Dans la même catégorie" : "In the same category"}</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {loaded.related.map(p => <ProductCard key={p.id} product={p} category={category ?? undefined} lang={lang} fromLabel={t("catalog.from")} perDayLabel={t("catalog.perDay")} />)}
+        </div>
+      </section>}
 
     </div>
   );

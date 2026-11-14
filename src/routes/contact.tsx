@@ -151,30 +151,30 @@ function ContactPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="c-name">{tx.name} *</Label>
-                    <Input id="c-name" required maxLength={200} className="mt-1" value={form.name} onChange={set("name")} />
+                    <Input id="c-name" name="name" autoComplete="name" required maxLength={200} className="mt-1" value={form.name} onChange={set("name")} />
                   </div>
                   <div>
                     <Label htmlFor="c-company">{tx.company}</Label>
-                    <Input id="c-company" maxLength={200} className="mt-1" value={form.company} onChange={set("company")} />
+                    <Input id="c-company" name="organization" autoComplete="organization" maxLength={200} className="mt-1" value={form.company} onChange={set("company")} />
                   </div>
                   <div>
                     <Label htmlFor="c-email">{tx.email} *</Label>
-                    <Input id="c-email" type="email" required maxLength={320} className="mt-1" value={form.email} onChange={set("email")} />
+                    <Input id="c-email" name="email" autoComplete="email" type="email" required maxLength={320} className="mt-1" value={form.email} onChange={set("email")} />
                   </div>
                   <div>
                     <Label htmlFor="c-phone">{tx.phone}</Label>
-                    <Input id="c-phone" type="tel" maxLength={50} className="mt-1" value={form.phone} onChange={set("phone")} />
+                    <Input id="c-phone" name="tel" autoComplete="tel" type="tel" maxLength={50} className="mt-1" value={form.phone} onChange={set("phone")} />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="c-message">{tx.message} *</Label>
-                  <Textarea id="c-message" required rows={6} maxLength={5000} className="mt-1" value={form.message} onChange={set("message")} />
+                  <Textarea id="c-message" name="message" required rows={6} maxLength={5000} className="mt-1" value={form.message} onChange={set("message")} />
                   <div className="mt-1 text-right text-[11px] text-muted-foreground">{form.message.length}/5000</div>
                 </div>
                 {/* Honeypot — hidden from humans */}
                 <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
                   <label htmlFor="c-website">Website</label>
-                  <input id="c-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
+                  <input id="c-website" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
                 </div>
                 <Button type="submit" disabled={sending} className="w-full sm:w-auto">
                   {sending ? tx.sending : tx.send}

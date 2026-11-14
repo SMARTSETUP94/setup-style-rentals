@@ -1,0 +1,15 @@
+# S19 — Corrections publiques
+- Aucun changement en base, aucune demande réelle, W-00001…W-00006 intacts, aucune publication.
+- Catalogue : prix événement (repli prix jour), bornes réelles 20–750 € HT, deux poignées min/max accessibles ; tri cohérent.
+- Données publiques actives chargées côté serveur avec clé publique : catalogue, catégories, fiches ; aucune lecture initiale doublonnée dans le navigateur.
+- HTML brut `curl -sL` : /catalogue et /en/catalogue = **40 liens vers les 40 produits actifs** ; catégories mobilier = 16, jeux = 9 dans chaque langue.
+- Fiches FR/EN : H1, description, dimensions, image/alt, prix/extra/mention stock présents avant JS ; Product et BreadcrumbList présents (stèle 50/10 €, pouf 500/100 €, bar droit 350/70 €, valeurs actuelles lues, non modifiées).
+- Produit inactif presentoir-triptyque et chemin inconnu : **HTTP 404** FR/EN, titre « Page introuvable — Setup Paris » / équivalent anglais.
+- Date unique conservée avec début=fin, 1 jour ; navigateur : 20/11/2026 présent dans Ma demande. Logistique : sous-total + livraison/installation/reprise détaillées, une seule mention du forfait.
+- Produits liés : jusqu'à 4 actifs de la même catégorie, hors produit courant ; stèle = 1 (seulement 2 produits actifs dans sa catégorie), pouf et bar droit = 4.
+- « Ma demande » / « Ajouter à ma demande », état vide expliqué + 4 produits ; erreur d'envoi exacte avec devis@setup.paris ; référence sur mesure filtrée du récap lorsqu'elle est déjà affichée séparément.
+- Compteur Durée corrigé à 390 px ; numéros de sections supprimés ; coordonnées contact/demande avec name + autocomplete ; noms accessibles des dates égaux au texte visible.
+- **bun test : 49 réussis, 0 échec, 85 assertions, 9 fichiers** (6 nouveaux tests filtre/date). Compilation OK.
+- Navigateur **1440/390 px, FR/EN : 24 pages contrôlées**, + parcours ajout sans 3D sur 3 fiches ; **0 erreur JavaScript, 0 débordement**, 4 envois interceptés (503 simulé), erreur affichée, aucun envoi réel.
+- Captures : [catalogue ordinateur](captures-S19/1440-fr-catalogue.png), [pouf mobile](captures-S19/390-fr-produit-pouf.png), [demande/date](captures-S19/390-fr-pouf-cart.png), [durée](captures-S19/390-fr-duration.png), [logistique](captures-S19/390-fr-logistics.png), [404 EN](captures-S19/390-en-page-inexistante-s19.png) ; autres captures FR/EN dans captures-S19/.
+- Limites : ni mail réel ni publication testés ; contrôles sur serveur de développement. Ces corrections seront visibles sur le site publié après la prochaine publication par Gabin.

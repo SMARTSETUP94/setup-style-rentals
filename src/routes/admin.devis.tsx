@@ -379,7 +379,7 @@ function AdminQuotesPage() {
         ))}
       </div>
       <div className="hidden md:block">
-      <ScrollableTable minWidth={1000}>
+      <ScrollableTable minWidth={1250}>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
@@ -736,6 +736,7 @@ function AdminQuotesPage() {
                   <Row label={t("quotes.totals.ht")} value={formatPrice(selected.total_ht)} />
                   <Row label={t("quotes.totals.vat")} value={formatPrice(selected.vat)} />
                   <Row label={t("quotes.totals.ttc")} value={quoteTotal(selected)} bold />
+                  {estimateByQuote[selected.id] != null && <p className="text-xs text-muted-foreground text-right">({formatPrice(estimateByQuote[selected.id] ?? 0)} HT · {lang === "fr" ? "estimation interne" : "internal estimate"})</p>}
                   <Row label={`${t("quotes.totals.deposit")} (${t("quotes.totals.depositNote")})`} value={formatPrice(selected.total_deposit)} />
                 </div>
                 <div>
@@ -786,7 +787,7 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
 
 function EmailStatusBadge({ q, title }: { q: Quote; title: string }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+    <div className="flex items-center gap-1.5 whitespace-nowrap text-xs">
       {([["Admin", q.email_admin_status], ["Client", q.email_client_status]] as const).map(([label, status], i) => <span key={label} className={isFailed(status) ? "text-destructive" : "text-muted-foreground"} title={isFailed(status) ? `${title} : ${status}` : status ?? undefined}>{i > 0 && "/ "}{label} {status === "sent" ? "✓" : isFailed(status) ? "✗" : "—"}</span>)}
     </div>
   );

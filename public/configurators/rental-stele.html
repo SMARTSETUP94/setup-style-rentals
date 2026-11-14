@@ -339,6 +339,15 @@ function setupPicker(swId,cpId,hxId,stateKey){
 
 window.addEventListener('resize',function(){camera.aspect=viewer.clientWidth/viewer.clientHeight;camera.updateProjectionMatrix();renderer.setSize(viewer.clientWidth,viewer.clientHeight);try{parent.postMessage({type:'configurator-resize',height:document.documentElement.scrollHeight},'*');}catch(e){}});
 
+window.addEventListener('message',function(e){
+  if(e.origin!==location.origin || e.source!==parent || !e.data) return;
+  if(e.data.type==='restore-config' && e.data.configuration){
+    var cfg=e.data.configuration;
+    STATE.finition=cfg.finition&&cfg.finition.mode==='custom'?'peinture':'blanc';
+    STATE.logo=cfg.logo&&cfg.logo.mode==='custom'?'adhesif':'sans';
+    rebuild();renderStep();
+  }
+});
 renderStep();
 })();
 </script>

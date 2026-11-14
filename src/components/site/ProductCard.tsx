@@ -103,6 +103,7 @@ export function ProductCard({
               </div>
             </>
           )}
+          <div className="mt-1 text-[11px] text-muted-foreground">{lang === "fr" ? "objet tel qu'en stock" : "item as in stock"}</div>
         </div>
       </div>
     </Link>

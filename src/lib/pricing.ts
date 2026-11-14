@@ -50,7 +50,7 @@ export interface LineInput {
   optionPrices: number[];
   quantityDiscounts?: QuantityDiscountTier[];
   durationDiscounts?: DurationDiscountTier[];
-  /** Event pricing model: when set (not null), replaces price_day and disables discounts. */
+  /** Event model: volume tiers apply to rental only; no duration discount. */
   priceEvent?: number | null;
   eventDaysIncluded?: number | null;
   priceExtraDay?: number | null;
@@ -97,9 +97,11 @@ export function computeLine(l: LineInput): LineResult {
     const customTotal = l.quantity * customUnit;
     const optionsGross = optsUnit * l.quantity;
     const gross = l.quantity * priceEvent + extraTotal + customTotal + optionsGross;
+    const qtyRate = volumeDiscount(l.quantity, l.quantityDiscounts ?? []);
+    const discount = round2((l.quantity * priceEvent + extraTotal) * qtyRate);
     return {
-      gross, discount: 0, net: gross, deposit: l.deposit * l.quantity,
-      optionsPerUnit: optsUnit, optionsTotal: optionsGross, qtyRate: 0, durationRate: 0,
+      gross, discount, net: round2(gross - discount), deposit: l.deposit * l.quantity,
+      optionsPerUnit: optsUnit, optionsTotal: optionsGross, qtyRate, durationRate: 0,
       event: { priceEvent, daysIncluded, extraDays, priceExtraDay, extraTotal, customUnit, customTotal },
     };
   }

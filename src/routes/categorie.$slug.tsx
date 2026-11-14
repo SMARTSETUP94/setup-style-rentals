@@ -1,5 +1,8 @@
 import { getPublicCatalogue } from "@/lib/catalogue.functions";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { categoryRedirect } from "@/lib/home-catalogue";
+import { localizedPath } from "@/lib/lang-url";
+import { PublicNotFound } from "@/components/site/PublicNotFound";
 import { useMemo } from "react";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -40,6 +43,10 @@ interface Product {
 }
 
 export const Route = createFileRoute("/categorie/$slug")({
+  beforeLoad: ({ params, search }) => {
+    const target = categoryRedirect(params.slug);
+    if (target) throw redirect({ href: localizedPath(`/categorie/${target}`, search.lang === "en" ? "en" : "fr"), statusCode: 301 });
+  },
   loader: async ({ params }) => {
     const data = await getPublicCatalogue();
     const category = data.categories.find(c => c.slug === params.slug);
@@ -72,15 +79,7 @@ export const Route = createFileRoute("/categorie/$slug")({
     };
   },
   component: CategoryPage,
-  notFoundComponent: () => {
-    void import("@/lib/ssr-status").then((m) => m.applyNotFoundStatus());
-    return (
-      <div className="container-x pt-32 pb-16 text-center">
-        <h1 className="font-display text-3xl mb-4">Catégorie introuvable</h1>
-        <Link to="/catalogue" className="underline">Retour au catalogue</Link>
-      </div>
-    );
-  },
+  notFoundComponent: PublicNotFound,
   errorComponent: ({ error }) => (
     <div className="container-x pt-32 pb-16 text-center">
       <h1 className="font-display text-2xl mb-4">Une erreur est survenue</h1>

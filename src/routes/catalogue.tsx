@@ -56,7 +56,7 @@ export const Route = createFileRoute("/catalogue")({
     return {
       meta: [
         { title },
-        { name: "description", content: L(lang, "Découvrez notre catalogue de location : jeux, structures, signalétique, décoration et mobilier événementiel.", "Browse our rental catalogue: games, structures, signage, decor and event furniture in Paris and Île-de-France.") },
+        { name: "description", content: L(lang, "Location événementielle à Paris : jeux et animations, scènes et podiums, décor et signalétique, accueil et présentation, mobilier et assises.", "Event rentals in Paris: games and entertainment, stages and podiums, decor and signage, reception and presentation, furniture and seating.") },
         { property: "og:title", content: title },
         { property: "og:description", content: L(lang, "Notre catalogue d'objets événementiels.", "Our catalogue of event objects.") },
         { property: "og:url", content: canonicalUrl("/catalogue", lang) },

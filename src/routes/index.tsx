@@ -1,61 +1,47 @@
-import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, seoLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
 import { getPublicCatalogue } from "@/lib/catalogue.functions";
+import { HOME_SELECTION, homeFaq } from "@/lib/home-catalogue";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight, MousePointerClick, Truck, Wand2, Zap, Ruler, Sparkles } from "lucide-react";
+import { ArrowRight, MousePointerClick, Truck, Wand2, Send, BadgeEuro, ClipboardCheck } from "lucide-react";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
-import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
-import { useReveal } from "@/hooks/use-reveal";
+import { HERO_IMAGE } from "@/lib/category-images";
 import { responsiveImage } from "@/lib/image";
 import { ClientsBand } from "@/components/site/ClientsBand";
-
-interface Category {
-  id: string;
-  name_fr: string;
-  name_en: string;
-  slug: string;
-  color: string;
-  sort_order: number;
-}
-
-interface FeaturedProduct {
-  id: string;
-  slug: string;
-  name_fr: string;
-  name_en: string;
-  category_slug: string;
-  price_day: number;
-  price_event?: number | null;
-  image_url: string | null;
-  sort_order: number;
-}
+import { Button } from "@/components/ui/button";
+import { PublicNotFound } from "@/components/site/PublicNotFound";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/")({
   loader: () => getPublicCatalogue(),
-  head: ({ match }) => {
+  notFoundComponent: PublicNotFound,
+  errorComponent: () => <div role="alert" className="container-x pt-32">Catalogue indisponible / Catalogue unavailable</div>,
+  head: ({ match, loaderData }) => {
     const lang = headLang(match);
-    const title = L(lang, "Setup Paris — Location d'objets événementiels", "Setup Paris — Event object rentals in Paris");
+    const title = L(lang, "Location et fabrication de mobilier événementiel à Paris | Setup Paris", "Event furniture rental and fabrication in Paris | Setup Paris");
+    const description = L(lang, "Prix par événement, personnalisé à vos couleurs, livré et installé en Île-de-France. Réponse sous 24 h ouvrées. Atelier à Vitry-sur-Seine.", "Per-event pricing, customised in your colours, delivered and installed in Île-de-France. Reply within 24 business hours. Workshop in Vitry-sur-Seine.");
+    const faq = homeFaq(loaderData?.categories ?? [], lang);
     return {
       meta: [
-        { title },
-        { name: "description", content: L(lang, "Personnalisez, configurez, louez. Catalogue d'objets événementiels avec configurateur 3D : jeux, structures, signalétique, décoration, mobilier.", "Customize, configure, rent. A catalogue of event objects with a 3D configurator: games, structures, signage, decor and furniture in Paris.") },
-        { property: "og:title", content: title },
-        { property: "og:description", content: L(lang, "Personnalisez, configurez, louez.", "Customize, configure, rent.") },
-        { property: "og:url", content: canonicalUrl("/", lang) },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
-        ...localeMeta(lang),
+        { title }, { name: "description", content: description },
+        { property: "og:title", content: title }, { property: "og:description", content: description },
+        { name: "twitter:title", content: title }, { name: "twitter:description", content: description },
+        { property: "og:url", content: canonicalUrl("/", lang) }, { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" }, ...localeMeta(lang),
       ],
-      links: [
-        ...seoLinks("/", lang),
-        { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
+      links: [...seoLinks("/", lang), { rel: "preload", as: "image", href: HERO_IMAGE }],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify({
+          "@context": "https://schema.org", "@type": ["Organization", "LocalBusiness"],
+          name: "Setup Paris", url: canonicalUrl("/", lang), telephone: "+33601416111", email: "smart@setup.paris",
+          address: { "@type": "PostalAddress", streetAddress: "8 avenue du Président Salvador Allende", addressLocality: "Vitry-sur-Seine", addressCountry: "FR" },
+        }) },
+        ...(faq.length ? [{ type: "application/ld+json", children: JSON.stringify({
+          "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(f => ({
+            "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer },
+          })),
+        }) }] : []),
       ],
-      scripts: [{ type: "application/ld+json", children: JSON.stringify({
-        "@context": "https://schema.org", "@type": ["Organization", "LocalBusiness"],
-        name: "Setup Paris", url: canonicalUrl("/", lang), telephone: "+33601416111", email: "smart@setup.paris",
-        address: { "@type": "PostalAddress", streetAddress: "8 avenue du Président Salvador Allende", addressLocality: "Vitry-sur-Seine", addressCountry: "FR" },
-      }) }],
     };
   },
   component: HomePage,
@@ -65,358 +51,90 @@ function HomePage() {
   const { t, lang } = useI18n();
   const data = Route.useLoaderData();
   const categories = data.categories;
-  const featured = data.products.slice(0, 8);
-
+  const featured = HOME_SELECTION.flatMap(slug => {
+    const product = data.products.find(p => p.slug === slug);
+    return product ? [product] : [];
+  });
+  const faq = homeFaq(categories, lang);
+  const copy = (fr: string, en: string) => L(lang, fr, en);
   return (
     <>
-      {/* HERO */}
-      <section className="relative min-h-screen flex items-end overflow-hidden text-white">
-        {/* Background image */}
-        <img
-          src={HERO_IMAGE}
-          alt="Installation événementielle Setup Paris — rideau bleu Yonex Player Support"
-          fetchPriority="high"
-          loading="eager"
-          decoding="async"
-          width={1920}
-          height={900}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        {/* Dark gradient overlay for legibility */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.85) 100%)",
-          }}
-        />
-
-        <div className="container-x relative pb-20 pt-32 md:pb-28 md:pt-32 w-full">
-          <div className="hero-rise flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-gold">
-            <span className="inline-block w-8 h-px bg-gold/70" />
-            <span>01 — {t("hero.eyebrow")}</span>
+      <section className="relative flex items-end min-h-[640px] md:min-h-[720px] overflow-hidden text-photo-foreground">
+        <img src={HERO_IMAGE} alt={copy("Installation événementielle Setup Paris — rideau bleu Yonex Player Support", "Setup Paris event installation — blue Yonex Player Support curtain")} fetchPriority="high" loading="eager" decoding="async" width={1920} height={900} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-photo-shade" />
+        <div className="container-x relative pb-12 pt-28 md:pb-16 md:pt-36">
+          <h1 className="max-w-5xl font-display font-semibold text-balance text-4xl md:text-6xl leading-tight tracking-normal">{copy("Location et fabrication de mobilier événementiel à Paris", "Event furniture rental and fabrication in Paris")}</h1>
+          <p className="mt-6 max-w-3xl text-lg md:text-xl text-photo-foreground/90">{copy("Prix par événement, personnalisé à vos couleurs, livré et installé en Île-de-France.", "Per-event pricing, customised in your colours, delivered and installed in Île-de-France.")}</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild size="lg" className="h-auto py-4 px-6 bg-gold text-gold-foreground hover:bg-gold/90 whitespace-normal"><Link to="/catalogue">{copy("Voir le catalogue", "View the catalogue")}<ArrowRight /></Link></Button>
+            <Button asChild size="lg" variant="outline" className="h-auto py-4 px-6 bg-transparent text-photo-foreground border-photo-edge hover:bg-photo-foreground/10 hover:text-photo-foreground whitespace-normal"><Link to="/sur-mesure">{copy("Faire fabriquer sur mesure", "Have it custom-made")}</Link></Button>
           </div>
-          <h1 className="hero-rise hero-rise-delay-1 mt-6 font-display font-medium text-balance text-[clamp(2.75rem,8vw,7rem)] leading-[0.98] tracking-tight">
-            {t("hero.title")}
-          </h1>
-          <p className="hero-rise hero-rise-delay-2 mt-6 max-w-2xl text-lg md:text-2xl text-white/80 font-light">
-            {t("hero.sub")}
-          </p>
-          <div className="hero-rise hero-rise-delay-3 mt-10 flex flex-wrap items-center gap-3">
-            <Link
-              to="/catalogue"
-              className="group inline-flex items-center gap-2 bg-gold text-gold-foreground rounded-md px-7 py-4 text-sm font-semibold tracking-wide hover:bg-gold/90 transition-all duration-300 shadow-lg shadow-black/20"
-            >
-              {t("hero.cta")}
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </Link>
-            <Link
-              to="/sur-mesure"
-              className="inline-flex items-center gap-2 rounded-md px-7 py-4 text-sm font-semibold tracking-wide border border-white/40 text-white hover:bg-white/10 transition-all duration-300"
-            >
-              {t("sm.heroCta")}
-            </Link>
-          </div>
+          <p className="mt-6 text-sm text-photo-foreground/90">{copy("Réponse sous 24 h ouvrées · Atelier à Vitry-sur-Seine", "Reply within 24 business hours · Workshop in Vitry-sur-Seine")}</p>
         </div>
       </section>
 
-      {/* TRUST BADGES */}
       <section className="border-y border-border bg-secondary/40">
-        <div className="container-x py-6 md:py-7 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="container-x py-9 grid gap-7 md:grid-cols-3">
           {[
-            { i: Truck, label: t("trust.delivery") },
-            { i: Wand2, label: t("trust.custom") },
-            { i: Zap, label: t("trust.quote") },
-            { i: Ruler, label: t("trust.bespoke"), href: true },
-          ].map((b, i) => {
-            const inner = (
-              <>
-                <span className="inline-flex shrink-0 items-center justify-center size-10 rounded-full bg-gold/15 text-gold-ink">
-                  <b.i className="size-4" strokeWidth={2} />
-                </span>
-                <span className="leading-tight">{b.label}</span>
-              </>
-            );
-            return "href" in b ? (
-              <Link key={i} to="/sur-mesure" className="flex items-center gap-3 text-xs md:text-sm font-medium hover:text-accent underline-offset-4 hover:underline">
-                {inner}
-              </Link>
-            ) : (
-              <div key={i} className="flex items-center gap-3 text-xs md:text-sm font-medium">{inner}</div>
-            );
-          })}
+            { icon: BadgeEuro, title: copy("Un prix clair par événement", "Clear per-event pricing"), text: copy("Jusqu'à 3 jours, de la livraison à la reprise.", "Up to 3 days, from delivery to collection.") },
+            { icon: Wand2, title: copy("Personnalisé par notre atelier", "Customised by our workshop"), text: copy("Peinture, adhésif, impression, à votre charte.", "Paint, vinyl and printing to match your brand.") },
+            { icon: Truck, title: copy("Livré, installé, repris", "Delivered, installed, collected"), text: copy("Paris et Île-de-France.", "Paris and Île-de-France.") },
+          ].map(p => <div key={p.title} className="flex items-start gap-4"><p.icon className="size-6 shrink-0 text-gold-ink mt-1" /><div><h2 className="font-semibold text-base tracking-normal">{p.title}</h2><p className="mt-2 text-sm text-muted-foreground">{p.text}</p></div></div>)}
         </div>
       </section>
 
-      {/* VIDEO PRESENTATION */}
-      <RevealSection className="container-x py-16 md:py-24">
-        <div className="text-center max-w-3xl mx-auto">
-
-          <h2 className="mt-4 font-display font-semibold text-balance text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight">
-            {lang === "fr" ? "Configurez votre événement en 3D" : "Design your event in 3D"}
-          </h2>
-          <p className="mt-5 text-lg text-muted-foreground leading-relaxed">
-            {lang === "fr"
-              ? "Découvrez la plateforme en 51 secondes."
-              : "Discover the platform in 51 seconds."}
-          </p>
-        </div>
-        <PresentationVideo lang={lang} />
-      </RevealSection>
-
-      <section className="container-x pt-16 md:pt-20">
-        <h2 className="font-display font-semibold text-2xl md:text-3xl tracking-tight">{t("sm.twoWaysTitle")}</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <Link to="/catalogue" className="group rounded-2xl border border-border bg-card p-6 hover:shadow-soft transition-all">
-            <div className="font-semibold text-lg">{t("sm.rentTitle")}</div>
-            <p className="mt-2 text-sm text-muted-foreground">{t("sm.rentText")}</p>
-            <ArrowRight className="mt-4 size-4 text-accent transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <Link to="/sur-mesure" className="group rounded-2xl border border-gold/40 bg-gold/5 p-6 hover:shadow-soft transition-all">
-            <div className="font-semibold text-lg">{t("sm.makeTitle")}</div>
-            <p className="mt-2 text-sm text-muted-foreground">{t("sm.makeText")}</p>
-            <ArrowRight className="mt-4 size-4 text-accent transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-      </section>
-
-      <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="03" title={t("cats.title")} sub={t("cats.sub")} />
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-          {categories.map((cat, idx) => (
-            <Link
-              key={cat.id}
-              to="/categorie/$slug"
-              params={{ slug: cat.slug }}
-              className="group relative h-64 rounded-xl overflow-hidden border border-border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium"
-              style={{
-                animation: `hero-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${idx * 80}ms both`,
-                background: categoryGradient(cat.slug),
-              }}
-            >
-              <img
-                {...responsiveImage(categoryImage(cat.slug))}
-                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
-                alt={pickLang(cat, "name", lang)}
-                loading="lazy"
-                decoding="async"
-                width={600}
-                height={256}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.40) 55%, rgba(0,0,0,0.85) 100%)",
-                }}
-              />
-              <div className="relative h-full flex flex-col justify-between p-5 text-white">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-gold">
-                  0{cat.sort_order}
-                </span>
-                <div>
-                  <h3 className="font-display text-2xl font-semibold leading-tight">
-                    {pickLang(cat, "name", lang)}
-                  </h3>
-                  <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-gold opacity-90 group-hover:gap-2 transition-all duration-300">
-                    {lang === "fr" ? "Découvrir" : "Discover"}
-                    <ArrowRight className="size-3.5" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </RevealSection>
-
-      {/* FEATURED PRODUCTS */}
-      {featured.length > 0 && (
-        <RevealSection className="container-x py-20 md:py-28">
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <SectionHeader num="04" title={t("featured.title")} sub={t("featured.sub")} />
-            <Link
-              to="/catalogue"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-gold-ink transition-colors duration-300 shrink-0"
-            >
-              {t("featured.all")}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-
-          {/* Mobile: horizontal scroll. md+: grid */}
-          <div className="mt-10 -mx-5 md:mx-0 md:hidden overflow-x-auto scrollbar-hide">
-            <div className="flex gap-4 px-5 snap-x snap-mandatory">
-              {featured.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  category={categories.find((c) => c.slug === p.category_slug)}
-                  lang={lang}
-                  fromLabel={t("catalog.from")}
-                  perDayLabel={t("catalog.perDay")}
-                  className="w-[70%] shrink-0 snap-start"
-                />
-              ))}
+      <section className="container-x py-14 md:py-20" aria-labelledby="home-categories">
+        <h2 id="home-categories" className="font-display font-semibold text-3xl md:text-4xl tracking-normal">{copy("Les catégories", "Categories")}</h2>
+        <div className="mt-8 grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5">
+          {categories.map(cat => <Link key={cat.id} to="/categorie/$slug" params={{ slug: cat.slug }} className="group block min-w-0 rounded-lg overflow-hidden border border-border bg-card hover:shadow-soft transition-shadow">
+            <div className="aspect-[4/3] bg-secondary overflow-hidden">
+              {cat.image_url && <img {...responsiveImage(cat.image_url)} sizes="(min-width: 1024px) 20vw, 50vw" alt={pickLang(cat, "name", lang)} loading="lazy" width={600} height={450} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />}
             </div>
-          </div>
-          <div className="mt-10 hidden md:grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-            {featured.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                category={categories.find((c) => c.slug === p.category_slug)}
-                lang={lang}
-                fromLabel={t("catalog.from")}
-                perDayLabel={t("catalog.perDay")}
-              />
-            ))}
-          </div>
-        </RevealSection>
-      )}
+            <div className="p-4"><h3 className="font-semibold text-base md:text-lg leading-snug tracking-normal">{pickLang(cat, "name", lang)}</h3><p className="mt-2 text-sm text-muted-foreground">{data.products.filter(p => p.category_slug === cat.slug).length} {copy("objets", "items")}</p><ArrowRight className="mt-4 size-4 text-gold-ink" /></div>
+          </Link>)}
+        </div>
+      </section>
 
-      {/* HOW */}
-      <RevealSection className="container-x py-20 md:py-28">
-        <SectionHeader num="05" title={t("how.title")} />
-        <div className="mt-12 grid md:grid-cols-3 gap-5">
+      <section className="container-x pb-14 md:pb-20" aria-labelledby="home-selection">
+        <div className="flex flex-wrap items-end justify-between gap-4"><h2 id="home-selection" className="font-display font-semibold text-3xl md:text-4xl tracking-normal">{copy("Une sélection", "A selection")}</h2><Button asChild variant="link"><Link to="/catalogue">{copy("Tout le catalogue", "Full catalogue")}<ArrowRight /></Link></Button></div>
+        <div className="mt-8 grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {featured.map(p => <ProductCard key={p.id} product={p} category={categories.find(c => c.slug === p.category_slug)} lang={lang} fromLabel={t("catalog.from")} perDayLabel={t("catalog.perDay")} />)}
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-secondary/40">
+        <div className="container-x py-14 md:py-20"><h2 className="font-display font-semibold text-3xl md:text-4xl tracking-normal">{copy("Louer ou faire fabriquer", "Rent or have it made")}</h2>
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            <Link to="/catalogue" className="group rounded-lg border border-border bg-card p-6 hover:shadow-soft transition-shadow"><h3 className="font-semibold text-xl tracking-normal">{copy("Louer", "Rent")}</h3><p className="mt-3 text-muted-foreground leading-relaxed">{copy("Choisissez dans le catalogue : un prix par événement, pour les objets disponibles en stock, avec personnalisation en option.", "Choose from the catalogue: per-event pricing for in-stock items, with optional customisation.")}</p><ArrowRight className="mt-5 size-4 text-gold-ink" /></Link>
+            <Link to="/sur-mesure" className="group rounded-lg border border-gold/40 bg-card p-6 hover:shadow-soft transition-shadow"><h3 className="font-semibold text-xl tracking-normal">{copy("Faire fabriquer", "Have it made")}</h3><p className="mt-3 text-muted-foreground leading-relaxed">{copy("24 pièces sur mesure, fabriquées par notre atelier. Prix et délai confirmés sous 48 h ouvrées.", "24 custom-made pieces, built by our workshop. Price and lead time confirmed within 48 business hours.")}</p><ArrowRight className="mt-5 size-4 text-gold-ink" /></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="container-x py-14 md:py-20">
+        <h2 className="font-display font-semibold text-3xl md:text-4xl tracking-normal">{copy("Comment ça marche", "How it works")}</h2>
+        <ol className="mt-9 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { i: MousePointerClick, t: t("how.s1.t"), d: t("how.s1.d") },
-            { i: Sparkles, t: t("how.s2.t"), d: t("how.s2.d") },
-            { i: Truck, t: t("how.s3.t"), d: t("how.s3.d") },
-          ].map((s, idx) => (
-            <div
-              key={idx}
-              className="rounded-xl border border-border p-7 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-gold-ink tracking-widest">0{idx + 1}</span>
-                <s.i className="size-5 text-gold-ink" />
-              </div>
-              <h3 className="mt-6 font-display font-semibold text-xl">{s.t}</h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.d}</p>
-            </div>
-          ))}
-        </div>
-      </RevealSection>
-
-      {/* CTA */}
-      <section className="container-x pb-20 md:pb-28">
-        <div className="rounded-2xl bg-foreground text-background p-10 md:p-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <div className="text-xs uppercase tracking-[0.28em] text-gold">— Setup Paris</div>
-            <h3 className="mt-4 font-display text-3xl md:text-4xl font-semibold text-balance max-w-xl leading-tight">
-              {lang === "fr" ? "Prêt à configurer votre événement ?" : "Ready to design your event?"}
-            </h3>
-          </div>
-          <Link
-            to="/catalogue"
-            className="inline-flex items-center gap-2 bg-gold text-gold-foreground rounded-md px-7 py-4 text-sm font-semibold hover:bg-gold/90 transition-all duration-300"
-          >
-            {t("hero.cta")}
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
+            { icon: MousePointerClick, title: copy("Choisissez vos objets", "Choose your items") },
+            { icon: Wand2, title: copy("Personnalisez (option)", "Customise (optional)") },
+            { icon: Send, title: copy("Envoyez votre demande", "Send your request") },
+            { icon: ClipboardCheck, title: copy("Devis sous 24 h ouvrées, puis livraison et installation.", "Quote within 24 business hours, then delivery and installation.") },
+          ].map((step, i) => <li key={step.title} className="border-t border-border pt-5"><div className="flex justify-between text-gold-ink"><span className="text-sm font-mono">0{i + 1}</span><step.icon className="size-5" /></div><h3 className="mt-5 font-semibold text-lg leading-snug tracking-normal">{step.title}</h3></li>)}
+        </ol>
       </section>
 
-      {/* CLIENTS BAND */}
       <ClientsBand label={t("clients.label")} />
+
+      <section className="container-x py-14 md:py-20">
+        <h2 className="font-display font-semibold text-3xl md:text-4xl tracking-normal">{copy("Questions fréquentes", "Frequently asked questions")}</h2>
+        <Accordion type="single" collapsible className="mt-8 max-w-4xl">
+          {faq.map((f, i) => <AccordionItem key={f.question} value={`faq-${i}`}><AccordionTrigger className="text-left">{f.question}</AccordionTrigger><AccordionContent forceMount className="whitespace-pre-line text-muted-foreground data-[state=closed]:hidden">{f.answer}</AccordionContent></AccordionItem>)}
+        </Accordion>
+      </section>
+
+      <section className="bg-foreground text-background">
+        <div className="container-x py-12 md:py-16 flex flex-col md:flex-row md:items-center justify-between gap-7"><h2 className="font-display font-semibold text-3xl tracking-normal">{copy("Parlons de votre événement", "Let's talk about your event")}</h2><div className="flex flex-wrap gap-3"><Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90"><Link to="/contact">Contact<ArrowRight /></Link></Button><Button asChild size="lg" variant="outline" className="bg-transparent text-background border-background/40 hover:bg-background/10 hover:text-background"><Link to="/devis">{copy("Ma demande", "My request")}</Link></Button></div></div>
+      </section>
     </>
-  );
-}
-
-type Cue = { start: number; end: number; fr: string; en: string };
-
-const PRESENTATION_CUES: Cue[] = [
-  { start: 0, end: 4, fr: "Bienvenue chez Setup Paris.", en: "Welcome to Setup Paris." },
-  { start: 4, end: 9, fr: "La location d'objets événementiels, réinventée.", en: "Event object rentals, reinvented." },
-  { start: 9, end: 14, fr: "Explorez notre catalogue : jeux, structures, signalétique, décoration, mobilier.", en: "Browse our catalogue: games, structures, signage, decor, furniture." },
-  { start: 14, end: 20, fr: "Choisissez un objet et lancez le configurateur 3D.", en: "Pick an object and launch the 3D configurator." },
-  { start: 20, end: 26, fr: "Personnalisez les couleurs, matières et finitions en temps réel.", en: "Customize colors, materials and finishes in real time." },
-  { start: 26, end: 32, fr: "Ajoutez votre logo, votre texte, vos visuels.", en: "Add your logo, your text, your artwork." },
-  { start: 32, end: 38, fr: "Visualisez le rendu sous tous les angles avant de réserver.", en: "Preview the result from every angle before booking." },
-  { start: 38, end: 44, fr: "Demande de devis en ligne, réponse sous 24 h ouvrées — Paris et Île-de-France.", en: "Online quote request, reply within one business day — Paris & Île-de-France." },
-  { start: 44, end: 51, fr: "Setup Paris — Personnalisez. Configurez. Louez.", en: "Setup Paris — Customize. Configure. Rent." },
-];
-
-function PresentationVideo({ lang }: { lang: "fr" | "en" }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [time, setTime] = useState(0);
-
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    const onTime = () => setTime(v.currentTime);
-    v.addEventListener("timeupdate", onTime);
-    return () => v.removeEventListener("timeupdate", onTime);
-  }, []);
-
-  const cue = PRESENTATION_CUES.find((c) => time >= c.start && time < c.end);
-  const text = cue ? (lang === "fr" ? cue.fr : cue.en) : "";
-
-  return (
-    <div className="mt-10 mx-auto max-w-[1200px] relative rounded-2xl overflow-hidden shadow-premium border border-border bg-black aspect-video">
-      <video
-        ref={videoRef}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        poster="https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg"
-        className="w-full h-full object-cover"
-      >
-        <source
-          src="https://setup-paris-configurators.netlify.app/setup-paris-presentation.mp4"
-          type="video/mp4"
-        />
-      </video>
-      {text && (
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-4 md:pb-6"
-          aria-live="polite"
-        >
-          <p
-            lang={lang}
-            className="max-w-[90%] md:max-w-[80%] text-center text-sm md:text-lg font-medium leading-snug text-white rounded-md px-3 py-1.5 md:px-4 md:py-2"
-            style={{ background: "rgba(0,0,0,0.6)", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
-          >
-            {text}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SectionHeader({ title, sub }: { num: string; title: string; sub?: string }) {
-  return (
-    <div>
-
-      <h2 className="mt-4 font-display font-semibold text-balance text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.05] tracking-tight max-w-3xl">
-        {title}
-      </h2>
-      {sub && <p className="mt-5 text-lg text-muted-foreground max-w-2xl leading-relaxed">{sub}</p>}
-    </div>
-  );
-}
-
-function RevealSection({ children, className }: { children: React.ReactNode; className?: string }) {
-  const ref = useReveal<HTMLElement>();
-  return (
-    <section ref={ref} className={`reveal ${className ?? ""}`}>
-      {children}
-    </section>
-  );
-}
-
-function RevealDiv({ children, className }: { children: React.ReactNode; className?: string }) {
-  const ref = useReveal<HTMLDivElement>();
-  return (
-    <div ref={ref} className={`reveal ${className ?? ""}`}>
-      {children}
-    </div>
   );
 }

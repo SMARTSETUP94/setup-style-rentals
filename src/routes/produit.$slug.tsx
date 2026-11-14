@@ -1247,6 +1247,7 @@ function ProductPage() {
                       type="button"
                       id="product-start-date"
                       data-testid="start-date-trigger"
+                      aria-label={startDate ? format(parseISO(startDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn }) : t("product.pickDate")}
                       className={cn(
                         "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
                         !startDate && "text-muted-foreground",
@@ -1284,6 +1285,7 @@ function ProductPage() {
                       type="button"
                       id="product-end-date"
                       data-testid="end-date-trigger"
+                      aria-label={endDate ? format(parseISO(endDate), "PPP", { locale: lang === "fr" ? dfFr : dfEn }) : t("product.pickDate")}
                       className={cn(
                         "mt-1 w-full px-3 py-2.5 text-sm bg-transparent border border-border rounded-lg text-left flex items-center gap-2 hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent",
                         !endDate && "text-muted-foreground",

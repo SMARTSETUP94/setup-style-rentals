@@ -379,19 +379,19 @@ function AdminQuotesPage() {
         ))}
       </div>
       <div className="hidden md:block">
-      <ScrollableTable minWidth={1250}>
-        <table className="w-full text-sm">
+      <ScrollableTable minWidth={1100}>
+        <table className="w-full text-xs">
           <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.number")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.date")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.client")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.email")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.event")}</th>
-              <th className="text-right px-4 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.emails")}</th>
-              <th className="text-left px-4 py-3 font-medium">{t("quotes.col.status")}</th>
-              <th className="px-4 py-3"></th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.number")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.date")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.client")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.email")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.event")}</th>
+              <th className="text-right px-2 py-3 font-medium">{t("quotes.col.totalTtc")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.emails")}</th>
+              <th className="text-left px-2 py-3 font-medium">{t("quotes.col.status")}</th>
+              <th className="px-2 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -402,25 +402,25 @@ function AdminQuotesPage() {
             ) : (
               visible.map((q) => (
                 <tr key={q.id} onClick={() => openDetail(q)} className="border-t border-border cursor-pointer hover:bg-muted/30">
-                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
+                  <td className="px-2 py-3 font-mono text-xs whitespace-nowrap">
                     {quoteNumber(q)}
                     {q.source && <span className="block text-[10px] text-muted-foreground">{q.source}</span>}
                     <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-sans font-medium ${KIND_COLORS[quoteKind(q)]}`}>
                       {t(`quotes.kind.${quoteKind(q)}`)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-2 py-3 text-muted-foreground">
                     {new Date(q.created_at).toLocaleDateString(dateLocale)}
                   </td>
-                  <td className="px-4 py-3 font-medium">
+                  <td className="px-2 py-3 font-medium">
                     {q.customer_name}
                     {q.company && <span className="block text-xs text-muted-foreground">{q.company}</span>}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{q.email}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-2 py-3 text-muted-foreground max-w-40 break-all">{q.email}</td>
+                  <td className="px-2 py-3 text-muted-foreground">
                     {q.event_date ? new Date(q.event_date).toLocaleDateString(dateLocale) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 py-3 text-right">
                     <div className="font-semibold">{quoteTotal(q)}</div>
                     {estimateByQuote[q.id] != null && (
                       <div className="text-[11px] text-muted-foreground whitespace-nowrap" title="Estimation sur-mesure (interne)">
@@ -428,10 +428,10 @@ function AdminQuotesPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-3">
                     <EmailStatusBadge q={q} title={t("quotes.emails.failed")} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-3">
                     <select
                       value={q.status}
                       aria-label={`Statut ${quoteNumber(q)}`}
@@ -457,7 +457,7 @@ function AdminQuotesPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openDetail(q); }} aria-label={`Voir la demande ${quoteNumber(q)}`}>
                         <Eye className="size-4" /> {lang === "fr" ? "Voir" : "View"}

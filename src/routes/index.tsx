@@ -46,10 +46,6 @@ export const Route = createFileRoute("/")({
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
         ...localeMeta(lang),
-        ...ogImageMeta(
-          HERO_IMAGE,
-          { alt: L(lang, "Setup Paris — Location d'objets événementiels personnalisables", "Setup Paris — Customizable event object rentals") },
-        ),
       ],
       links: [
         ...seoLinks("/", lang),

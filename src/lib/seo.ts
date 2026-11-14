@@ -15,7 +15,7 @@ export function seoDescription(text: string, max = 155): string {
 }
 
 export function rentalTitle(name: string, lang: SeoLang): string {
-  const suffix = L(lang, " — Location | Setup Paris", " — Rental | Setup Paris");
+  const suffix = L(lang, " — Location événementielle | Setup Paris", " — Event rentals | Setup Paris");
   const title = `${name}${suffix}`;
   return title.length <= 65 ? title : `${name} — Setup Paris`;
 }

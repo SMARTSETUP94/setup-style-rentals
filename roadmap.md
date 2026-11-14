@@ -1,3 +1,8 @@
+# S23
+- [ ] Redirections bilingues, catégories actives et administration sans modification des données.
+- [ ] Accueil FR/EN rendu serveur, sélection et FAQ issues du catalogue existant.
+- [ ] Tests, contrôles curl et navigateur 1440/390, journal avec captures ; aucune publication.
+
 # S22
 - [x] Crawl curl complet des 152 URL publiées et rapport par URL.
 - [x] Corrections sitemap, catégories, fiches et sur-mesure sans changer les données métier.

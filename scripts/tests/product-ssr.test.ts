@@ -30,7 +30,7 @@ for (const prefix of ["", "/en"]) {
     const amount = new Intl.NumberFormat(prefix ? "en-GB" : "fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })
       .format(Number(product.offers.price)).replace(/\s+/g, " ");
     expect(priceText).toContain(amount);
-    expect(priceText).toMatch(/€\s+(?:HT|excl\. VAT)/);
+    expect(priceText).toMatch(prefix ? /\d\s+excl\. VAT/ : /€\s+HT/);
   }, 30000);
 }
 

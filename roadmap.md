@@ -1,3 +1,8 @@
+# S22
+- [x] Crawl curl complet des 152 URL publiées et rapport par URL.
+- [x] Corrections sitemap, catégories, fiches et sur-mesure sans changer les données métier.
+- [x] 80 tests réussis, contrôles HTML FR/EN et navigateur 1440/390, rapport final ; aucune publication.
+
 # S21
 - [x] Unifier personnalisation et services, choix 3D et tarifs en base.
 - [x] Remises sur location seule, détails fiche/demande/mail et CGL FR/EN.

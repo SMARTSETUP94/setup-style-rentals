@@ -2,13 +2,15 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { zodValidator } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { useEffect, useRef, useState } from "react";
-import { Check, Link2, X } from "lucide-react";
+import { Check, Link2, X, Box } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SUR_MESURE_SPECS } from "@/lib/sur-mesure-specs";
 import { toast } from "sonner";
 import { useCustomPublicPricing, priceLines, rangeLine, studyLine, type PublicRange } from "@/lib/custom-pricing";
 import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
-import { canonicalUrl, headLang, L, localeMeta, seoLinks, serviceJsonLd } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks, serviceJsonLd, seoDescription, breadcrumbJsonLd } from "@/lib/seo";
 import { getPiece, SurMesureConfigMessage, SUR_MESURE_FAMILIES, decodeConfigParam, configLink } from "@/lib/sur-mesure";
 
 const ALLOWED_TYPES = new Set(["sur-mesure-ready", "sur-mesure-config", "sur-mesure-save"]);
@@ -27,21 +29,24 @@ export const Route = createFileRoute("/sur-mesure/$piece")({
     if (!p) return { meta: [{ title: L(lang, "Pièce introuvable — Setup Paris", "Piece not found — Setup Paris") }, { name: "robots", content: "noindex" }] };
     const name = lang === "en" ? p.name_en : p.nom;
     const desc = lang === "en" ? p.desc_en : p.desc;
-    const title = L(lang, `${name} sur mesure — Setup Paris`, `Custom-made ${name.toLowerCase()} — Setup Paris`);
+    const title = L(lang, `${name} sur mesure | Atelier Setup Paris`, `Custom-made ${name.toLowerCase()} | Setup Paris`);
+    const description = seoDescription(L(lang, `${desc} Fabrication sur mesure, réponse sous 48 h ouvrées.`, `${desc} Made to order; reply within 48 business hours.`));
     const path = `/sur-mesure/${params.piece}`;
     return {
       meta: [
         { title },
-        { name: "description", content: L(lang, `${desc} Configurez en 3D, prix et délai confirmés sous 48 h ouvrées.`, `${desc} Configure in 3D; price and production time confirmed within two business days.`) },
+        { name: "description", content: description },
         { property: "og:title", content: title },
-        { property: "og:description", content: desc },
+        { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonicalUrl(path, lang) },
         ...localeMeta(lang),
         { name: "twitter:card", content: "summary" },
       ],
       links: seoLinks(path, lang),
-      scripts: [{ type: "application/ld+json", children: JSON.stringify(serviceJsonLd(title.replace(" — Setup Paris", ""), desc, canonicalUrl(path, lang), lang)) }],
+      scripts: [serviceJsonLd(name, desc, canonicalUrl(path, lang), lang), breadcrumbJsonLd([
+        { name: L(lang, "Accueil", "Home"), path: "/" }, { name: L(lang, "Sur mesure", "Custom-made"), path: "/sur-mesure" }, { name, path },
+      ], lang)].map(schema => ({ type: "application/ld+json", children: JSON.stringify(schema) })),
     };
   },
   component: PiecePage,
@@ -88,6 +93,8 @@ function PiecePage() {
   const { line, c } = Route.useSearch();
   const { lang } = useI18n();
   const tx = TXT[lang];
+  const [is3DOpen, setIs3DOpen] = useState(false);
+  const specs = SUR_MESURE_SPECS[piece.k];
   const prices = useCustomPublicPricing();
   const rangeOn = prices[piece.k]?.range_enabled === true;
   const [estimate, setEstimate] = useState<{ range: PublicRange | null; study: boolean } | null>(null);
@@ -122,7 +129,7 @@ function PiecePage() {
   const lastQtyRef = useRef(1);
   const lastConfigForRange = useRef<Record<string, unknown> | null>(null);
   const lines = rangeOn && estimate
-    ? [estimate.study ? studyLine(lang) : rangeLine(estimate.range!, lang)]
+    ? [estimate.study || !estimate.range ? studyLine(lang) : rangeLine(estimate.range, lang)]
     : priceLines(prices[piece.k], lang);
   const sharedConfigRef = useRef<Record<string, unknown> | null>(decodeConfigParam(c, piece.k));
   const [lastConfig, setLastConfig] = useState<Record<string, unknown> | null>(sharedConfigRef.current);
@@ -241,12 +248,10 @@ function PiecePage() {
   return (
     <div className="pt-24 md:pt-28 pb-16">
       {/* Immersive configurator */}
-      <div className="fixed inset-0 z-[60] bg-background md:top-24">
+      {is3DOpen && <div className="fixed inset-0 z-[60] bg-background md:top-24">
         <div className="relative w-full h-[100dvh] md:h-[calc(100dvh-6rem)] flex flex-col">
           <div className="shrink-0 border-b border-border bg-background px-4 py-2 pr-36 md:pr-[22rem] text-xs sm:text-sm">
-            {lines.map((l) => (
-              <div key={l} className="font-medium">{l}</div>
-            ))}
+            {lang === "fr" ? "Fabrication sur devis — réponse sous 48 h ouvrées" : "Made to order — reply within 48 business hours"}
           </div>
           <iframe
             ref={frameRef}
@@ -277,7 +282,7 @@ function PiecePage() {
           )}
           <button
             type="button"
-            onClick={() => navigate({ to: "/sur-mesure" })}
+            onClick={() => setIs3DOpen(false)}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-background/90 backdrop-blur border border-border hover:bg-background transition-colors shadow-lg"
             aria-label={tx.close}
           >
@@ -305,9 +310,9 @@ function PiecePage() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* Indexable text (behind the immersive layer) */}
+      {/* Public text remains visible; the visualiser opens on request. */}
       <div className="container-x">
         <Link to="/sur-mesure" className="text-xs uppercase tracking-[0.22em] text-gold-ink hover:underline">← {tx.back}</Link>
         {family && <div className="mt-4 text-sm text-muted-foreground">{lang === "fr" ? family.fr : family.en}</div>}
@@ -315,10 +320,29 @@ function PiecePage() {
           {lang === "fr" ? piece.nom : piece.name_en} {tx.suffix}
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">{lang === "fr" ? piece.desc : piece.desc_en}</p>
-        {lines.map((l) => (
-          <p key={l} className="mt-3 text-sm font-medium">{l}</p>
-        ))}
+        <Button className="mt-6" onClick={() => setIs3DOpen(true)}><Box className="size-4" />{lang === "fr" ? "Configurer en 3D" : "Configure in 3D"}</Button>
+        <section className="mt-10 max-w-3xl">
+          <h2 className="font-display text-2xl">{lang === "fr" ? "Dimensions configurables" : "Configurable dimensions"}</h2>
+          <dl className="mt-4 divide-y divide-border">
+            {specs?.dimensions.map(d => <div key={d.label} className="flex justify-between gap-4 py-3"><dt>{lang === "en" ? ({ Largeur: "Width", Hauteur: "Height", Profondeur: "Depth", Façade: "Front", Retour: "Return", Diamètre: "Diameter", Longueur: "Length", Épaisseur: "Thickness" } as Record<string,string>)[d.label] || d.label : d.label}</dt><dd>{d.min}–{d.max} mm</dd></div>)}
+          </dl>
+          <p className="mt-3 text-sm text-muted-foreground">{lang === "fr" ? "Limites du configurateur ; faisabilité et dimensions finales validées au devis." : "Configurator limits; feasibility and final dimensions confirmed in your quotation."}</p>
+          <h2 className="mt-8 font-display text-2xl">{lang === "fr" ? "Finitions" : "Finishes"}</h2>
+          <p className="mt-3 text-muted-foreground">{specs?.finishes.map(f => finishName(f, lang)).join(", ")}</p>
+          <h2 className="mt-8 font-display text-2xl">{lang === "fr" ? "Étapes de fabrication" : "Production steps"}</h2>
+          <ol className="mt-3 list-decimal pl-5 space-y-2">
+            {(lang === "fr" ? ["Choix de la pièce, des cotes et des finitions.", "Envoi de votre configuration et étude de faisabilité.", "Validation écrite du devis et des visuels avant fabrication.", "Fabrication et livraison selon le planning confirmé au devis."] : ["Choose the piece, dimensions and finishes.", "Send your configuration for a feasibility review.", "Approve the quotation and artwork in writing before production.", "Production and delivery according to the agreed schedule."]).map(step => <li key={step}>{step}</li>)}
+          </ol>
+          <p className="mt-5 font-medium">{lang === "fr" ? "Réponse sous 48 h ouvrées. Le délai de fabrication est confirmé au devis." : "Reply within 48 business hours. Production time is confirmed in your quotation."}</p>
+        </section>
       </div>
     </div>
   );
+}
+
+function finishName(key: string, lang: "fr" | "en") {
+  const names: Record<string, [string, string]> = {
+    laque: ["Laqué mat", "Matt lacquer"], laqueB: ["Laqué brillant", "Gloss lacquer"], mela: ["Mélaminé blanc", "White melamine"], chene: ["Placage chêne", "Oak veneer"], cp: ["Contreplaqué verni", "Varnished plywood"], osb: ["OSB verni", "Varnished OSB"], noir: ["MDF noir verni", "Varnished black MDF"], miroir: ["Miroir", "Mirror"], brosse: ["Aluminium brossé", "Brushed aluminium"], brut: ["Brut à peindre", "Unfinished for painting"], moquette: ["Moquette", "Carpet"], tissu: ["Tissu", "Fabric"], visuel: ["Visuel imprimé", "Printed artwork"], pmmaC: ["Plexi incolore", "Clear acrylic"], pmmaD: ["Plexi blanc diffusant", "Diffusing white acrylic"], pmmaN: ["Plexi noir", "Black acrylic"], acier: ["Acier brut verni", "Varnished raw steel"], acierP: ["Acier peint", "Painted steel"], tasV: ["Sapin verni", "Varnished softwood"], tasL: ["Sapin laqué", "Lacquered softwood"],
+  };
+  return names[key]?.[lang === "en" ? 1 : 0] || key;
 }

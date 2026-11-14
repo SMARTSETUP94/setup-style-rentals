@@ -66,6 +66,7 @@ export function ProductCard({
         <ProductImage
           name={pickLang(product, "name", lang)}
           category_slug={product.category_slug}
+          categoryName={categoryLabel}
           image_url={product.image_url}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
         />

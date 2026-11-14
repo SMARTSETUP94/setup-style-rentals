@@ -6,7 +6,7 @@ export const Route = createFileRoute("/mentions-legales")({
   component: LegalPage,
   head: ({ match }) => {
     const lang = headLang(match);
-    const title = L(lang, "Mentions légales — Setup Paris", "Legal notice — Setup Paris");
+    const title = L(lang, "Mentions légales et éditeur — Setup Paris", "Legal notice and publisher — Setup Paris");
     return {
       meta: [
         { title },

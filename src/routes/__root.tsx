@@ -89,9 +89,12 @@ export const Route = createRootRoute({
           areaServed: { "@type": "Place", name: L(headLang(match), "Paris et Île-de-France", "Paris and Île-de-France") },
           address: {
             "@type": "PostalAddress",
-            addressLocality: "Paris",
+            streetAddress: "8 avenue du Président Salvador Allende",
+            addressLocality: "Vitry-sur-Seine",
             addressCountry: "FR",
           },
+          telephone: "+33601416111",
+          email: "smart@setup.paris",
         }),
       },
     ],

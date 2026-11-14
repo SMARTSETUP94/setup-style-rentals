@@ -5,6 +5,27 @@ import { localizedPath } from "./lang-url";
  */
 export const SITE_URL = "https://catalogue.setup.paris";
 
+/** Plain-text snippet, never split the final word or change stored content. */
+export function seoDescription(text: string, max = 155): string {
+  const clean = text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const part = clean.slice(0, max + 1);
+  const end = part.lastIndexOf(" ");
+  return (end > 0 ? part.slice(0, end) : "").trim();
+}
+
+export function rentalTitle(name: string, lang: SeoLang): string {
+  const suffix = L(lang, " — Location événementielle | Setup Paris", " — Event rentals | Setup Paris");
+  const title = `${name}${suffix}`;
+  return title.length <= 65 ? title : `${name} — Setup Paris`;
+}
+
+export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>, lang: SeoLang) {
+  return { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items.map((item, i) => ({
+    "@type": "ListItem", position: i + 1, name: item.name, item: canonicalUrl(item.path, lang),
+  })) };
+}
+
 /**
  * Build an absolute canonical URL from a path (with or without leading slash).
  * Strips query strings and trailing slashes (except root) for canonical stability.

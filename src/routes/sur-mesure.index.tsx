@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ConciergeBell, Boxes, Signpost, Armchair, type LucideIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { useCustomPublicPricing, priceLines } from "@/lib/custom-pricing";
 import { canonicalUrl, headLang, L, localeMeta, seoLinks, serviceJsonLd } from "@/lib/seo";
 import { SUR_MESURE_FAMILIES, SUR_MESURE_PIECES, type SurMesureFamily } from "@/lib/sur-mesure";
 
@@ -15,8 +14,8 @@ export const Route = createFileRoute("/sur-mesure/")({
         {
           name: "description",
           content: L(lang,
-            "Faites fabriquer votre mobilier événementiel sur mesure : comptoirs, stèles, podiums, totems, arches… Configurez en 3D, prix et délai confirmés sous 48 h ouvrées.",
-            "Have your event furniture custom-made: counters, plinths, podiums, totems, arches… Configure in 3D; price and production time confirmed within two business days."),
+            "Mobilier événementiel fabriqué sur mesure : 24 pièces, cotes et finitions personnalisées. Étude et réponse sous 48 h ouvrées par Setup Paris.",
+            "Custom-made event furniture: 24 pieces with bespoke dimensions and finishes. Setup Paris reviews your project and replies within 48 business hours."),
         },
         { property: "og:title", content: title },
         {
@@ -106,7 +105,6 @@ const TXT = {
 function SurMesurePage() {
   const { lang } = useI18n();
   const tx = TXT[lang];
-  const prices = useCustomPublicPricing();
   const counts = Object.fromEntries(
     SUR_MESURE_FAMILIES.map((f) => [f.key, SUR_MESURE_PIECES.filter((p) => p.fam === f.key).length]),
   );
@@ -189,9 +187,6 @@ function SurMesurePage() {
                         <ArrowRight aria-hidden className="size-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" />
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{lang === "fr" ? p.desc : p.desc_en}</p>
-                      {prices[p.k]?.from_price_ht != null && priceLines(prices[p.k], lang).slice(0, 1).map((l) => (
-                        <p key={l} className="mt-2 text-xs font-medium text-foreground">{l}</p>
-                      ))}
                       <span className="sr-only">{tx.configure}</span>
                     </Link>
                   ))}

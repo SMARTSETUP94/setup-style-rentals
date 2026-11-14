@@ -31,11 +31,11 @@ export const Route = createFileRoute("/devis")({
   errorComponent: () => <div role="alert" className="container-x pt-32">Page indisponible / Page unavailable</div>,
   head: ({ match }) => {
     const lang = headLang(match);
-    const title = L(lang, "Ma demande — Setup Paris", "My request — Setup Paris");
+    const title = L(lang, "Ma demande de devis — Setup Paris", "My event rental request — Setup Paris");
     return {
       meta: [
         { title },
-        { name: "description", content: L(lang, "Ma demande : demande de devis en ligne, réponse sous 24 h ouvrées. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.", "My request: online quote request, reply within one business day. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.") },
+        { name: "description", content: L(lang, "Votre demande de devis Setup Paris : location événementielle, livraison, installation et reprise en Île-de-France. Réponse sous 24 h ouvrées.", "Your Setup Paris event rental quotation: delivery, installation and collection in Paris and Île-de-France. Reply within one business day.") },
         { property: "og:title", content: title },
         { property: "og:description", content: L(lang, "Demande de devis en ligne, réponse sous 24 h ouvrées.", "Online quote request, reply within one business day.") },
         { property: "og:type", content: "website" },

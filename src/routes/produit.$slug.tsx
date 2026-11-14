@@ -30,7 +30,8 @@ function preloadFor(url: string) {
 }
 import { LogoUpload } from "@/components/site/LogoUpload";
 import { sanitizeAndTranslateRecapHtml } from "@/lib/sanitize-recap";
-import { canonicalUrl, headLang, L, localeMeta, seoLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, seoLinks, seoDescription, rentalTitle } from "@/lib/seo";
+import { isStorageImage, storageImageAt } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/site/LazyCalendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -144,8 +145,8 @@ export const Route = createFileRoute("/produit/$slug")({
     }
     const name = lang === "en" ? m.name_en || m.name_fr : m.name_fr;
     const desc = lang === "en" ? m.description_en || m.description_fr : m.description_fr;
-    const title = `${name} — Setup Paris`;
-    const description = desc?.slice(0, 160) || L(lang, `Louez ${name} chez Setup Paris : configurateur 3D. Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.`, `Rent ${name} from Setup Paris with a 3D configurator. Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.`);
+    const title = rentalTitle(name, lang); // Public rental title, shared with HTTP tests.
+    const description = seoDescription(desc || L(lang, `Location de ${name} pour vos événements à Paris et en Île-de-France. Disponibilité et logistique confirmées sur devis.`, `Hire ${name} for events in Paris and Île-de-France. Availability and delivery arrangements confirmed in your quotation.`));
     const productUrl = canonicalUrl(`/produit/${m.slug}`, lang);
     const meta: Array<Record<string, string>> = [
       { title },
@@ -159,15 +160,17 @@ export const Route = createFileRoute("/produit/$slug")({
       { name: "twitter:description", content: description },
       ...localeMeta(lang),
     ];
-    if (m.image_url) {
-      meta.push({ property: "og:image", content: m.image_url });
-      meta.push({ name: "twitter:image", content: m.image_url });
+    if (m.image_url?.startsWith("https://")) {
+      const shareImage = isStorageImage(m.image_url) ? storageImageAt(m.image_url, 1200) : m.image_url;
+      meta.push({ property: "og:image", content: shareImage });
+      meta.push({ name: "twitter:image", content: shareImage });
+      meta.push({ property: "og:image:alt", content: `${name} — ${m.category_slug}` });
     }
     const jsonLd: Record<string, unknown> = {
       "@context": "https://schema.org/",
       "@type": "Product",
       name,
-      description,
+      description: desc || description,
       inLanguage: lang,
       sku: m.slug,
       category: m.category_slug,
@@ -182,6 +185,7 @@ export const Route = createFileRoute("/produit/$slug")({
           "@type": "UnitPriceSpecification",
           price: Number(m.price_event ?? m.price_day).toFixed(2),
           priceCurrency: "EUR",
+          unitText: m.price_event != null ? "par événement" : "par jour",
           unitCode: m.price_event != null ? "C62" : "DAY",
           referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: m.price_event != null ? "C62" : "DAY" },
         },
@@ -191,6 +195,7 @@ export const Route = createFileRoute("/produit/$slug")({
       },
     };
     if (m.image_url) jsonLd.image = m.image_url;
+    if (m.dimensions) jsonLd.additionalProperty = [{ "@type": "PropertyValue", name: "Dimensions", value: m.dimensions }];
     const breadcrumbsLd = {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -936,7 +941,7 @@ function ProductPage() {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to="/catalogue" search={{ category: category.slug, q: "", sort: "featured" }}>
+                    <Link to="/categorie/$slug" params={{ slug: category.slug }}>
                       {pickLang(category, "name", lang)}
                     </Link>
                   </BreadcrumbLink>
@@ -964,6 +969,7 @@ function ProductPage() {
             <ProductImage
               name={pickLang(product, "name", lang)}
               category_slug={product.category_slug}
+              categoryName={category ? pickLang(category, "name", lang) : product.category_slug}
               image_url={product.image_url}
               priority
               sizes={PRODUCT_HERO_SIZES}

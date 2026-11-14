@@ -3,6 +3,8 @@
 
 - Public rental routes load active catalogue data through publishable-key server functions and reuse loader DTOs for HTML and metadata; never rely on mount-time fetching for initial product content. Why: crawlers receive the same catalogue as visitors without exposing private data.
 - Keep the product SSR HTTP integration test runnable against local or published origins via `SSR_TEST_BASE_URL`, asserting actual H1 and visible tariff outside scripts. Why: metadata alone cannot detect an empty server-rendered product page.
+- Public SEO reads reuse catalogue loader content without editing descriptions; sitemap reads paginate and fail closed on errors, with only record-specific updated timestamps. Why: avoid incomplete indexing and preserve concurrent editorial work.
+- Made-to-measure specifications expose existing configurator bounds and finishes in visible SSR content; the visualiser opens on demand. Why: readable public content must not be concealed beneath an iframe or reveal internal prices.
 
 - Admin presentation helpers classify custom-only totals and imported image filenames without updating records; internal HT estimates are converted to TTC only for TTC dashboard aggregates. Why: avoid false zero prices and mixing tax bases.
 - Rental customisation detection, service units and event detail rows live in a pure shared helper; server repricing also derives branding from configuration. Why: prevent visual choices and client totals from bypassing the same pricing rule.

@@ -1,8 +1,8 @@
 import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, seoLinks } from "@/lib/seo";
+import { getPublicCatalogue } from "@/lib/catalogue.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, MousePointerClick, Truck, Wand2, Zap, Ruler, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
 import { categoryImage, categoryGradient, HERO_IMAGE } from "@/lib/category-images";
@@ -32,6 +32,7 @@ interface FeaturedProduct {
 }
 
 export const Route = createFileRoute("/")({
+  loader: () => getPublicCatalogue(),
   head: ({ match }) => {
     const lang = headLang(match);
     const title = L(lang, "Setup Paris — Location d'objets événementiels", "Setup Paris — Event object rentals in Paris");
@@ -42,16 +43,19 @@ export const Route = createFileRoute("/")({
         { property: "og:title", content: title },
         { property: "og:description", content: L(lang, "Personnalisez, configurez, louez.", "Customize, configure, rent.") },
         { property: "og:url", content: canonicalUrl("/", lang) },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
         ...localeMeta(lang),
-        ...ogImageMeta(
-          "https://setup-paris-configurators.netlify.app/setup-paris-presentation-poster.jpg",
-          { alt: L(lang, "Setup Paris — Location d'objets événementiels personnalisables", "Setup Paris — Customizable event object rentals") },
-        ),
       ],
       links: [
         ...seoLinks("/", lang),
         { rel: "preload", as: "image", href: HERO_IMAGE, fetchpriority: "high" },
       ],
+      scripts: [{ type: "application/ld+json", children: JSON.stringify({
+        "@context": "https://schema.org", "@type": ["Organization", "LocalBusiness"],
+        name: "Setup Paris", url: canonicalUrl("/", lang), telephone: "+33601416111", email: "smart@setup.paris",
+        address: { "@type": "PostalAddress", streetAddress: "8 avenue du Président Salvador Allende", addressLocality: "Vitry-sur-Seine", addressCountry: "FR" },
+      }) }],
     };
   },
   component: HomePage,
@@ -59,24 +63,9 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { t, lang } = useI18n();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
-
-  useEffect(() => {
-    supabase
-      .from("categories")
-      .select("*")
-      .order("sort_order")
-      .then(({ data }) => setCategories((data as Category[]) ?? []));
-
-    supabase
-      .from("products")
-      .select("id, slug, name_fr, name_en, category_slug, price_day, price_event, image_url, sort_order")
-      .eq("is_active", true)
-      .order("sort_order")
-      .limit(8)
-      .then(({ data }) => setFeatured((data as FeaturedProduct[]) ?? []));
-  }, []);
+  const data = Route.useLoaderData();
+  const categories = data.categories;
+  const featured = data.products.slice(0, 8);
 
   return (
     <>
@@ -197,8 +186,8 @@ function HomePage() {
           {categories.map((cat, idx) => (
             <Link
               key={cat.id}
-              to="/catalogue"
-              search={{ category: cat.slug }}
+              to="/categorie/$slug"
+              params={{ slug: cat.slug }}
               className="group relative h-64 rounded-xl overflow-hidden border border-border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium"
               style={{
                 animation: `hero-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) ${idx * 80}ms both`,

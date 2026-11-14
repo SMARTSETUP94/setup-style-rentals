@@ -3,7 +3,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ProductCard } from "@/components/site/ProductCard";
-import { canonicalUrl, headLang, L, localeMeta, ogImageMeta, SITE_URL, seoLinks } from "@/lib/seo";
+import { canonicalUrl, headLang, L, localeMeta, SITE_URL, seoLinks, seoDescription, rentalTitle, breadcrumbJsonLd } from "@/lib/seo";
 import {
   Accordion,
   AccordionContent,
@@ -50,8 +50,9 @@ export const Route = createFileRoute("/categorie/$slug")({
     const lang = headLang(match);
     const cat = loaderData?.category;
     const name = (lang === "en" ? cat?.name_en || cat?.name_fr : cat?.name_fr) ?? params.slug;
-    const title = L(lang, `${name} — Location événementielle | Setup Paris`, `${name} — Event rental | Setup Paris`);
-    const description = L(lang, `Location de ${name.toLowerCase()} à Paris et en Île-de-France. Découvrez notre sélection Setup Paris.`, `${name} for hire in Paris and Île-de-France. Discover the Setup Paris selection.`);
+    const title = L(lang, `${name} — Location événementielle | Setup Paris`, `${name} — Event rentals | Setup Paris`);
+    const longDescription = lang === "en" ? cat?.description_long_en || cat?.description_long_fr : cat?.description_long_fr || cat?.description_long_en;
+    const description = seoDescription(longDescription || L(lang, `Location de ${name.toLowerCase()} à Paris et en Île-de-France. Découvrez notre sélection Setup Paris.`, `${name} for hire in Paris and Île-de-France. Discover the Setup Paris selection.`));
     const path = `/categorie/${params.slug}`;
     return {
       meta: [
@@ -60,14 +61,14 @@ export const Route = createFileRoute("/categorie/$slug")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:url", content: canonicalUrl(path, lang) },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
         ...localeMeta(lang),
-        ...ogImageMeta(
-          cat?.image_url ??
-            "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1200&h=630&q=80",
-          { alt: L(lang, `Catégorie ${name} — Setup Paris`, `${name} category — Setup Paris`) },
-        ),
       ],
       links: seoLinks(path, lang),
+      scripts: [{ type: "application/ld+json", children: JSON.stringify(breadcrumbJsonLd([
+        { name: L(lang, "Accueil", "Home"), path: "/" }, { name: "Catalogue", path: "/catalogue" }, { name, path },
+      ], lang)) }],
     };
   },
   component: CategoryPage,
@@ -106,7 +107,7 @@ function CategoryPage() {
       itemListElement: products.map((p, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${SITE_URL}/produit/${p.slug}`,
+        url: canonicalUrl(`/produit/${p.slug}`, lang),
         name: pickLang(p, "name", lang),
       })),
     }),
@@ -116,7 +117,8 @@ function CategoryPage() {
   type FaqEntry = { q_fr?: string; q_en?: string; a_fr?: string; a_en?: string };
   const faqList: FaqEntry[] = ((category.faq ?? []) as FaqEntry[]).filter((f) => {
     const q = lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en;
-    return !!q;
+    const a = lang === "en" ? f.a_en || f.a_fr : f.a_fr || f.a_en;
+    return !!q && !!a;
   });
   const longDesc = lang === "en"
     ? category.description_long_en || category.description_long_fr
@@ -172,7 +174,7 @@ function CategoryPage() {
         </h1>
         {longDesc ? (
           <div className="mt-4 max-w-2xl text-base text-muted-foreground whitespace-pre-line leading-relaxed">
-            {longDesc}
+            {longDesc.split(/\n\s*\n|\n/).filter(p => p.trim()).map((p, i) => <p key={i} className="mb-3">{p}</p>)}
           </div>
         ) : null}
         <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
@@ -217,7 +219,7 @@ function CategoryPage() {
                 <AccordionTrigger className="text-left">
                   {lang === "en" ? f.q_en || f.q_fr : f.q_fr || f.q_en}
                 </AccordionTrigger>
-                <AccordionContent className="whitespace-pre-line text-muted-foreground">
+                <AccordionContent forceMount className="whitespace-pre-line text-muted-foreground data-[state=closed]:hidden">
                   {lang === "en" ? f.a_en || f.a_fr : f.a_fr || f.a_en}
                 </AccordionContent>
               </AccordionItem>

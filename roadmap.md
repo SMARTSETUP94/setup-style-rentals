@@ -1,7 +1,7 @@
 # S21
-- [ ] Unifier personnalisation et services, choix 3D et tarifs en base.
-- [ ] Remises sur location seule, détails fiche/demande/mail et CGL FR/EN.
-- [ ] Tests et navigateur 1440/390 sans demande réelle, journal ; ne pas publier.
+- [x] Unifier personnalisation et services, choix 3D et tarifs en base.
+- [x] Remises sur location seule, détails fiche/demande/mail et CGL FR/EN.
+- [x] Tests et navigateur 1440/390 sans demande réelle, journal ; ne pas publier.
 
 # S19bis
 - [x] Comparer les fiches FR/EN publiées et locales : défaut non reproductible, contenu complet ; vérifier le 404 inactif.

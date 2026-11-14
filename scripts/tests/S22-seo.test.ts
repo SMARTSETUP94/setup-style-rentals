@@ -3,7 +3,7 @@ import { seoDescription } from "../../src/lib/seo";
 import { SUR_MESURE_SPECS } from "../../src/lib/sur-mesure-specs";
 
 const base = (process.env.SSR_TEST_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
-const visible = (s: string) => s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+const visible = (s: string) => s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<[^>]*>/g, " ").replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/\s+/g, " ");
 
 test("metadata snippet does not split a word and stays at 155 characters", () => {
   const input = "Présentation ".repeat(20);

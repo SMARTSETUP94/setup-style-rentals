@@ -1,3 +1,4 @@
+import { eventDetailRows, optionCharge } from "@/lib/rental-customisation";
 import { getPublicCatalogue } from "@/lib/catalogue.functions";
 import { ProductCard } from "@/components/site/ProductCard";
 import { PublicNotFound } from "@/components/site/PublicNotFound";
@@ -408,12 +409,10 @@ function QuotePage() {
                                 ? `${formatPrice(lt.event.priceEvent, lang)} ${t("catalog.perEvent")} • ${item.days} ${t("product.days")}`
                                 : <>{t("catalog.from")} {formatPrice(item.price_day, lang)} {t("catalog.perDay")} • {item.days} {t("product.days")}</>}
                             </div>
-                            {lt.event && (lt.event.extraDays > 0 || lt.event.customTotal > 0) && (
-                              <div className="text-xs text-muted-foreground" data-testid="event-detail">
-                                {lt.event.extraDays > 0 && <div>+ {t("product.extraDays")} : {lt.event.extraDays} × {formatPrice(lt.event.priceExtraDay, lang)} × {item.quantity} = {formatPrice(lt.event.extraTotal, lang)}</div>}
-                                {lt.event.customTotal > 0 && <div>+ {t("product.customisation")} ({pickLang(item, "customLabel", lang) || item.customLabel_fr}) : {formatPrice(lt.event.customUnit, lang)} × {item.quantity} = {formatPrice(lt.event.customTotal, lang)}</div>}
-                              </div>
-                            )}
+                            {lt.event && <div className="text-xs text-muted-foreground" data-testid="event-detail">
+                              {eventDetailRows(lt.event, item.quantity, lang, n => formatPrice(n, lang)).map(row => <div key={row}>{row}</div>)}
+                              {lt.discount > 0 && <div>{lang === "fr" ? "Remise location" : "Rental discount"} : −{formatPrice(lt.discount, lang)} ({Math.round(lt.qtyRate * 100)}%)</div>}
+                            </div>}
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
@@ -468,7 +467,7 @@ function QuotePage() {
                                     </span>
                                     {o.price > 0 && (
                                       <span className="text-accent">
-                                        +{formatPrice(o.price, lang)}
+                                        + {formatPrice(optionCharge(o.price, o.name_fr, item.days), lang)} × {item.quantity} = {formatPrice(optionCharge(o.price, o.name_fr, item.days) * item.quantity, lang)}
                                       </span>
                                     )}
                                   </li>

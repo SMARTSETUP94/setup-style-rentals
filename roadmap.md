@@ -1,3 +1,7 @@
+# S19bis
+- [ ] Comparer les fiches FR/EN publiées et locales, identifier le diagnostic SSR et vérifier le 404 inactif.
+- [ ] Rendre explicite l’espace tarif/HT, ajouter et exécuter le test HTTP sans JavaScript, consigner le résultat sans publier.
+
 # S20
 - [x] Demandes : confirmation statut, montants, mails, détail et cartes mobiles.
 - [x] Tableau de bord, demandeurs en attente, alias produits et badges qualité.

@@ -190,11 +190,11 @@ const DICT: Dict = {
   "quotes.item.externalLink": { fr: "lien externe non vérifié", en: "unverified external link" },
   "quotes.stockConfirm": { fr: "Stock insuffisant pour {name} : {req} demandés, {avail} disponibles. Confirmer quand même ?", en: "Insufficient stock for {name}: {req} requested, {avail} available. Confirm anyway?" },
   "quotes.statusNote": { fr: "Les statuts Confirmé et Livré bloquent le stock sur les dates de l'événement.", en: "Confirmed and Delivered statuses block stock on the event dates." },
-  "quotes.status.pending": { fr: "Nouveau", en: "New" },
+  "quotes.status.pending": { fr: "En attente", en: "Pending" },
   "quotes.status.contacted": { fr: "En cours", en: "In progress" },
-  "quotes.status.confirmed": { fr: "Confirmé", en: "Confirmed" },
+  "quotes.status.confirmed": { fr: "Acceptée", en: "Accepted" },
   "quotes.status.completed": { fr: "Livré", en: "Delivered" },
-  "quotes.status.rejected": { fr: "Retourné", en: "Returned" },
+  "quotes.status.rejected": { fr: "Refusée", en: "Rejected" },
 
   // Dashboard
   "dash.title": { fr: "Tableau de bord", en: "Dashboard" },
@@ -244,7 +244,7 @@ const DICT: Dict = {
   "prods.countOf": { fr: "produits", en: "products" },
   "prods.searchPlaceholder": { fr: "Rechercher nom, slug…", en: "Search name, slug…" },
   "prods.allCategories": { fr: "Toutes catégories", en: "All categories" },
-  "prods.new": { fr: "Nouveau", en: "New" },
+  "prods.new": { fr: "En attente", en: "Pending" },
   "prods.col.name": { fr: "Nom", en: "Name" },
   "prods.col.category": { fr: "Catégorie", en: "Category" },
   "prods.col.priceDay": { fr: "Prix/j", en: "Price/d" },

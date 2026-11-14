@@ -1,3 +1,4 @@
+import { pendingApplicants } from "@/lib/admin-display";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -250,6 +251,15 @@ function AdminClientsPage() {
         <p className="text-sm text-muted-foreground">{t("clients.sub")}</p>
       </div>
 
+      <aside className="mb-6 border-l-2 border-accent pl-4 text-sm text-muted-foreground">{lang === "fr" ? "Les clients sont créés lorsqu'une demande est acceptée ou refusée" : "Clients are created when a request is accepted or rejected"}</aside>
+      <section className="mb-8" data-testid="pending-applicants">
+        <h2 className="font-display font-semibold text-lg mb-3">{lang === "fr" ? "Demandeurs en attente" : "Pending applicants"}</h2>
+        {loading ? <p>{t("layout.loading")}</p> : pendingApplicants(quotes).length === 0 ? <p className="text-sm text-muted-foreground">{lang === "fr" ? "Aucun demandeur en attente" : "No pending applicants"}</p> : <ul className="divide-y divide-border">
+          {pendingApplicants(quotes).map(applicant => <li key={applicant.email} className="py-3 flex flex-wrap justify-between gap-2 text-sm">
+            <span className="break-all">{applicant.email}</span><div className="flex flex-wrap gap-2">{applicant.quotes.map(quote => <Button key={quote.id} asChild variant="outline" size="sm"><Link to="/admin/devis" search={{ request: quote.id }}>{lang === "fr" ? "Voir la demande" : "View request"} · {fmtDate(quote.created_at)}</Link></Button>)}</div>
+          </li>)}
+        </ul>}
+      </section>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />

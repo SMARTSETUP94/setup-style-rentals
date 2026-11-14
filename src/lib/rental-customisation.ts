@@ -1,12 +1,15 @@
 /** Pure bridge shared with server repricing. Camera/dimensions never imply branding. */
 export function isPersonalisedConfiguration(data: unknown, recap = ""): boolean {
   if (data && typeof data === "object") {
+    let hasMode = false;
     for (const value of Object.values(data)) {
       if (value && typeof value === "object" && "mode" in value) {
+        hasMode = true;
         const mode = String(value.mode).toLowerCase();
         if (["custom", "personnalise", "peinture", "adhesif", "print", "logo"].includes(mode)) return true;
       }
     }
+    if (hasMode) return false;
   }
   return recap.split("\n").some(line => {
     const match = line.match(/^(?:finition|fond|logo|structure|panneau|adhésif)\s*:\s*(.*)$/i);

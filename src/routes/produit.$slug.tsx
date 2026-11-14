@@ -247,9 +247,9 @@ function ProductPage() {
   const [is3DMode, setIs3DMode] = useState(false);
   const unified3D = Number(product.custom_price) > 0 && Boolean(product.configurator_url);
   const unknown3DPrice = ["lettres-geantes", "table-de-blackjack", "pouf", "auvent", "triporteur"].includes(slug);
-  const productOptions = (loaded.productOptions as ProductOptionRow[]).filter(o =>
-    (!unified3D && !unknown3DPrice) || isDailyService(o.name_fr) || /LED|coussin/i.test(o.name_fr));
-  const optionCategories = (loaded.optionCategories as OptionCategory[]).filter(c => productOptions.some(o => o.category_id === c.id));
+  const productOptions = useMemo(() => (loaded.productOptions as ProductOptionRow[]).filter(o =>
+    (!unified3D && !unknown3DPrice) || isDailyService(o.name_fr) || /LED|coussin/i.test(o.name_fr)), [loaded.productOptions, unified3D, unknown3DPrice]);
+  const optionCategories = useMemo(() => (loaded.optionCategories as OptionCategory[]).filter(c => productOptions.some(o => o.category_id === c.id)), [loaded.optionCategories, productOptions]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<string, string>>(() => defaultOptionSelection(optionCategories, productOptions));
   /** Category IDs whose option was auto-selected by the 3D configurator (for visual hint). */
   const [autoSelectedCatIds, setAutoSelectedCatIds] = useState<Set<string>>(new Set());
@@ -266,6 +266,7 @@ function ProductPage() {
   /** Origin of the configurator iframe — target for outgoing postMessage. */
   const configuratorOrigin = (() => {
     try {
+      if (slug === "stele") return typeof window !== "undefined" ? window.location.origin : "https://catalogue.setup.paris";
       return product?.configurator_url
         ? new URL(product.configurator_url, typeof window !== "undefined" ? window.location.href : "https://catalogue.setup.paris").origin
         : null;
@@ -434,7 +435,7 @@ function ProductPage() {
         // Newer Pro configurators send `configuration` (preferred) alongside
         // `recap_html` (styled HTML) and `recap` (plain text fallback).
         const cfg = d.configuration ?? d.data;
-        if (cfg) setConfiguratorData(cfg);
+        setConfiguratorData(cfg ?? null);
         if (typeof d.recap === "string") setConfiguratorRecap(d.recap);
         if (typeof d.recap_html === "string") setConfiguratorRecapHtml(d.recap_html);
         setHasSavedConfig(true);
@@ -1002,7 +1003,7 @@ function ProductPage() {
             </Link>
           )}
 
-          {product.configurator_url && (BRAND_3D_SLUGS.has(product.slug) ? (
+          {product.configurator_url && slug !== "stele-miroir" && (BRAND_3D_SLUGS.has(product.slug) ? (
             <button
               type="button"
               onClick={() => setIs3DMode((prev) => !prev)}

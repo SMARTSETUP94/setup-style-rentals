@@ -14,6 +14,8 @@ describe("S21", () => {
   test("stèle white recap stays stocked", () => expect(isPersonalisedConfiguration(null,"Finition : Blanc\nLogo : Sans logo")).toBe(false));
   test("basket branding 680 once per unit/event", () => expect(computeLine({price_day:0,deposit:0,quantity:2,days:3,priceEvent:300,optionPrices:[],customPrice:680,customChosen:true}).net).toBe(1960));
   test("stèle painting 25", () => expect(computeLine({price_day:0,deposit:0,quantity:1,days:1,priceEvent:50,optionPrices:[],customPrice:25,customChosen:true}).net).toBe(75));
+  test("photobooth face printing 430", () => expect(computeLine({price_day:0,deposit:0,quantity:1,days:3,priceEvent:750,optionPrices:[],customPrice:430,customChosen:true}).net).toBe(1180));
+  test("reset standard overrides stale customised recap", () => expect(isPersonalisedConfiguration({structure:{mode:"standard"}},"Structure : Peinture personnalisée")).toBe(false));
   test("daily service charged for all days", () => expect(optionCharge(250,"Animateur dédié (par jour)",5)).toBe(1250));
   test("customisation is not daily", () => expect(optionCharge(680,"Branding",5)).toBe(680));
   test("three detailed event rows", () => expect(eventDetailRows({priceEvent:350,extraDays:2,priceExtraDay:70,customUnit:140},2,"fr",n=>`${n} €`)).toEqual(["Événement : 350 € × 2","Jours sup. : 2 × 70 € × 2","Personnalisation : 140 € × 2"]));

@@ -58,7 +58,9 @@ export const Route = createFileRoute("/api/sur-mesure/estimate")({
             .select("range_enabled,range_low_pct,range_high_pct,floor_ht")
             .eq("piece", b.piece)
             .maybeSingle();
-          if (!row?.range_enabled) return off();
+          // Dev server only (stripped from builds): lets tests display the range without enabling it in the database.
+          const forced = import.meta.env.DEV && request.headers.get("x-dev-force-range") === "1";
+          if (!row || (!row.range_enabled && !forced)) return off();
 
           const { chiffrer } = await import("@/server/chiffrage.server.js");
           const r = chiffrer(b.configuration, { quantite: b.quantity });

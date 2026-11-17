@@ -46,16 +46,28 @@ const fmt = (n: number, lang: "fr" | "en") => new Intl.NumberFormat(lang === "fr
 
 export function rangeLine(r: PublicRange, lang: "fr" | "en") {
   return lang === "fr"
-    ? `Budget indicatif : entre ${fmt(r.low, lang)} et ${fmt(r.high, lang)} € HT l'unité, hors livraison et pose — prix ferme confirmé par devis`
-    : `Indicative budget: between €${fmt(r.low, lang)} and €${fmt(r.high, lang)} excl. VAT per unit, delivery and installation not included — firm price confirmed by quote`;
+    ? `Estimation indicative : ${fmt(r.low, lang)} € – ${fmt(r.high, lang)} € HT`
+    : `Indicative estimate: €${fmt(r.low, lang)} – €${fmt(r.high, lang)} excl. VAT`;
 }
+export function rangeTotalLine(r: PublicRange, qty: number, lang: "fr" | "en") {
+  const lo = fmt(r.low * qty, lang), hi = fmt(r.high * qty, lang);
+  return lang === "fr"
+    ? `Par unité · total pour ${qty} unité${qty > 1 ? "s" : ""} : ${lo} € – ${hi} € HT`
+    : `Per unit · total for ${qty} unit${qty > 1 ? "s" : ""}: €${lo} – €${hi} excl. VAT`;
+}
+/** Short form for the request line and client e-mail (always says "indicative"). */
 export function rangeShort(r: PublicRange, lang: "fr" | "en") {
   return lang === "fr"
-    ? `Budget indicatif : entre ${fmt(r.low, lang)} et ${fmt(r.high, lang)} € HT l'unité (estimation, confirmée par devis)`
-    : `Indicative budget: between €${fmt(r.low, lang)} and €${fmt(r.high, lang)} excl. VAT per unit (estimate, confirmed by quote)`;
+    ? `Estimation indicative : ${fmt(r.low, lang)} € – ${fmt(r.high, lang)} € HT par unité`
+    : `Indicative estimate: €${fmt(r.low, lang)} – €${fmt(r.high, lang)} excl. VAT per unit`;
 }
 export function studyLine(lang: "fr" | "en") {
   return lang === "fr"
-    ? "Cette configuration demande une étude : prix sur devis sous 48 h ouvrées"
-    : "This configuration requires a study: price quoted within two business days";
+    ? "Cette configuration nécessite une étude : prix et délai confirmés sous 48 h ouvrées."
+    : "This configuration requires a design study: price and lead time confirmed within 48 working hours.";
+}
+export function rangeReserves(lang: "fr" | "en") {
+  return lang === "fr"
+    ? "Fourchette indicative hors taxes, calculée automatiquement à partir de votre configuration (± 20 %). Elle ne constitue ni un devis ni une offre de prix. Le prix définitif et le délai sont confirmés par notre bureau d'études sous 48 h ouvrées, après vérification des cotes, des finitions et de la faisabilité. Hors livraison, installation, conception graphique et fichiers d'impression. Teintes validées sur échantillon. TVA en sus."
+    : "Indicative range excluding VAT, calculated automatically from your configuration (± 20%). It is neither a quotation nor a price offer. The final price and lead time are confirmed by our design office within 48 working hours, after checking dimensions, finishes and feasibility. Excludes delivery, installation, graphic design and print files. Colours approved on sample. VAT extra.";
 }

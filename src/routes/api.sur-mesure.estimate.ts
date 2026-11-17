@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { SUR_MESURE_KEYS } from "@/lib/sur-mesure";
-import { publicRange } from "@/lib/price-range";
+import { publicEstimate } from "@/lib/price-range";
 
 const Body = z
   .object({
@@ -58,14 +58,13 @@ export const Route = createFileRoute("/api/sur-mesure/estimate")({
             .select("range_enabled,range_low_pct,range_high_pct,floor_ht")
             .eq("piece", b.piece)
             .maybeSingle();
-          if (!row?.range_enabled) return off();
+          // Dev server only (stripped from builds): lets tests display the range without enabling it in the database.
+          const forced = import.meta.env.DEV && request.headers.get("x-dev-force-range") === "1";
+          if (!row || (!row.range_enabled && !forced)) return off();
 
           const { chiffrer } = await import("@/server/chiffrage.server.js");
           const r = chiffrer(b.configuration, { quantite: b.quantity });
-          if (!r.ok) return off();
-          if (r.incomplet || (r.alertes?.length ?? 0) > 0) return json({ enabled: true, per: "unit", study: true });
-          const { low, high } = publicRange(r.unite_ht, Number(row.range_low_pct), Number(row.range_high_pct), Number(row.floor_ht));
-          return json({ enabled: true, low, high, per: "unit", study: false });
+          return json({ enabled: true, ...publicEstimate(r, row) });
         } catch (e) {
           console.error("[sur-mesure/estimate] error", e instanceof Error ? e.message : "unknown");
           return off();

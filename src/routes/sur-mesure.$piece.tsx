@@ -6,7 +6,7 @@ import { Check, Link2, X, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SUR_MESURE_SPECS } from "@/lib/sur-mesure-specs";
 import { toast } from "sonner";
-import { useCustomPublicPricing, priceLines, rangeLine, studyLine, type PublicRange } from "@/lib/custom-pricing";
+import { useCustomPublicPricing, rangeLine, rangeTotalLine, rangeReserves, studyLine, type PublicRange } from "@/lib/custom-pricing";
 import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
@@ -97,7 +97,7 @@ function PiecePage() {
   const specs = SUR_MESURE_SPECS[piece.k];
   const prices = useCustomPublicPricing();
   const rangeOn = prices[piece.k]?.range_enabled === true;
-  const [estimate, setEstimate] = useState<{ range: PublicRange | null; study: boolean } | null>(null);
+  const [estimate, setEstimate] = useState<{ range: PublicRange | null; study: boolean; qty?: number } | null>(null);
   const estimateRef = useRef(estimate);
   estimateRef.current = estimate;
   const rangeOnRef = useRef(rangeOn);
@@ -109,28 +109,40 @@ function PiecePage() {
     window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(async () => {
       const seq = ++reqSeq.current;
+      const sentQty = Math.min(50, Math.max(1, quantity || 1));
       try {
         const res = await fetch("/api/sur-mesure/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ piece: piece.k, configuration, quantity: Math.min(50, Math.max(1, quantity || 1)) }),
+          body: JSON.stringify({ piece: piece.k, configuration, quantity: sentQty }),
         });
         if (seq !== reqSeq.current || !res.ok) return;
         const d = (await res.json()) as { enabled?: boolean; low?: number; high?: number; study?: boolean };
         if (!d.enabled) return setEstimate(null);
         if (d.study) return setEstimate({ range: null, study: true });
-        if (typeof d.low === "number" && typeof d.high === "number") setEstimate({ range: { low: d.low, high: d.high }, study: false });
+        if (typeof d.low === "number" && typeof d.high === "number") setEstimate({ range: { low: d.low, high: d.high }, study: false, qty: sentQty });
       } catch {
         /* keep current text */
       }
-    }, 800);
+    }, 400);
   };
   useEffect(() => () => window.clearTimeout(debounceRef.current), []);
   const lastQtyRef = useRef(1);
   const lastConfigForRange = useRef<Record<string, unknown> | null>(null);
-  const lines = rangeOn && estimate
-    ? [estimate.study || !estimate.range ? studyLine(lang) : rangeLine(estimate.range, lang)]
-    : priceLines(prices[piece.k], lang);
+  const [qty, setQty] = useState(1);
+  const rangeBlock = rangeOn && estimate ? (
+    <div data-testid="price-range" role="status" aria-live="polite" className="text-sm">
+      {estimate.study || !estimate.range ? (
+        <p className="font-medium">{studyLine(lang)}</p>
+      ) : (
+        <>
+          <p className="font-display text-lg font-semibold">{rangeLine(estimate.range, lang)}</p>
+          <p className="text-muted-foreground">{rangeTotalLine(estimate.range, estimate.qty ?? qty, lang)}</p>
+          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{rangeReserves(lang)}</p>
+        </>
+      )}
+    </div>
+  ) : null;
   const sharedConfigRef = useRef<Record<string, unknown> | null>(decodeConfigParam(c, piece.k));
   const [lastConfig, setLastConfig] = useState<Record<string, unknown> | null>(sharedConfigRef.current);
   lastConfigForRange.current = lastConfig;
@@ -205,6 +217,7 @@ function PiecePage() {
       if (m.piece === piece.k) {
         setLastConfig(m.configuration);
         lastQtyRef.current = m.quantity;
+        setQty(m.quantity);
         requestEstimate(m.configuration, m.quantity);
       }
       if (m.action !== "save") return;
@@ -260,6 +273,7 @@ function PiecePage() {
             sandbox="allow-scripts allow-downloads"
             className="block w-full flex-1 min-h-0 border-0"
           />
+          {rangeBlock && <div className="shrink-0 max-h-[35dvh] overflow-y-auto border-t border-border bg-background px-4 py-3">{rangeBlock}</div>}
           {noReply && (
             <p role="status" className="shrink-0 border-t border-border bg-background px-4 py-2 text-xs text-muted-foreground">
               {lang === "fr"
@@ -320,6 +334,7 @@ function PiecePage() {
           {lang === "fr" ? piece.nom : piece.name_en} {tx.suffix}
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">{lang === "fr" ? piece.desc : piece.desc_en}</p>
+        {rangeBlock && <div className="mt-6 max-w-2xl rounded-lg border border-border p-4">{rangeBlock}</div>}
         <Button className="mt-6" onClick={() => setIs3DOpen(true)}><Box className="size-4" />{lang === "fr" ? "Configurer en 3D" : "Configure in 3D"}</Button>
         <section className="mt-10 max-w-3xl">
           <h2 className="font-display text-2xl">{lang === "fr" ? "Dimensions configurables" : "Configurable dimensions"}</h2>

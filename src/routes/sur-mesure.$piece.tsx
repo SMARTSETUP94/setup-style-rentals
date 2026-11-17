@@ -6,7 +6,7 @@ import { Check, Link2, X, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SUR_MESURE_SPECS } from "@/lib/sur-mesure-specs";
 import { toast } from "sonner";
-import { useCustomPublicPricing, rangeLine, rangeTotalLine, rangeReserves, studyLine, type PublicRange } from "@/lib/custom-pricing";
+import { useCustomPublicPricing, rangeLine, rangeTotalLine, rangeReserves, studyLine, iframePriceMessage, type PublicRange } from "@/lib/custom-pricing";
 import { trackSiteEvent } from "@/lib/track";
 import { useI18n } from "@/lib/i18n";
 import { useCart } from "@/lib/cart";
@@ -143,6 +143,22 @@ function PiecePage() {
       )}
     </div>
   ) : null;
+  const sentPriceRef = useRef(false);
+  const pushPrice = () => {
+    const win = frameRef.current?.contentWindow;
+    if (!win || !readyRef.current) return;
+    if (!rangeOn || !estimate) {
+      if (!sentPriceRef.current) return; // inactive: leave the iframe's own text untouched
+      sentPriceRef.current = false;
+      win.postMessage(iframePriceMessage(null, lang), "*");
+      return;
+    }
+    sentPriceRef.current = true;
+    win.postMessage(iframePriceMessage(estimate, lang), "*");
+  };
+  const pushPriceRef = useRef(pushPrice);
+  pushPriceRef.current = pushPrice;
+  useEffect(() => { pushPrice(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [estimate, rangeOn, lang]);
   const sharedConfigRef = useRef<Record<string, unknown> | null>(decodeConfigParam(c, piece.k));
   const [lastConfig, setLastConfig] = useState<Record<string, unknown> | null>(sharedConfigRef.current);
   lastConfigForRange.current = lastConfig;
@@ -197,6 +213,8 @@ function PiecePage() {
       if (d.type === "sur-mesure-ready") {
         readyRef.current = true;
         setNoReply(false);
+        sentPriceRef.current = false;
+        pushPriceRef.current();
         const editing = editLineRef.current
           ? itemsRef.current.find((i) => i.lineId === editLineRef.current && i.kind === "custom")
           : undefined;

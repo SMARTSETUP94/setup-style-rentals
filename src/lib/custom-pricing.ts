@@ -71,3 +71,17 @@ export function rangeReserves(lang: "fr" | "en") {
     ? "Fourchette indicative hors taxes, calculée automatiquement à partir de votre configuration (± 20 %). Elle ne constitue ni un devis ni une offre de prix. Le prix définitif et le délai sont confirmés par notre bureau d'études sous 48 h ouvrées, après vérification des cotes, des finitions et de la faisabilité. Hors livraison, installation, conception graphique et fichiers d'impression. Teintes validées sur échantillon. TVA en sus."
     : "Indicative range excluding VAT, calculated automatically from your configuration (± 20%). It is neither a quotation nor a price offer. The final price and lead time are confirmed by our design office within 48 working hours, after checking dimensions, finishes and feasibility. Excludes delivery, installation, graphic design and print files. Colours approved on sample. VAT extra.";
 }
+
+/** Text-only message sent to the configurator iframe; the iframe never computes prices. `null` text = restore its default. */
+export function iframePriceMessage(
+  est: { range: PublicRange | null; study: boolean } | null,
+  lang: "fr" | "en",
+): { type: "price-range"; text: string; sub: string } {
+  if (!est) return { type: "price-range", text: "", sub: "" };
+  if (est.study || !est.range)
+    return { type: "price-range", text: lang === "fr" ? "Étude nécessaire : prix sous 48 h ouvrées" : "Design study required: price within 48 business hours", sub: "" };
+  const { low, high } = est.range;
+  return lang === "fr"
+    ? { type: "price-range", text: `Estimation indicative : ${fmt(low, lang)} – ${fmt(high, lang)} € HT / unité`, sub: "Prix confirmé sous 48 h ouvrées" }
+    : { type: "price-range", text: `Indicative estimate: €${fmt(low, lang)} – €${fmt(high, lang)} excl. VAT / unit`, sub: "Price confirmed within 48 business hours" };
+}

@@ -35,7 +35,7 @@ const L = {
     warn2: "N'activez la fourchette qu'après validation des temps par l'atelier et avis juridique sur l'affichage d'un prix indicatif.",
     range: "Fourchette publique", low: "− %", high: "+ %", floor: "Plancher HT",
     piece: "Pièce", price: "À partir de (€ HT)", lead: "Délai indicatif (jours ouvrés)", show: "Afficher sur le site",
-    by: "Validé par", save: "Enregistrer", saved: "Enregistré", invalid: "Valeurs invalides", on: "validé le",
+    by: "Validé par", all20: "Mettre toutes les pièces à ± 20 %", all20done: "Toutes les pièces sont à ± 20 % (fourchettes non activées)", save: "Enregistrer", saved: "Enregistré", invalid: "Valeurs invalides", on: "validé le",
   },
   en: {
     title: "Custom-made — “from” prices",
@@ -43,7 +43,7 @@ const L = {
     warn2: "Only enable the price range after the workshop has validated the times and legal advice on showing an indicative price.",
     range: "Public range", low: "− %", high: "+ %", floor: "Floor excl. VAT",
     piece: "Piece", price: "From (€ excl. VAT)", lead: "Indicative lead time (business days)", show: "Show on site",
-    by: "Validated by", save: "Save", saved: "Saved", invalid: "Invalid values", on: "validated on",
+    by: "Validated by", all20: "Set all pieces to ± 20%", all20done: "All pieces set to ± 20% (ranges not enabled)", save: "Save", saved: "Saved", invalid: "Invalid values", on: "validated on",
   },
 };
 
@@ -66,8 +66,8 @@ function AdminCustomPricingPage() {
       enabled: r.enabled,
       validatedBy: r.validated_by ?? "",
       range: r.range_enabled,
-      low: String(r.range_low_pct ?? 5),
-      high: String(r.range_high_pct ?? 15),
+      low: String(r.range_low_pct ?? 20),
+      high: String(r.range_high_pct ?? 20),
       floor: String(r.floor_ht ?? 0),
     }])));
   };
@@ -105,12 +105,23 @@ function AdminCustomPricingPage() {
     void load();
   };
 
+  const setAll20 = async () => {
+    setSaving("__all");
+    // Sets percentages only: range_enabled is deliberately left untouched.
+    const { error } = await supabase.from("custom_pricing").update({ range_low_pct: 20, range_high_pct: 20, updated_at: new Date().toISOString() }).in("piece", rows.map((r) => r.piece));
+    setSaving(null);
+    if (error) return toast.error(error.message);
+    toast.success(tx.all20done);
+    void load();
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-6xl">
       <h1 className="font-display text-2xl font-semibold">{tx.title}</h1>
       <div role="alert" className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
         <AlertTriangle className="size-4 mt-0.5 shrink-0" /> <div>{tx.warn}<div className="mt-1 font-medium">{tx.warn2}</div></div>
       </div>
+      <Button variant="outline" className="mt-4" onClick={setAll20} disabled={saving !== null || rows.length === 0}>{tx.all20}</Button>
       <div className="mt-6 overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">

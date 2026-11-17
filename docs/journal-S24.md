@@ -27,9 +27,12 @@ Non publié. `custom_pricing.range_enabled` reste **false** sur les 24 pièces. 
 Sans le forçage, les trois appels renvoient `{"enabled":false}`.
 
 ## Contrôles
-- `bun test` : 100 réussis, 0 échec (dont `scripts/tests/S24-range.test.ts` : arrondis, plancher, étude, aucun champ interne dans la réponse publique).
+- `bun test` : 101 réussis, 0 échec (dont `scripts/tests/S24-range.test.ts` : arrondis, plancher, étude, aucun champ interne dans la réponse publique, total × quantité).
 - Navigateur (fourchette simulée dans le test uniquement, en interceptant la lecture des prix publics) : 1440 FR comptoir, 1440 EN stèle, 390 FR stèle, 390 EN comptoir, 1440 FR bar — fourchette + total + réserves visibles dans la 3D, 0 erreur console, aucun débordement. Après une cote modifiée dans la 3D : comptoir 1 230–1 860 €, stèle 720–1 090 €.
 - Ma demande (1440 FR) : ligne « Estimation indicative : 1 230 € – 1 860 € HT par unité ».
+- Message « étude » (réponse simulée) : FR 1440 et EN 390 affichés.
+- Admin (lecture seule, écritures bloquées) 1440/390 : bouton ± 20 % présent, 24 interrupteurs tous éteints, 24 pièces à 20 %.
+- Total pour la quantité : désormais calculé sur la quantité réellement estimée ; vérifié par test unitaire (la quantité n'a pas été changée dans la 3D en navigateur).
 - Non vérifié : le mail client réel (aucune demande envoyée).
 
-Captures : [comptoir 1440 FR](captures-S24/1440-fr-comptoir-3d.png), [stèle 1440 EN](captures-S24/1440-en-stele-3d.png), [stèle 390 FR](captures-S24/390-fr-stele-3d.png), [comptoir 390 EN](captures-S24/390-en-comptoir-3d.png), [bar 1440 FR](captures-S24/1440-fr-bar-3d.png), [Ma demande](captures-S24/1440-fr-devis.png).
+Captures : [comptoir 1440 FR](captures-S24/1440-fr-comptoir-3d.png), [stèle 1440 EN](captures-S24/1440-en-stele-3d.png), [stèle 390 FR](captures-S24/390-fr-stele-3d.png), [comptoir 390 EN](captures-S24/390-en-comptoir-3d.png), [bar 1440 FR](captures-S24/1440-fr-bar-3d.png), [Ma demande](captures-S24/1440-fr-devis.png), [étude FR](captures-S24/1440-fr-study.png), [étude EN](captures-S24/390-en-study.png), [admin 1440](captures-S24/1440-admin.png), [admin 390](captures-S24/390-admin.png).

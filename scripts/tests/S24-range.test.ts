@@ -18,11 +18,10 @@ test("floor_ht lifts the low bound (and the high if needed)", () => {
 test("blocking alerts → study, no amounts", () => {
   expect(publicEstimate({ ok: true, unite_ht: 1000, alertes: ["Hauteur hors limite"] }, s20)).toEqual({ per: "unit", study: true });
 });
-test("unpriced item → study; plain notes do not", () => {
-  expect(publicEstimate({ ok: true, unite_ht: 1000, non_chiffre: ["Fichier d'impression non chiffré"] }, s20).study).toBe(true);
-  expect(publicEstimate({ ok: true, unite_ht: 1000, non_chiffre: ["Teinte à valider"] }, s20)).toEqual({ low: 800, high: 1200, per: "unit", study: false });
+test("standard exclusions listed by the engine do not force a study", () => {
+  expect(publicEstimate({ ok: true, unite_ht: 1000, non_chiffre: ["Livraison et pose : hors estimation."] }, s20)).toEqual({ low: 800, high: 1200, per: "unit", study: false });
 });
-test("incomplete or failed engine → study", () => {
+test("unpriced posts (incomplet) or failed engine → study", () => {
   expect(publicEstimate({ ok: true, unite_ht: 1000, incomplet: true }, s20).study).toBe(true);
   expect(publicEstimate({ ok: false }, s20).study).toBe(true);
 });

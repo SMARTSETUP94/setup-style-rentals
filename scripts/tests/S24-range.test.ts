@@ -32,3 +32,8 @@ test("public response exposes only low, high, per, study", () => {
   const txt = JSON.stringify(out);
   for (const leak of ["unite_ht", "total_ht", "lignes", "alertes", "non_chiffre", "t0"]) expect(txt).not.toContain(leak);
 });
+
+test("total line multiplies the unit range by the quantity", async () => {
+  const { rangeTotalLine } = await import("../../src/lib/custom-pricing");
+  expect(rangeTotalLine({ low: 1230, high: 1850 }, 3, "fr").replace(/\s/g, " ")).toContain("3 690 € – 5 550 € HT");
+});

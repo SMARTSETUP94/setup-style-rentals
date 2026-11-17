@@ -1,6 +1,8 @@
 import { isPersonalisedConfiguration, optionCharge, eventDetailRows } from "@/lib/rental-customisation";
 import { SITE_URL } from "@/lib/seo";
 import { splitNonChiffre, stripRecapHeader } from "@/lib/chiffrage-split";
+import { publicEstimate, type PublicEstimate } from "@/lib/price-range";
+import { rangeReserves, rangeShort, rangeTotalLine, studyLine } from "@/lib/custom-pricing";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   computeLine,
@@ -205,7 +207,14 @@ function estimateBlock(e: InternalEstimate | undefined) {
   </div>`;
 }
 
-function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string, InternalEstimate>, lang: MailLang = "fr") {
+/** CLIENT MAIL — public indicative range only (never the internal estimate). */
+function publicRangeBlock(r: PublicEstimate | undefined, qty: number, lang: MailLang) {
+  if (!r) return "";
+  if (r.study) return `<div style="margin-top:8px;font-size:13px;">${escapeHtml(studyLine(lang))}</div>`;
+  return `<div style="margin-top:8px;font-size:13px;"><strong>${escapeHtml(rangeShort(r, lang))}</strong><br/><span style="color:#666;">${escapeHtml(rangeTotalLine(r, qty, lang))}</span><div style="margin-top:4px;font-size:11px;color:#777;">${escapeHtml(rangeReserves(lang))}</div></div>`;
+}
+
+function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string, InternalEstimate>, lang: MailLang = "fr", ranges?: Map<string, PublicEstimate>) {
   if (!customs.length) return "";
   const rows = customs
     .map(
@@ -216,6 +225,7 @@ function customBlock(p: Payload, customs: StoredCustom[], estimates?: Map<string
         ${stripRecapHeader(c.configurator_recap || "") ? `<pre style="margin:8px 0 0;font-family:ui-monospace,Menlo,Monaco,monospace;font-size:12px;color:#444;white-space:pre-wrap;background:#fffbe6;padding:8px;border-radius:6px;">${escapeHtml(stripRecapHeader(c.configurator_recap))}</pre>` : ""}
         ${c.resume_url ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(c.resume_url)}" style="color:#1d4ed8;">${tr(lang, "Reprendre / partager cette configuration", "Resume / share this configuration")}</a></div>` : ""}
         ${c.custom_alerts.length ? `<div style="margin-top:8px;font-size:12px;"><strong>Points à vérifier par le bureau d'études :</strong><ul style="margin:4px 0 0 18px;padding:0;">${c.custom_alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>` : ""}
+        ${ranges ? publicRangeBlock(ranges.get(c.custom_config_id), c.quantity, lang) : ""}
         ${estimates ? estimateBlock(estimates.get(c.custom_config_id)) : ""}
         ${estimates ? `<div style="margin-top:8px;font-size:12px;"><a href="${escapeHtml(`${SITE_URL}/admin/chiffrage?config_id=${encodeURIComponent(c.custom_config_id)}`)}" style="color:#1d4ed8;">Ouvrir dans le chiffrage</a></div>` : ""}
       </div>`,
@@ -358,7 +368,7 @@ function greeting(name: string, lang: MailLang = "fr"): string {
   return /^\p{L}{2,20}$/u.test(first) ? `${hello} ${escapeHtml(first)},` : `${hello},`;
 }
 
-function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[]) {
+function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals, customs: StoredCustom[], ranges?: Map<string, PublicEstimate>) {
   const lang: MailLang = p.lang === "en" ? "en" : "fr";
   const c = colon(lang);
   return `
@@ -379,7 +389,7 @@ function clientEmail(p: Payload, number: string, items: StoredItem[], t: Totals,
       </div>` : ""}
       <h2 style="font-size:16px;margin:24px 0 8px;">${tr(lang, "Récapitulatif de votre demande", "Summary of your request")} ${escapeHtml(number)}</h2>
       ${rentalBlock(items, t, lang, true)}
-      ${customBlock(p, customs, undefined, lang)}
+      ${customBlock(p, customs, undefined, lang, ranges)}
       ${items.length ? `<p style="margin-top:24px;font-size:13px;color:#666;">${tr(lang, "Livraison, installation et reprise : forfait indicatif pour Paris et l'Île-de-France, confirmé par devis.<br/>Estimation indicative. Le devis final dépend des disponibilités et de la logistique.", "Delivery, setup and pickup: indicative flat fee for Paris & Île-de-France, confirmed in the quote.<br/>Indicative estimate. The final quote depends on availability and logistics.")}</p>` : ""}
       ${customs.length ? `<p style="margin-top:8px;font-size:13px;color:#666;">${tr(lang, "Livraison et pose du sur-mesure : sur devis.", "Delivery and installation of custom pieces: on quote.")}</p>` : ""}
       <p style="margin-top:24px;font-size:14px;">${tr(lang, "— L'équipe Setup Paris", "— The Setup Paris team")}</p>
@@ -762,6 +772,26 @@ export const Route = createFileRoute("/api/quotes/submit")({
             }
           }
 
+          // 8d. Public indicative range for the client mail, only for pieces whose range is enabled.
+          const publicRanges = new Map<string, PublicEstimate>();
+          if (customItems.length) {
+            try {
+              const { data: rangeRows } = await supabaseAdmin
+                .from("custom_pricing")
+                .select("piece,range_enabled,range_low_pct,range_high_pct,floor_ht")
+                .in("piece", customItems.map((c) => c.piece));
+              const byPiece = new Map((rangeRows ?? []).filter((r) => r.range_enabled).map((r) => [r.piece, r]));
+              for (const [idx, c] of customItems.entries()) {
+                const sc = storedCustoms[idx]!;
+                const row = byPiece.get(c.piece);
+                const e = estimates.get(sc.custom_config_id);
+                if (row && e) publicRanges.set(sc.custom_config_id, publicEstimate(e as never, row));
+              }
+            } catch (e) {
+              console.error("[quotes/submit] public range failed", e);
+            }
+          }
+
           // 9. Emails (awaited, failures recorded but never fatal)
           const notifyTo = (process.env.QUOTE_NOTIFY_TO || DEFAULT_ADMIN_EMAIL)
             .split(",")
@@ -777,7 +807,7 @@ export const Route = createFileRoute("/api/quotes/submit")({
             sendEmail({
               to: [p.email],
               subject: p.lang === "en" ? `Your quote request ${number} — Setup Paris` : `Votre demande de devis ${number} — Setup Paris`,
-              html: clientEmail(p, number, storedItems, totals, storedCustoms),
+              html: clientEmail(p, number, storedItems, totals, storedCustoms, publicRanges),
               replyTo: CLIENT_REPLY_TO,
             }),
           ]);

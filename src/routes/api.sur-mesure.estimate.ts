@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { SUR_MESURE_KEYS } from "@/lib/sur-mesure";
-import { publicRange } from "@/lib/price-range";
+import { publicEstimate } from "@/lib/price-range";
 
 const Body = z
   .object({
@@ -62,10 +62,7 @@ export const Route = createFileRoute("/api/sur-mesure/estimate")({
 
           const { chiffrer } = await import("@/server/chiffrage.server.js");
           const r = chiffrer(b.configuration, { quantite: b.quantity });
-          if (!r.ok) return off();
-          if (r.incomplet || (r.alertes?.length ?? 0) > 0) return json({ enabled: true, per: "unit", study: true });
-          const { low, high } = publicRange(r.unite_ht, Number(row.range_low_pct), Number(row.range_high_pct), Number(row.floor_ht));
-          return json({ enabled: true, low, high, per: "unit", study: false });
+          return json({ enabled: true, ...publicEstimate(r, row) });
         } catch (e) {
           console.error("[sur-mesure/estimate] error", e instanceof Error ? e.message : "unknown");
           return off();

@@ -1,3 +1,5 @@
+import { splitNonChiffre } from "./chiffrage-split";
+
 /** Public indicative range from an internal unit price. Pure arithmetic, no internal rates. */
 export function publicRange(unitHt: number, lowPct: number, highPct: number, floorHt: number) {
   const floor = Number.isFinite(floorHt) && floorHt > 0 ? floorHt : 0;
@@ -14,7 +16,7 @@ export type PublicEstimate = { low: number; high: number; per: "unit"; study: fa
 /** Maps an internal engine result to the public whitelist. Non-simple configurations become a study. */
 export function publicEstimate(r: EngineResult, s: RangeSettings): PublicEstimate {
   const unit = Number(r.unite_ht);
-  const blocking = (r.alertes?.length ?? 0) > 0 || (r.non_chiffre?.length ?? 0) > 0 || r.incomplet === true;
+  const blocking = (r.alertes?.length ?? 0) > 0 || splitNonChiffre((r.non_chiffre ?? []).map(String)).postes.length > 0 || r.incomplet === true;
   if (!r.ok || blocking || !Number.isFinite(unit) || unit <= 0) return { per: "unit", study: true };
   const { low, high } = publicRange(unit, Number(s.range_low_pct ?? 20), Number(s.range_high_pct ?? 20), Number(s.floor_ht ?? 0));
   return { low, high, per: "unit", study: false };

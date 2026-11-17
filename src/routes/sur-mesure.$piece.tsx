@@ -97,7 +97,7 @@ function PiecePage() {
   const specs = SUR_MESURE_SPECS[piece.k];
   const prices = useCustomPublicPricing();
   const rangeOn = prices[piece.k]?.range_enabled === true;
-  const [estimate, setEstimate] = useState<{ range: PublicRange | null; study: boolean } | null>(null);
+  const [estimate, setEstimate] = useState<{ range: PublicRange | null; study: boolean; qty?: number } | null>(null);
   const estimateRef = useRef(estimate);
   estimateRef.current = estimate;
   const rangeOnRef = useRef(rangeOn);
@@ -109,17 +109,18 @@ function PiecePage() {
     window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(async () => {
       const seq = ++reqSeq.current;
+      const sentQty = Math.min(50, Math.max(1, quantity || 1));
       try {
         const res = await fetch("/api/sur-mesure/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ piece: piece.k, configuration, quantity: Math.min(50, Math.max(1, quantity || 1)) }),
+          body: JSON.stringify({ piece: piece.k, configuration, quantity: sentQty }),
         });
         if (seq !== reqSeq.current || !res.ok) return;
         const d = (await res.json()) as { enabled?: boolean; low?: number; high?: number; study?: boolean };
         if (!d.enabled) return setEstimate(null);
         if (d.study) return setEstimate({ range: null, study: true });
-        if (typeof d.low === "number" && typeof d.high === "number") setEstimate({ range: { low: d.low, high: d.high }, study: false });
+        if (typeof d.low === "number" && typeof d.high === "number") setEstimate({ range: { low: d.low, high: d.high }, study: false, qty: sentQty });
       } catch {
         /* keep current text */
       }
@@ -136,7 +137,7 @@ function PiecePage() {
       ) : (
         <>
           <p className="font-display text-lg font-semibold">{rangeLine(estimate.range, lang)}</p>
-          <p className="text-muted-foreground">{rangeTotalLine(estimate.range, qty, lang)}</p>
+          <p className="text-muted-foreground">{rangeTotalLine(estimate.range, estimate.qty ?? qty, lang)}</p>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{rangeReserves(lang)}</p>
         </>
       )}

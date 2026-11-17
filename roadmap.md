@@ -27,3 +27,9 @@
 - [x] Dates, logistique, produits liés, demande vide et textes FR/EN.
 - [x] Petites corrections publiques et formulaires.
 - [x] Tests, contrôles HTML et navigateur, journal ; aucune publication ni écriture en base.
+## S24 — Fourchette ±20 % sur mesure
+- [x] Calcul serveur (dizaines, plancher, étude), réponse publique limitée
+- [x] Affichage 3D/page/Ma demande/mail client + réserves FR/EN
+- [x] Admin : bouton ± 20 %, 24 pièces à 20/20, interrupteurs éteints
+- [x] Tests, navigateur (forçage test uniquement), journal docs/journal-S24.md
+- [ ] Activation publique : attend le feu vert de Gabin
